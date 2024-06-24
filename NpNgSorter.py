@@ -30,6 +30,10 @@ for i in range(potTree.GetEntries()):
 #define histograms to fill
 #we will write histograms to output file for:
 protonGammaHist = rt.TH1F("nProton_nGammaHist", "Energy of NC events with N photon(s) and N proton(s)",60,0,6)
+oneProtonHist = rt.TH1F("1Proton_nGammaHist", "Energy of NC events with N photon(s) and 1 proton",60,0,6)
+twoProtonHist = rt.TH1F("2Proton_nGammaHist", "Energy of NC events with N photon(s) and 2 protons",60,0,6)
+threeProtonHist = rt.TH1F("3Proton_nGammaHist", "Energy of NC events with N photon(s) and 3 protons",60,0,6)
+manyProtonHist = rt.TH1F("manyProton_nGammaHist", "Energy of NC events with N photon(s) and >3 protons",60,0,6)
 
 # set histogram axis titles and increase line width
 def configureHist(h):
@@ -38,8 +42,12 @@ def configureHist(h):
     h.SetLineWidth(2)
     return h
 
-#scale the histogram based on total good POT
+#scale the histograms based on total good POT
 protonGammaHist = configureHist(protonGammaHist)
+oneProtonHist = configureHist(oneProtonHist)
+twoProtonHist = configureHist(twoProtonHist)
+threeProtonHist = configureHist(threeProtonHist)
+manyProtonHist = configureHist(manyProtonHist)
 
 #set detector min/max and fiducial width (cm)
 xMin, xMax = 0, 256
@@ -70,13 +78,16 @@ for i in range(eventTree.GetEntries()):
 #Check for presence of both protons above 60mev and charged pions above 30mev
     piPlusPresent = False
     protonPresent = False
+    nProtons = 0
     for x in range(len(eventTree.truePrimPartPDG)):
         if abs(eventTree.truePrimPartPDG[x] == 211) and eventTree.truePrimPartE[x] >= 0.03:
             piPlusPresent = True
+            break
         if eventTree.truePrimPartPDG[x] == 2212 and eventTree.truePrimPartE[x] >= 0.06:
+            nProtons += 1
             protonPresent = True
 #Cut all events without protons or with >= 1 charged pions
-    if protonPresent == False or piPlusPresent == True:
+    if nProtons == 0 or piPlusPresent == True:
         continue
 
 #determine whether there are photons as secondary particles
@@ -95,25 +106,43 @@ for i in range(eventTree.GetEntries()):
     #Iterate through trueSimParts to find photons
         for x in range(len(eventTree.trueSimPartPDG)):
             if eventTree.trueSimPartPDG[x] == 22:
-    #Check for parent particle in the primary list
+    #Check for photon's parent particle in the primary list
                 if eventTree.trueSimPartMID[x] in primList:
                     photonInSecondary = True
     #Check if the photon has starting coordinates within 1.5mm of the event vertex
                 elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
-                    photonInSecondary = True
-                
-    #Discard event unless a secondary photon is found
+                    photonInSecondary = True                
+    #Discard event if no secondary photon is found
     if photonInSecondary == False:
         continue
 
 #Fill histogram
     protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight) 
+
+    if nProtons == 1:
+        oneProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    elif nProtons == 2:
+        twoProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    elif nProtons == 3:
+        threeProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    elif nProtons >= 4:
+        manyProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    
+    
       
 #----- end of event loop ---------------------------------------------#
 
 #scale histograms to target POT
 protonGammaHist.Scale(targetPOT/ntuplePOTsum)
+oneProtonHist.Scale(targetPOT/ntuplePOTsum)
+twoProtonHist.Scale(targetPOT/ntuplePOTsum)
+threeProtonHist.Scale(targetPOT/ntuplePOTsum)
+manyProtonHist.Scale(targetPOT/ntuplePOTsum)
 
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 protonGammaHist.Write()
+oneProtonHist.Write()
+twoProtonHist.Write()
+threeProtonHist.Write()
+manyProtonHist.Write()
