@@ -67,49 +67,47 @@ for i in range(eventTree.GetEntries()):
     if eventTree.vtxFracHitsOnCosmic >= 1.:
         continue
   
+#Check for presence of both protons above 60mev and charged pions above 30mev
+    piPlusPresent = False
+    protonPresent = False
+    for x in range(len(eventTree.truePrimPartPDG)):
+        if abs(eventTree.truePrimPartPDG[x] == 211) and eventTree.truePrimPartE[x] >= 0.03:
+            piPlusPresent = True
+        if eventTree.truePrimPartPDG[x] == 2212 and eventTree.truePrimPartE[x] >= 0.06:
+            protonPresent = True
+#Cut all events without protons or with >= 1 charged pions
+    if protonPresent == False or piPlusPresent == True:
+        continue
+
 #determine whether there are photons as secondary particles
     photonInSecondary = False
     primList = []
-    pionPresent = False
-    protonPresent = False
-#check if Neutral Pion and Kaon in primaries - must be a photon if so
+
+    #check if Neutral Pion and Kaon in primaries - must be a photon if so
     if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
         photonInSecondary = True
     else:
-  #Create a list of prime particle Track IDs
+    #Create a list of primary particle Track IDs: 
+    #Checks that a track id is equal to its mother id, this will return true for all primary particles
         for x in range(len(eventTree.trueSimPartTID)):
             if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
                 primList.append(eventTree.trueSimPartTID[x])
-  #Iterate through to find photons
+    #Iterate through trueSimParts to find photons
         for x in range(len(eventTree.trueSimPartPDG)):
             if eventTree.trueSimPartPDG[x] == 22:
-  #Check for parent particle in the primary list
+    #Check for parent particle in the primary list
                 if eventTree.trueSimPartMID[x] in primList:
                     photonInSecondary = True
-  #Check if the photon has starting coordinates within 1.5mm of the event vertex
-                if abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
+    #Check if the photon has starting coordinates within 1.5mm of the event vertex
+                elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
                     photonInSecondary = True
-  #Discard event unless a secondary photon is found
+                
+    #Discard event unless a secondary photon is found
     if photonInSecondary == False:
         continue
 
-  #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
-
-  #Determining presence of suitably energetic protons and pions
-    nProtons = 0
-    for x in range(len(eventTree.truePrimPartPDG)):
-        if eventTree.truePrimPartPDG[x] == 211 and eventTree.truePrimPartE[x] >= 0.03:
-            pionPresent = True
-        elif eventTree.truePrimPartPDG[x] == 2212 and eventTree.truePrimPartE[x] >= 0.06:
-            protonPresent = True
-            nProtons += 1
-
-      
-  #Now we sort
-    if protonPresent == True and pionPresent == False:
-        protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight) 
-    else:
-        continue
+#Fill histogram
+    protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight) 
       
 #----- end of event loop ---------------------------------------------#
 
