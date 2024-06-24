@@ -1,11 +1,8 @@
-
-
 import sys, argparse
 import numpy as np
 import ROOT as rt
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
-
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
