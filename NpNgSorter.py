@@ -10,7 +10,7 @@ parser.add_argument("-ncc", "--noCosmicCuts", action="store_true", help="don't a
 args = parser.parse_args()
 
 # needed for proper scaling of error bars:
-#rt.TH1.SetDefaultSumw2(rt.kTRUE)
+rt.TH1.SetDefaultSumw2(rt.kTRUE)
 
 #open input file and get event and POT trees
 ntuple_file = rt.TFile(args.infile)
