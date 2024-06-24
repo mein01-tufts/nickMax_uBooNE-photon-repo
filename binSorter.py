@@ -24,7 +24,7 @@ potTree = ntuple_file.Get("potTree")
 
 #we will scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
 targetPOT = 6.67e+20
-targetPOTstring = "6.67e+20" #for plot axis titles
+targetPOTstring = "6.67e+20"
 
 #calculate POT represented by full ntuple file after applying cross section weights
 ntuplePOTsum = 0.
@@ -34,10 +34,10 @@ for i in range(potTree.GetEntries()):
 
 #define histograms to fill
 #we will write histograms to output file for:
-soleGammaHist = rt.TH1F("soleGammaHist", "Energy of NC events with only photons" ,60,0,6)
-protonGammaHist = rt.TH1F("twoPhotonHist", "Energy of NC events with photons and protons",60,0,6)
-pionGammaHist = rt.TH1F("threePhotonHist", "Energy of NC events with photons and charged pions",60,0,6)
-protonPionGammaHist = rt.TH1F("morePhotonHist", "Energy of NC events with photons, protons, and charged pions", 60, 0, 6)
+soleGammaHist = rt.TH1F("soleGammaHist", "Only photons" ,60,0,6)
+protonGammaHist = rt.TH1F("twoPhotonHist", "Photons and protons",60,0,6)
+pionGammaHist = rt.TH1F("threePhotonHist", "Photons and charged pions",60,0,6)
+protonPionGammaHist = rt.TH1F("morePhotonHist", "Photons, protons, and charged pions", 60, 0, 6)
 
 #set histogram axis titles and increase line width
 def configureHist(h):
@@ -64,10 +64,11 @@ for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
 
-  #filter for neutral curren
+  #filter for neutral current
   if eventTree.trueNuCCNC != 1:
     continue
 
+  #filter for fiducial width
   if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
     eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or \
     eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
@@ -78,32 +79,47 @@ for i in range(eventTree.GetEntries()):
   if eventTree.vtxFracHitsOnCosmic >= 1.:
     continue
   
-  #Determine whether there are photons as secondary particles
+  #Create sorting variables
   photonInSecondary = False
   primList = []
   pionPresent = False
   protonPresent = False
-  #Check if Neutral Pion and Kaon in primaries - must be a photon if so
+  photonInBox = False
+  photonIDList = []
+  killCount = 0
+  
+  #Check if Neutral Pion and Kaon in primaries
   if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
-    photonInSecondary = True
+    #Check if there is actually a detectable photon
+    for x in range(eventTree.nTrueSimParts):
+      if eventTree.trueSimPartPDG[x] == 22:
+        photonIDList.append(x)
+        photonInSecondary = True
   else:
   #Create a list of prime particle Track IDs
     for x in range(len(eventTree.trueSimPartTID)):
       if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
         primList.append(eventTree.trueSimPartTID[x])
-  #Iterate through to find photons
+    #Iterate through to find photons
     for x in range(len(eventTree.trueSimPartPDG)):
       if eventTree.trueSimPartPDG[x] == 22:
-  #Check for parent particle in the primary list
+        photonIDList.append(x)
+        #Check for parent particle in the primary list
         if eventTree.trueSimPartMID[x] in primList:
-          photonInSecondary = True
-  #Check if the photon has coordinates exactly equal to that of the event vertex
-        if abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
+          photonInSecondary = True      
+        #Failing that, check if the photon has coordinates within 15 mm of those of the event vertex
+        elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
           photonInSecondary = True
   #Discard event unless a secondary photon is found
   if photonInSecondary == False:
     continue
 
+  #Discard event unless the photon begins to deposit energy within the fiducial volume
+  for x in range(len(photonIDList)):
+    if eventTree.trueSimPartEDepX[x] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[x] >= (xMax - fiducialWidth) or eventTree.trueSimPartEDepY[x] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[x] >= (yMax - fiducialWidth) or eventTree.trueSimPartEDepZ[x] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[x] >= (zMax - fiducialWidth):
+      killCount += 1
+      continue
+  
   #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
 
   #Determining presence of suitably energetic protons and pions
@@ -152,10 +168,10 @@ histStack.Add(protonPionGammaHist)
 
 legend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
-legend.AddEntry(soleGammaHist, "Energy of NC events with only  photons", "l")
-legend.AddEntry(protonGammaHist, "Energy of NC events photons and protons", "l")
-legend.AddEntry(pionGammaHist, "Energy of NC events with photons and charged pions", "l")
-legend.AddEntry(protonPionGammaHist, "Energy of NC events with photons, charged pions, and protons", "l")
+legend.AddEntry(soleGammaHist, "Only photons", "l")
+legend.AddEntry(protonGammaHist, "Photons and protons", "l")
+legend.AddEntry(pionGammaHist, "Photons and charged pions", "l")
+legend.AddEntry(protonPionGammaHist, "Photons, charged pions, and protons", "l")
 
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
@@ -165,3 +181,5 @@ rt.gPad.Update()
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
+
+print("The new checker eliminated", killCount, "events")
