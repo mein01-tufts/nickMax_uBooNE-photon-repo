@@ -1,8 +1,10 @@
+
 import sys, argparse
 import numpy as np
 import ROOT as rt
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
+
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -31,10 +33,10 @@ for i in range(potTree.GetEntries()):
 
 #define histograms to fill
 #we will write histograms to output file for:
-soleGammaHist = rt.TH1F("soleGammaHist", "Only photons" ,60,0,6)
-protonGammaHist = rt.TH1F("twoPhotonHist", "Photons and protons",60,0,6)
-pionGammaHist = rt.TH1F("threePhotonHist", "Photons and charged pions",60,0,6)
-protonPionGammaHist = rt.TH1F("morePhotonHist", "Photons, protons, and charged pions", 60, 0, 6)
+onePhotonHist = rt.TH1F("onePhotonHist", "Events with just one photon" ,60,0,6)
+twoPhotonHist = rt.TH1F("twoPhotonHist", "Events with two photons",60,0,6)
+threePhotonHist = rt.TH1F("threePhotonHist", "Events with three photons",60,0,6)
+manyPhotonHist = rt.TH1F("morePhotonHist", "Events with lots of photons", 60, 0, 6)
 
 #set histogram axis titles and increase line width
 def configureHist(h):
@@ -44,34 +46,43 @@ def configureHist(h):
   return h
 
 #Scale the histograms
-soleGammaHist = configureHist(soleGammaHist)
-protonGammaHist = configureHist(protonGammaHist)
-pionGammaHist = configureHist(pionGammaHist)
-protonPionGammaHist = configureHist(protonPionGammaHist)
+onePhotonHist = configureHist(onePhotonHist)
+twoPhotonHist = configureHist(twoPhotonHist)
+threePhotonHist = configureHist(threePhotonHist)
+manyPhotonHist = configureHist(manyPhotonHist)
 
-#Set detector min/max and fiducial width (cm)
+#Set detector volumes
 xMin, xMax = 0, 256
 yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
 fiducialWidth = 10
+
+#Set variables for program review
+problemCount = 0
 
 #begin loop over events in ntuple file
 
 for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
-  
+
   #filter for neutral current
   if eventTree.trueNuCCNC != 1:
     continue
 
-  #filter for fiducial width
-  #filter for neutral current events
-  if eventTree.trueNuCCNC != 1:
+  #Remove photon and charged pion events
+  pionPresent = False
+  protonPresent = False                                    
+  for x in range(len(eventTree.truePrimPartPDG)):
+    if eventTree.truePrimPartPDG[x] == 211 and eventTree.truePrimPartE[x] >= 0.03:
+      pionPresent = True
+    elif eventTree.truePrimPartPDG[x] == 2212 and eventTree.truePrimPartE[x] >= 0.06:
+      protonPresent = True
+
+  if protonPresent == True or pionPresent == True:
     continue
-
-#fiducial cut removes everything within fiducial
-
+  
+  #filter for fiducial width
   if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
     eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or \
     eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
@@ -85,18 +96,14 @@ for i in range(eventTree.GetEntries()):
   #Create sorting variables
   photonInSecondary = False
   primList = []
-  pionPresent = False
-  protonPresent = False
-  photonInBox = False
-  photonIDList = []
-  killCount = 0
+  photonList = []
   
   #Check if Neutral Pion and Kaon in primaries
   if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
     #Check if there is actually a detectable photon
     for x in range(eventTree.nTrueSimParts):
       if eventTree.trueSimPartPDG[x] == 22:
-        photonIDList.append(x)
+        photonList.append(x)
         photonInSecondary = True
   else:
   #Create a list of prime particle Track IDs
@@ -106,7 +113,7 @@ for i in range(eventTree.GetEntries()):
     #Iterate through to find photons
     for x in range(len(eventTree.trueSimPartPDG)):
       if eventTree.trueSimPartPDG[x] == 22:
-        photonIDList.append(x)
+        photonList.append(x)
         #Check for parent particle in the primary list
         if eventTree.trueSimPartMID[x] in primList:
           photonInSecondary = True      
@@ -118,63 +125,51 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Discard event unless the photon begins to deposit energy within the fiducial volume
-  for x in range(len(photonIDList)):
+  for x in photonList:
     if eventTree.trueSimPartEDepX[x] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[x] >= (xMax - fiducialWidth) or eventTree.trueSimPartEDepY[x] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[x] >= (yMax - fiducialWidth) or eventTree.trueSimPartEDepZ[x] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[x] >= (zMax - fiducialWidth):
-      killCount += 1
       continue
   
-  #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
-
-  #Determining presence of suitably energetic protons and pions
-  for x in range(len(eventTree.truePrimPartPDG)):
-    if eventTree.truePrimPartPDG[x] == 211 and eventTree.truePrimPartE[x] >= 0.03:
-      pionPresent = True
-    elif eventTree.truePrimPartPDG[x] == 2212 and eventTree.truePrimPartE[x] >= 0.06:
-      protonPresent = True
-      
-  #Now we sort
-  if protonPresent == True and pionPresent == False:
-    protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
-
-  elif protonPresent == False and pionPresent == True:
-    pionGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
-
-  elif protonPresent == True and pionPresent == True:
-    protonPionGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
-  
+  #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS  
+  if len(photonList) == 0:
+    problemCount += 1
+  elif len(photonList) == 1:
+    onePhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+  elif len(photonList) == 2:
+    twoPhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+  elif len(photonList) == 3:
+    threePhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
   else:
-    soleGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
-      
+    manyPhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
 #----- end of event loop ---------------------------------------------#
 
 #scale histograms to target POT
-soleGammaHist.Scale(targetPOT/ntuplePOTsum)
-protonGammaHist.Scale(targetPOT/ntuplePOTsum)
-pionGammaHist.Scale(targetPOT/ntuplePOTsum)
-protonPionGammaHist.Scale(targetPOT/ntuplePOTsum)
+onePhotonHist.Scale(targetPOT/ntuplePOTsum)
+twoPhotonHist.Scale(targetPOT/ntuplePOTsum)
+threePhotonHist.Scale(targetPOT/ntuplePOTsum)
+manyPhotonHist.Scale(targetPOT/ntuplePOTsum)
 
 
 #Create stack histogram, add others to it
 histStack = rt.THStack("histStack", "NC Histograms with Secondary Photons")
 
-soleGammaHist.SetLineColor(rt.kGreen)
-histStack.Add(soleGammaHist)
+onePhotonHist.SetLineColor(rt.kGreen)
+histStack.Add(onePhotonHist)
 
-protonGammaHist.SetLineColor(rt.kRed)
-histStack.Add(protonGammaHist)
+twoPhotonHist.SetLineColor(rt.kRed)
+histStack.Add(twoPhotonHist)
 
-pionGammaHist.SetLineColor(rt.kMagenta)
-histStack.Add(pionGammaHist)
+threePhotonHist.SetLineColor(rt.kMagenta)
+histStack.Add(threePhotonHist)
 
-protonPionGammaHist.SetLineColor(rt.kCyan)
-histStack.Add(protonPionGammaHist)
+manyPhotonHist.SetLineColor(rt.kCyan)
+histStack.Add(manyPhotonHist)
 
 legend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
-legend.AddEntry(soleGammaHist, "Only photons", "l")
-legend.AddEntry(protonGammaHist, "Photons and protons", "l")
-legend.AddEntry(pionGammaHist, "Photons and charged pions", "l")
-legend.AddEntry(protonPionGammaHist, "Photons, charged pions, and protons", "l")
+legend.AddEntry(onePhotonHist, "One photon", "l")
+legend.AddEntry(twoPhotonHist, "Two photons", "l")
+legend.AddEntry(threePhotonHist, "Three photons", "l")
+legend.AddEntry(manyPhotonHist, "More than three photons", "l")
 
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
@@ -184,5 +179,3 @@ rt.gPad.Update()
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
-
-print("The new checker eliminated", killCount, "events")
