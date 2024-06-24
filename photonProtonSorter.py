@@ -31,7 +31,7 @@ for i in range(potTree.GetEntries()):
 
 #define histograms to fill
 #we will write histograms to output file for:
-protonGammaHist = rt.TH1F("twoPhotonHist", "Energy of NC events with photons and protons",60,0,6)
+protonGammaHist = rt.TH1F("nProton_nGammaHist", "Energy of NC events with N photon(s) and N proton(s)",60,0,6)
 
 # set histogram axis titles and increase line width
 def configureHist(h):
