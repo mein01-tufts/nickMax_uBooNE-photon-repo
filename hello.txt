@@ -1,2 +1,0 @@
-hello nick, can you see this test text file?
-can you say "test text file" 5 times fast?
