@@ -52,7 +52,7 @@ protonGammaHist = configureHist(protonGammaHist)
 pionGammaHist = configureHist(pionGammaHist)
 protonPionGammaHist = configureHist(protonPionGammaHist)
 
-#Set detector volumes
+#Set detector min/max and fiducial width (cm)
 xMin, xMax = 0, 256
 yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
@@ -63,12 +63,18 @@ fiducialWidth = 10
 for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
-
+  
   #filter for neutral current
   if eventTree.trueNuCCNC != 1:
     continue
 
   #filter for fiducial width
+  #filter for neutral current events
+  if eventTree.trueNuCCNC != 1:
+    continue
+
+#fiducial cut removes everything within fiducial
+
   if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
     eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or \
     eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
