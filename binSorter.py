@@ -61,11 +61,6 @@ for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
   
-  #filter for neutral current
-  if eventTree.trueNuCCNC != 1:
-    continue
-
-  #filter for fiducial width
   #filter for neutral current events
   if eventTree.trueNuCCNC != 1:
     continue
