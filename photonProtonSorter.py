@@ -2,8 +2,6 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from helpers.larflowreco_ana_funcs import getCosThetaGravVector
-
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
 parser.add_argument("-o", "--outfile", type=str, default="example_ntuple_analysis_script_output.root", help="output root file name")
@@ -88,7 +86,7 @@ for i in range(eventTree.GetEntries()):
   #Check for parent particle in the primary list
                 if eventTree.trueSimPartMID[x] in primList:
                     photonInSecondary = True
-  #Check if the photon has coordinates exactly equal to that of the event vertex
+  #Check if the photon has starting coordinates within 1.5mm of the event vertex
                 if abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
                     photonInSecondary = True
   #Discard event unless a secondary photon is found
@@ -98,15 +96,18 @@ for i in range(eventTree.GetEntries()):
   #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
 
   #Determining presence of suitably energetic protons and pions
+    nProtons = 0
     for x in range(len(eventTree.truePrimPartPDG)):
         if eventTree.truePrimPartPDG[x] == 211 and eventTree.truePrimPartE[x] >= 0.03:
             pionPresent = True
         elif eventTree.truePrimPartPDG[x] == 2212 and eventTree.truePrimPartE[x] >= 0.06:
             protonPresent = True
+            nProtons += 1
+
       
   #Now we sort
     if protonPresent == True and pionPresent == False:
-        protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)  
+        protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight) 
     else:
         continue
       
