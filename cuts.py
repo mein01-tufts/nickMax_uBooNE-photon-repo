@@ -113,7 +113,7 @@ def trueCutEDep(eventTree):
 
 
   
-def trueSingalFinder(eventTree):
+def trueSignalFinder(eventTree):
 #Uses a series of truth-based checks to determine signal as thoroughly as possible
   xMin, xMax = 0, 256
   yMin, yMax = -116.5, 116.5
