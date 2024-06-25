@@ -1,11 +1,8 @@
-
-
 import sys, argparse
 import numpy as np
 import ROOT as rt
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
-
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -64,11 +61,6 @@ for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
   
-  #filter for neutral current
-  if eventTree.trueNuCCNC != 1:
-    continue
-
-  #filter for fiducial width
   #filter for neutral current events
   if eventTree.trueNuCCNC != 1:
     continue
