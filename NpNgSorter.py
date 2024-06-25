@@ -10,7 +10,7 @@ parser.add_argument("-ncc", "--noCosmicCuts", action="store_true", help="don't a
 args = parser.parse_args()
 
 # needed for proper scaling of error bars:
-rt.TH1.SetDefaultSumw2(rt.kTRUE)
+#rt.TH1.SetDefaultSumw2(rt.kTRUE)
 
 #open input file and get event and POT trees
 ntuple_file = rt.TFile(args.infile)
@@ -139,10 +139,39 @@ twoProtonHist.Scale(targetPOT/ntuplePOTsum)
 threeProtonHist.Scale(targetPOT/ntuplePOTsum)
 manyProtonHist.Scale(targetPOT/ntuplePOTsum)
 
+histStack = rt.THStack("stackedHist", "Histogram of NC events with N Protons and N Photons")
+
+oneProtonHist.SetLineColor(rt.kRed)
+oneProtonHist.SetFillColor(rt.kRed)
+histStack.Add(oneProtonHist)
+
+twoProtonHist.SetLineColor(rt.kGreen)
+twoProtonHist.SetFillColor(rt.kGreen)
+histStack.Add(twoProtonHist)
+
+threeProtonHist.SetLineColor(rt.kBlue)
+threeProtonHist.SetFillColor(rt.kBlue)
+histStack.Add(threeProtonHist)
+
+manyProtonHist.SetLineColor(rt.kViolet)
+manyProtonHist.SetFillColor(rt.kViolet)
+histStack.Add(manyProtonHist)
+
+
+legend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
+
+legend.AddEntry(oneProtonHist, "1 photon present", "l")
+legend.AddEntry(twoProtonHist, "2 photons present", "l")
+legend.AddEntry(threeProtonHist, "3 photons present", "l")
+legend.AddEntry(manyProtonHist, ">3 photons present", "l")
+
+histCanvas = rt.TCanvas()
+histStack.Draw("HIST")
+histStack.GetXaxis().SetTitle("neutrino energy (GeV)")
+histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
+legend.Draw()
+rt.gPad.Update()
+
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
-protonGammaHist.Write()
-oneProtonHist.Write()
-twoProtonHist.Write()
-threeProtonHist.Write()
-manyProtonHist.Write()
+histCanvas.Write()
