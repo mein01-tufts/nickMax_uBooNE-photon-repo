@@ -5,7 +5,7 @@ import ROOT as rt
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
 #Import some functions of our own
-from cuts import trueCutNCC, trueCutCosmic, trueCutVertex
+from cuts import trueSingalFinder
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -65,6 +65,8 @@ for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
   #PART 1 - FINDING RECO EVENTS
+
+  #See if we can find a photon
   photonFound = False
   photonIDs = []
   for x in range(eventTree.nShowers):
@@ -75,21 +77,14 @@ for i in range(eventTree.GetEntries()):
         break
   if photonFound == False:
     continue
+
+  #Now that we have a photon, we check for muons to see if it's 
   
 
   #PART 2 - USING TRUTH TO SEPARATE SIGNAL FROM BACKGROUND
   truthConsistent = True
-  if trueCutNCC(eventTree) == False:
+  if trueSingalFinder(eventTree) == False:
     truthConsistent = False
-    NCBackground += 1
-    
-  if trueCutCosmic(eventTree) == False:
-    truthConsistent = False
-    CosmicBackground += 1
-    
-  if trueCutVertex(eventTree) == False:
-    truthConsistent = False
-    VertexBackground += 1
     
 #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
   scaledEnergy = []
@@ -98,18 +93,21 @@ for i in range(eventTree.GetEntries()):
     scaledEnergy.append(energyGeV)
 
   if truthConsistent == True:
-    trueEvents += 1
     signalHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
 
   else:
     backgroundHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
-
+  
   
 #----- end of event loop ---------------------------------------------#
 
 #scale histograms to target POT
 signalHist.Scale(targetPOT/ntuplePOTsum)
 backgroundHist.Scale(targetPOT/ntuplePOTsum)
+
+#Integrate hists for data
+signalInt = signalHist.Integral(0,60)
+backgroundInt = backgroundHist.Integral(0,60)
 
 #Create stack histogram, add others to it
 histStack = rt.THStack("histStack", "NC Histograms with Secondary Photons")
@@ -124,23 +122,16 @@ totalEvents = NCBackground + CosmicBackground + VertexBackground
 
 legend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
-legend.AddEntry(signalHist, "Signal: "+str(trueEvents)+" Events", "l")
-legend.AddEntry(backgroundHist, "Background: "+str(totalEvents)+" Events", "l")
+legend.AddEntry(signalHist, "Signal: "+str(signalInt)+" Events", "l")
+legend.AddEntry(backgroundHist, "Background: "+str(backgroundInt)+" Events", "l")
 
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
 histStack.GetXaxis().SetTitle("Photon Energy (GeV)")
-histStack.GetYaxis().SetTitle("No. of Events")
+histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
 legend.Draw()
 rt.gPad.Update()
 
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
-
-print("Background cuts from Neutral Current:", NCBackground)
-print("Background cuts from Cosmic Overlap:", CosmicBackground)
-print("Background cuts from Vertex:", VertexBackground)
-print("True events detected in reco:", trueEvents)
-totalEvents = NCBackground + CosmicBackground + VertexBackground + trueEvents
-print("Total events:", totalEvents)
