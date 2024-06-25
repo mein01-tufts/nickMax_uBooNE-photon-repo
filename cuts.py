@@ -79,7 +79,7 @@ def trueCutVertex(eventTree):
   secondaryPhoton = False
   for x in range(len(eventTree.trueSimPartPDG)):
     if eventTree.trueSimPartPDG[x] == 22:
-      if abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.truetxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
+      if abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
         secondaryPhoton = True
         break
   if secondaryPhoton == True:
