@@ -168,6 +168,7 @@ legend.AddEntry(manyProtonHist, ">3 photons present", "l")
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
 histStack.GetXaxis().SetTitle("neutrino energy (GeV)")
+histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
 legend.Draw()
 rt.gPad.Update()
 
