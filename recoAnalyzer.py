@@ -5,7 +5,7 @@ import ROOT as rt
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
 #Import some functions of our own
-from cuts import trueSingalFinder
+from cuts import trueSignalFinder
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -59,6 +59,7 @@ NCBackground = 0
 CosmicBackground = 0
 VertexBackground = 0
 trueEvents = 0
+NCCaught = 0
 
 #Now we loop through the events to form the histogram!
 for i in range(eventTree.GetEntries()):
@@ -66,24 +67,36 @@ for i in range(eventTree.GetEntries()):
   eventTree.GetEntry(i)
   #PART 1 - FINDING RECO EVENTS
 
-  #See if we can find a photon
+  #Iterate through the showers to see if we can find a photon (in which case it seems like signal) or a muon (in which case it's almost certainly charge current, and we need to throw it out)
   photonFound = False
+  chargeCurrent = False
   photonIDs = []
   for x in range(eventTree.nShowers):
     if eventTree.showerClassified[x] == 1:
       if eventTree.showerPID[x] == 22:
         photonFound = True
         photonIDs.append(x)
-        break
+      elif eventTree.showerPID[x] == 13:
+        chargeCurrent = True
+
+#Check tracks to check for Neutral Current
+  for x in range(eventTree.nTracks):
+    if eventTree.trackClassified[x] == 1:
+      if eventTree.trackPID[x] == 13:
+        chargeCurrent = True
+      
   if photonFound == False:
     continue
 
-  #Now that we have a photon, we check for muons to see if it's 
+  if chargeCurrent == True:
+    NCCaught += 1
+    continue
+
   
 
   #PART 2 - USING TRUTH TO SEPARATE SIGNAL FROM BACKGROUND
   truthConsistent = True
-  if trueSingalFinder(eventTree) == False:
+  if trueSignalFinder(eventTree) == False:
     truthConsistent = False
     
 #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
@@ -97,8 +110,8 @@ for i in range(eventTree.GetEntries()):
 
   else:
     backgroundHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
-  
-  
+
+
 #----- end of event loop ---------------------------------------------#
 
 #scale histograms to target POT
@@ -135,3 +148,5 @@ rt.gPad.Update()
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
+
+print("Neutral current events detected using Reco:", NCCaught)

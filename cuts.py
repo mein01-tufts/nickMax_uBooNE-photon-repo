@@ -142,7 +142,7 @@ def trueSignalFinder(eventTree):
   protonPresent = False
   PionPresent = False
 
-  #Determining presence of suitably energetic protons and pions
+  #Determining presence of suitably energetic protons and charged pions - if they're present, the event is beyond the scope of our investigation
   for x in range(len(eventTree.truePrimPartPDG)):
     if eventTree.truePrimPartPDG[x] == 211:
       pionEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
@@ -156,27 +156,26 @@ def trueSignalFinder(eventTree):
         badEvent = True
   
   #Check if Neutral Pion and Kaon in primaries
-  if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
+#  if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
     #Check if there is actually a detectable photon
-    for x in range(eventTree.nTrueSimParts):
-      if eventTree.trueSimPartPDG[x] == 22:
-        photonIDList.append(x)
+#    for x in range(eventTree.nTrueSimParts):
+#      if eventTree.TrueSimPartPDG[x] == 22:
         photonInSecondary = True
-  else:
+#  else:
   #Create a list of prime particle Track IDs
-    for x in range(len(eventTree.trueSimPartTID)):
-      if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
-        primList.append(eventTree.trueSimPartTID[x])
+  for x in range(len(eventTree.trueSimPartTID)):
+    if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
+      primList.append(eventTree.trueSimPartTID[x])
     #Iterate through to find photons
-    for x in range(len(eventTree.trueSimPartPDG)):
-      if eventTree.trueSimPartPDG[x] == 22:
-        photonIDList.append(x)
+  for x in range(len(eventTree.trueSimPartPDG)):
+    if eventTree.trueSimPartPDG[x] == 22:
+      photonIDList.append(x)
         #Check for parent particle in the primary list
-        if eventTree.trueSimPartMID[x] in primList:
-          photonInSecondary = True      
-        #Failing that, check if the photon has coordinates within 15 mm of those of the event vertex
-        elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
-          photonInSecondary = True
+      if eventTree.trueSimPartMID[x] in primList:
+        photonInSecondary = True
+      #Failing that, check if the photon has coordinates within 15 mm of those of the event vertex
+      elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
+        photonInSecondary = True
   #Discard event unless a secondary photon is found
   if photonInSecondary == False:
     badEvent = True  
