@@ -9,7 +9,7 @@ parser.add_argument("-fc", "--fullyContained", action="store_true", help="only c
 parser.add_argument("-ncc", "--noCosmicCuts", action="store_true", help="don't apply cosmic rejection cuts")
 args = parser.parse_args()
 
-#needed for proper scaling of error bars:
+# needed for proper scaling of error bars:
 #rt.TH1.SetDefaultSumw2(rt.kTRUE)
 
 #open input file and get event and POT trees
@@ -17,7 +17,7 @@ ntuple_file = rt.TFile(args.infile)
 eventTree = ntuple_file.Get("EventTree")
 potTree = ntuple_file.Get("potTree")
 
-#scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
+#we will scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
 targetPOT = 6.67e+20
 targetPOTstring = "6.67e+20" #for plot axis titles
 
@@ -35,7 +35,7 @@ twoProtonHist = rt.TH1F("2Proton_nGammaHist", "Energy of NC events with N photon
 threeProtonHist = rt.TH1F("3Proton_nGammaHist", "Energy of NC events with N photon(s) and 3 protons",60,0,6)
 manyProtonHist = rt.TH1F("manyProton_nGammaHist", "Energy of NC events with N photon(s) and >3 protons",60,0,6)
 
-#set histogram axis titles and increase line width
+# set histogram axis titles and increase line width
 def configureHist(h):
     h.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
     h.GetXaxis().SetTitle("energy (GeV)")
@@ -55,15 +55,16 @@ yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
 fiducialWidth = 10
 
+nProtonsTotal = 0
 #begin loop over events in ntuple file
 for i in range(eventTree.GetEntries()):
     eventTree.GetEntry(i)
 
-#cut charge current events
+#cut CC events
     if eventTree.trueNuCCNC != 1:
         continue
 
-#cut everything with a vertex within fiducialWidth (10cm) of detector wall
+#cut everything within fiducialWidth of detector wall
     if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
         eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or \
         eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
@@ -74,119 +75,104 @@ for i in range(eventTree.GetEntries()):
 #seems like the way to go re: assuring cosmics are cut
     if eventTree.vtxFracHitsOnCosmic >= 1.:
         continue
-
+  
 #determine whether there are photons as secondary particles
     photonInSecondary = False
     primList = []
 
-#check if Neutral Pion and Kaon in primaries - must be a photon if so
+    #check if Neutral Pion and Kaon in primaries - must be a photon if so
     if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
         photonInSecondary = True
-
     else:
-#Create a list of primary particle Track IDs: 
-#Checks that a track id is equal to its mother id, this will be the casefor all primary particles
+    #Create a list of primary particle Track IDs: 
+    #Checks that a track id is equal to its mother id, this will return true for all primary particles
         for x in range(len(eventTree.trueSimPartTID)):
             if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
                 primList.append(eventTree.trueSimPartTID[x])
-#iterate through trueSimParts to find photons
+    #Iterate through trueSimParts to find photons
         for x in range(len(eventTree.trueSimPartPDG)):
             if eventTree.trueSimPartPDG[x] == 22:
-#check for photon's parent particle in the primary list - if so, we want to count it as a secondary
+    #Check for photon's parent particle in the primary list
                 if eventTree.trueSimPartMID[x] in primList:
                     photonInSecondary = True
-#check if the photon has starting coordinates within 1.5mm of the event vertex - this means it's more than likely part of the event
+    #Check if the photon has starting coordinates within 1.5mm of the event vertex
                 elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
                     photonInSecondary = True                
-#discard event if no secondary photon is found
+    #Discard event if no secondary photon is found
     if photonInSecondary == False:
         continue
 
-#check for charged pions - we want to exclude any
+#Check for presence of both protons above 60mev and charged pions above 30mev
     piPlusPresent = False
+    protonPresent = False
+    nProtons = 0
     for x in range(len(eventTree.truePrimPartPDG)):
-        if abs(eventTree.truePrimPartPDG[x] == 211):
+        if abs(eventTree.truePrimPartPDG[x] == 211) and eventTree.truePrimPartE[x] >= 0.03:
             piPlusPresent = True
             break
     if piPlusPresent == True:
         continue
-
-#If proton present in primary particles, checks that its kinetic energy exceeds 60mev - count it if so
-    protonPresent = False
-    for x in range(len(eventTree.truePrimPartPDG)):
+    for x in range(len(eventTree.truePrimPartPDG)):    
         if eventTree.truePrimPartPDG[x] == 2212:
-            pVector = np.square(eventTree.truePrimPartPx[x]) + np.square(eventTree.truePrimPartPy[x]) + np.square(eventTree.truePrimPartPz[x])
-            kE = eventTree.truePrimPartE[x] - np.sqrt((np.square(eventTree.truePrimPartE[x])) - pVector)
-            if kE >= 0.06:
-                protonPresent = True
-    if protonPresent == False:
-        continue
-#Cut all events without protons or with >= 1 charged pions
-#    if protonPresent == False or piPlusPresent == True:
-#        continue
+            protonPresent = True
+
 
 #Fill histogram
-#    protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight) 
+    protonGammaHist.Fill(eventTree.trueNuE, eventTree.xsecWeight) 
 
-#    if nProtons == 1:
-#        oneProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
-#    elif nProtons == 2:
-#        twoProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
-#    elif nProtons == 3:
-#        threeProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
-#    elif nProtons >= 4:
-#        manyProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    if nProtons == 1:
+        oneProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    elif nProtons == 2:
+        twoProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    elif nProtons == 3:
+        threeProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+    elif nProtons >= 4:
+        manyProtonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
     
     
       
 #----- end of event loop ---------------------------------------------#
 
 #scale histograms to target POT
-#protonGammaHist.Scale(targetPOT/ntuplePOTsum)
-#oneProtonHist.Scale(targetPOT/ntuplePOTsum)
-#twoProtonHist.Scale(targetPOT/ntuplePOTsum)
-#threeProtonHist.Scale(targetPOT/ntuplePOTsum)
-#manyProtonHist.Scale(targetPOT/ntuplePOTsum)
+protonGammaHist.Scale(targetPOT/ntuplePOTsum)
+oneProtonHist.Scale(targetPOT/ntuplePOTsum)
+twoProtonHist.Scale(targetPOT/ntuplePOTsum)
+threeProtonHist.Scale(targetPOT/ntuplePOTsum)
+manyProtonHist.Scale(targetPOT/ntuplePOTsum)
 
-#histStack = rt.THStack("stackedHist", "Histogram of NC events with N Protons and N Photons")
+histStack = rt.THStack("stackedHist", "Histogram of NC events with N Protons and N Photons")
 
+oneProtonHist.SetLineColor(rt.kRed)
+oneProtonHist.SetFillColor(rt.kRed)
+histStack.Add(oneProtonHist)
 
-#oneProtonHist.SetFillColor(rt.kRed)
-#oneProtonHist.SetMarkerStyle(21)
-#oneProtonHist.SetMarkerColor(rt.kRed)
-#histStack.Add(oneProtonHist)
+twoProtonHist.SetLineColor(rt.kGreen)
+twoProtonHist.SetFillColor(rt.kGreen)
+histStack.Add(twoProtonHist)
 
+threeProtonHist.SetLineColor(rt.kBlue)
+threeProtonHist.SetFillColor(rt.kBlue)
+histStack.Add(threeProtonHist)
 
-#twoProtonHist.SetFillColor(rt.kGreen)
-#twoProtonHist.SetMarkerStyle(21)
-#twoProtonHist.SetMarkerColor(rt.kGreen)
-#histStack.Add(twoProtonHist)
-
-
-#threeProtonHist.SetFillColor(rt.kBlue)
-#threeProtonHist.SetMarkerStyle(21)
-#histStack.Add(threeProtonHist)
-
-
-#manyProtonHist.SetFillColor(rt.kViolet)
-#manyProtonHist.SetMarkerStyle(21)
-#histStack.Add(manyProtonHist)
+manyProtonHist.SetLineColor(rt.kViolet)
+manyProtonHist.SetFillColor(rt.kViolet)
+histStack.Add(manyProtonHist)
 
 
-#legend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
+legend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
-#legend.AddEntry(oneProtonHist, "1 proton present", "l")
-#legend.AddEntry(twoProtonHist, "2 protons present", "l")
-#legend.AddEntry(threeProtonHist, "3 protons present", "l")
-#legend.AddEntry(manyProtonHist, ">3 protons present", "l")
+legend.AddEntry(oneProtonHist, "1 photon present", "l")
+legend.AddEntry(twoProtonHist, "2 photons present", "l")
+legend.AddEntry(threeProtonHist, "3 photons present", "l")
+legend.AddEntry(manyProtonHist, ">3 photons present", "l")
 
-#histCanvas = rt.TCanvas()
-#histStack.Draw("HIST")
-#histStack.GetXaxis().SetTitle("neutrino energy (GeV)")
-#histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
-#legend.Draw()
-#rt.gPad.Update()
+histCanvas = rt.TCanvas()
+histStack.Draw("HIST")
+histStack.GetXaxis().SetTitle("neutrino energy (GeV)")
+histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
+legend.Draw()
+rt.gPad.Update()
 
 #create output root file and write histograms to file
-#outFile = rt.TFile(args.outfile, "RECREATE")
-#histCanvas.Write()
+outFile = rt.TFile(args.outfile, "RECREATE")
+histCanvas.Write()
