@@ -29,9 +29,9 @@ for i in range(potTree.GetEntries()):
 
 #define histograms to fill
 #we will write histograms to output file for:
-onePhotonHist = rt.TH1F("1Photon_nProtonHist", "Energy of NC events with N proton(s) and 1 photon",60,0,6)
-twoPhotonHist = rt.TH1F("2Photon_nProtonHist", "Energy of NC events with N proton(s) and 2 photons",60,0,6)
-threePhotonHist = rt.TH1F("3Photon_nProtonHist", "Energy of NC events with N proton(s) and 3+ photons",60,0,6)
+onePhotonHist = rt.TH1F("1Photon_nProtonHist", "Energy of NC events with N proton(s) and 1 photon",24,0,6)
+twoPhotonHist = rt.TH1F("2Photon_nProtonHist", "Energy of NC events with N proton(s) and 2 photons",24,0,6)
+threePhotonHist = rt.TH1F("3Photon_nProtonHist", "Energy of NC events with N proton(s) and 3+ photons",24,0,6)
 
 #set histogram axis titles and increase line width
 def configureHist(h):
@@ -108,23 +108,26 @@ for i in range(eventTree.GetEntries()):
 
 #If proton present in primary particles, checks that its kinetic energy exceeds 60mev - count it if so
     protonPresent = False
+    nProtons = 0
     for x in range(len(eventTree.truePrimPartPDG)):
         if eventTree.truePrimPartPDG[x] == 2212:
             pVector = np.square(eventTree.truePrimPartPx[x]) + np.square(eventTree.truePrimPartPy[x]) + np.square(eventTree.truePrimPartPz[x])
             kE = eventTree.truePrimPartE[x] - np.sqrt((np.square(eventTree.truePrimPartE[x])) - pVector)
             if kE >= 0.06:
+                nProtons += 1
                 protonPresent = True
+                
     if protonPresent == False:
         continue
 
 #fill histograms based on number of photons
 
     if len(photonIndexList) == 1:
-        onePhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+        onePhotonHist.Fill(nProtons, eventTree.xsecWeight)
     elif len(photonIndexList) == 2:
-        twoPhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+        twoPhotonHist.Fill(nProtons, eventTree.xsecWeight)
     elif len(photonIndexList) >= 3:
-        threePhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
+        threePhotonHist.Fill(nProtons, eventTree.xsecWeight)
     
 #----- end of event loop ---------------------------------------------#
 
@@ -134,7 +137,7 @@ twoPhotonHist.Scale(targetPOT/ntuplePOTsum)
 threePhotonHist.Scale(targetPOT/ntuplePOTsum)
 
 #create empty stacked histogram, add to it below
-histStack = rt.THStack("stackedHist", "NC, N proton + N photon events")
+histStack = rt.THStack("stackedHist", "NC Events, N Gamma + N Proton")
 
 #this function iteratively scales and fills each histogram to the stack
 def histScalerStacker(hist, kColor):
@@ -153,18 +156,19 @@ oneInt = round(onePhotonHist.Integral(0,60), 2)
 twoInt = round(twoPhotonHist.Integral(0,60), 2)
 threeInt = round(threePhotonHist.Integral(0,60), 2)
 
-legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
+legend = rt.TLegend(0.5, 0.65, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
 #add color key to legend
-legend.AddEntry(onePhotonHist, "1 secondary photon, " + str(oneInt) + " events per 6.67e20 POT", "f")
-legend.AddEntry(twoPhotonHist, "2 secondary photons, " + str(twoInt) + " events per 6.67e20 POT", "f")
-legend.AddEntry(threePhotonHist, "3+ secondary photons, " + str(threeInt) + " events per 6.67e20 POT", "f")
+legend.AddEntry(onePhotonHist, "#splitline{1 secondary photon,}" + "{" + str(oneInt) + " events per 6.67e+20 POT}", "f")
+legend.AddEntry(twoPhotonHist, "#splitline{2 secondary photons,}" + "{" + str(twoInt) + " events per 6.67e+20 POT}", "f")
+legend.AddEntry(threePhotonHist, "#splitline{3+ secondary photons,}" + "{" + str(threeInt) + " events per 6.67e+20 POT}", "f")
 
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
-histStack.GetXaxis().SetTitle("neutrino energy (GeV)")
+histStack.GetXaxis().SetTitle("Number of Protons")
 histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
 legend.Draw()
+rt.gPad.SetLogy(1)
 rt.gPad.Update()
 
 #create output root file and write histograms to file
