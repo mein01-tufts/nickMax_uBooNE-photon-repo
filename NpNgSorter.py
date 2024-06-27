@@ -134,7 +134,7 @@ twoPhotonHist.Scale(targetPOT/ntuplePOTsum)
 threePhotonHist.Scale(targetPOT/ntuplePOTsum)
 
 #create empty stacked histogram, add to it below
-histStack = rt.THStack("stackedHist", "Histogram of N proton, N photon NC events sorted by number of photons created")
+histStack = rt.THStack("stackedHist", "NC, N proton + N photon events")
 
 #this function iteratively scales and fills each histogram to the stack
 def histScalerStacker(hist, kColor):
@@ -153,12 +153,12 @@ oneInt = round(onePhotonHist.Integral(0,60), 2)
 twoInt = round(twoPhotonHist.Integral(0,60), 2)
 threeInt = round(threePhotonHist.Integral(0,60), 2)
 
-legend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
+legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
 #add color key to legend
-legend.AddEntry(onePhotonHist, "1 secondary photon, integral = " + str(oneInt), "f")
-legend.AddEntry(twoPhotonHist, "2 secondary photons, integral = " + str(twoInt), "f")
-legend.AddEntry(threePhotonHist, "3+ secondary photons, integral = " + str(threeInt), "f")
+legend.AddEntry(onePhotonHist, "1 secondary photon, " + str(oneInt) + " events per 6.67e20 POT", "f")
+legend.AddEntry(twoPhotonHist, "2 secondary photons, " + str(twoInt) + " events per 6.67e20 POT", "f")
+legend.AddEntry(threePhotonHist, "3+ secondary photons, " + str(threeInt) + " events per 6.67e20 POT", "f")
 
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
