@@ -80,7 +80,7 @@ for i in range(eventTree.GetEntries()):
             if abs(eventTree.trackPID[i]) == 13:
                 primaryMuonFound = True
                 break
-    #cut events w/ primary muon
+    #cut events w/ primary muons
     if primaryMuonFound:    
         continue
     
@@ -96,13 +96,4 @@ for i in range(eventTree.GetEntries()):
     if primaryElectronFound:
         continue
 
-            
-
-
     
-
-
-
-
-
-
