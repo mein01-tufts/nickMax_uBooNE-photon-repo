@@ -11,7 +11,8 @@ parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay n
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
 parser.add_argument("-o", "--outfile", type=str, default="example_ntuple_analysis_script_output.root", help="output root file name")
 parser.add_argument("-n", "--eventNumber", type=int, required=True, help="the number of the event you want to search")
-parser.add_argument("-list", "--listParticles", action="store_true", help="printthe lists of tracks and particles with corresponding information")
+parser.add_argument("-listTrue", "--listTrueParticles", action="store_true", help="printthe lists of tracks and particles with corresponding information")
+parser.add_argument("-listReco", "--listRecoParticles", action="store_true", help="printthe lists of tracks and particles with corresponding information")
 parser.add_argument("-fc", "--fullyContained", action="store_true", help="only consider fully contained events")
 parser.add_argument("-ncc", "--noCosmicCuts", action="store_true", help="don't apply cosmic rejection cuts")
 args = parser.parse_args()
@@ -54,10 +55,12 @@ for x in range(eventTree.nShowers):
     elif eventTree.showerPID[x] == 13:
       chargeCurrent = True
 
+print("This collision had a neutrino energy of", eventTree.trueNuE, "GeV.")
+      
 if photonFound == True:
-  print("This event appears to have", len(photonIDs), " photons present in the reco")
+  print("This event appears to have", len(photonIDs), " photons present in the reco.")
 else:
-  print("This event does not appear to contain any photons based on the reco")
+  print("This event does not appear to contain any photons based on the reco.")
 
 #Check tracks to check for Neutral Current
 for x in range(eventTree.nTracks):
@@ -66,10 +69,18 @@ for x in range(eventTree.nTracks):
       chargeCurrent = True
       
 if chargeCurrent == True:
-  print("This event appears to have a charged current in the reco")
+  if eventTree.trueNuCCNC == 1:
+    print("This event has a neutral current, but the reco thinks it's charged.")
+  else:
+    print("This event has a neutral current, and the reco is able to detect it.")
+  
 else:
-  print("This event appears to have a neutral current in the reco")
+  if eventTree.trueNuCCNC == 0:
+    print("This event has a charged current, and the reco is able to detect it.")
+  else:
+    print("This event has a charged current, but the reco thinks it's neutral.")
 
+  
 #EVALUATION USING TRUTH
 truePhotonIDs = []
 for x in range(eventTree.nTrueSimParts):
@@ -81,22 +92,32 @@ for x in range(len(truePhotonIDs)):
   if eventTree.trueSimPartPDG[x] == 22:
       if abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] - eventTree.trueVtxZ) <= 0.15:
         trueSecondaryIDs.append(x)
+
 if len(trueSecondaryIDs) > 0:
   print("Based on truth, this event actually contains", len(truePhotonIDs), "photons, and based on vertex information", len(trueSecondaryIDs), "of them are secondary particles.")
-else:
+elif len(truePhotonIDs) > 0:
+  print("Based on truth, this event actually contains", len(truePhotonIDs), "photons. Based on vertex information, none of them are secondary particles.")
+else:  
   print("Based on truth, this event contains no photons")
   
 #PRINTING LISTS
-if args.listParticles:
-  print("SHOWERS AND TRUTH BASED ON RECO")
+if args.listRecoParticles:
+  print("SHOWERS AND ENERGY BASED ON RECO")
   for x in range(eventTree.nShowers):
     if eventTree.showerClassified[x] == 1:
-      print(eventTree.showerPID)
+      print("Shower ID:", eventTree.showerPID[x], "Shower Energy (MeV):", eventTree.showerRecoE[x])
 
-  print("PRIMARY PARTICLE PDG VALUES")
+  print("TRACKS AND ENERGY BASED ON RECO")
+  for x in range(eventTree.nTracks):
+    if eventTree.trackClassified[x] == 1:
+      print("Track ID:", eventTree.trackPID[x], "Track Energy (MeV):", eventTree.trackRecoE[x])
+
+        
+if args.listTrueParticles:
+  print("PRIMARY PARTICLE PDG VALUES BASED ON TRUTH")
   for x in range(eventTree.nTruePrimParts):
     print(eventTree.truePrimPartPDG[x])
 
-  print("TRUE SIM PARTICLE TID, PDG, and MOTHER TID VALUES:")
+  print("TRUE SIM PARTICLE TID, PDG,  MOTHER TID VALUES, AND ENERGY:")
   for x in range(eventTree.nTrueSimParts):
-    print("TID:", eventTree.trueSimPartTID[x], "PDG:", eventTree.trueSimPartPDG[x], "Mother TID:", eventTree.trueSimPartMID[x])
+    print("TID:", eventTree.trueSimPartTID[x], "PDG:", eventTree.trueSimPartPDG[x], "Mother TID:", eventTree.trueSimPartMID[x], "TOTAL ENERGY(MeV):", eventTree.trueSimPartE[x])
