@@ -29,9 +29,9 @@ for i in range(potTree.GetEntries()):
 
 #define histograms to fill
 #we will write histograms to output file for:
-onePhotonHist = rt.TH1F("1Photon_nProtonHist", "Energy of NC events with N proton(s) and 1 photon",24,0,6)
-twoPhotonHist = rt.TH1F("2Photon_nProtonHist", "Energy of NC events with N proton(s) and 2 photons",24,0,6)
-threePhotonHist = rt.TH1F("3Photon_nProtonHist", "Energy of NC events with N proton(s) and 3+ photons",24,0,6)
+onePhotonHist = rt.TH1F("1Photon_nProtonHist", "Energy of NC events with N proton(s) and 1 photon",60,0,6)
+twoPhotonHist = rt.TH1F("2Photon_nProtonHist", "Energy of NC events with N proton(s) and 2 photons",60,0,6)
+threePhotonHist = rt.TH1F("3Photon_nProtonHist", "Energy of NC events with N proton(s) and 3+ photons",60,0,6)
 
 #set histogram axis titles and increase line width
 def configureHist(h):
@@ -165,10 +165,9 @@ legend.AddEntry(threePhotonHist, "#splitline{3+ secondary photons,}" + "{" + str
 
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
-histStack.GetXaxis().SetTitle("Number of Protons")
+histStack.GetXaxis().SetTitle("neutrino energy (GeV)")
 histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
 legend.Draw()
-rt.gPad.SetLogy(1)
 rt.gPad.Update()
 
 #create output root file and write histograms to file
