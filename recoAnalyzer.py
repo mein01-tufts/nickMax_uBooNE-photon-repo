@@ -45,7 +45,7 @@ morePhotonHist2 = rt.TH1F("twoRecoManyTrueHist", "Signal events with one or more
 backgroundHist2 = rt.TH1F("twoPhotonBackgroundHist", "Background events with two photons", 60, 0, 2)
 
 onePhotonHist3 = rt.TH1F("threeRecoOneTrueHist", "Signal events missing two photons",60,0,2)
-twoPhotonHist3 = signalHist = rt.TH1F("threeRecoTwoTrueHist", "Signal events missing one photon",60,0,2)
+twoPhotonHist3 = rt.TH1F("threeRecoTwoTrueHist", "Signal events missing one photon",60,0,2)
 signalHist3 = rt.TH1F("threePhotonSignalHist", "Signal events with three or more photons",60,0,2)
 backgroundHist3 = rt.TH1F("threePhotonBackgroundHist", "Background events with three or more photons", 60, 0, 2)
 
@@ -108,11 +108,13 @@ for i in range(eventTree.GetEntries()):
   for x in range(eventTree.nShowers):
     if eventTree.showerClassified[x] == 1:
       if eventTree.showerPID[x] == 22:
+#        if eventTree.showerStartPosX[x] > (xMin + fiducialWidth) and eventTree.showerStartPosX[x] < (xMax - fiducialWidth) and eventTree.showerStartPosY[x] > (yMin + fiducialWidth) and eventTree.showerStartPosY[x] < (yMax - fiducialWidth) and eventTree.showerStartPosZ[x] > (zMin + fiducialWidth) and eventTree.vtxZ < (zMax - fiducialWidth):
         recoPhotonIDs.append(x)
         photonFound = True
       elif eventTree.showerPID[x] == 13:
         chargeCurrent = True
-
+  if len(recoPhotonIDs) == 11:
+    print("It's event number", i)
 #Check tracks to check for Neutral Current, for Protons, and for Charged Pions
   for x in range(eventTree.nTracks):
     if eventTree.trackClassified[x] == 1:
