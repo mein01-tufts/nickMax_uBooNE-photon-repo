@@ -217,7 +217,7 @@ for i in range(eventTree.GetEntries()):
 
   #Discard the photon unless it begins to deposit energy within the fiducial volume
   truePhotonList = []
-  for x in range(len(photonIDList)):
+  for x in photonIDList:
     if eventTree.trueSimPartEDepX[x] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[x] >= (xMax - fiducialWidth) or eventTree.trueSimPartEDepY[x] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[x] >= (yMax - fiducialWidth) or eventTree.trueSimPartEDepZ[x] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[x] >= (zMax - fiducialWidth):
       SantaReal = False
     else:
