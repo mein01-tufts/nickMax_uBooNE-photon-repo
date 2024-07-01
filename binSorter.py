@@ -57,6 +57,7 @@ fiducialWidth = 10
 
 #begin loop over events in ntuple file
 
+
 for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
@@ -84,7 +85,6 @@ for i in range(eventTree.GetEntries()):
   protonPresent = False
   photonInBox = False
   photonIDList = []
-  killCount = 0
   
   #Check if Neutral Pion and Kaon in primaries
   if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
@@ -115,7 +115,6 @@ for i in range(eventTree.GetEntries()):
   #Discard event unless the photon begins to deposit energy within the fiducial volume
   for x in range(len(photonIDList)):
     if eventTree.trueSimPartEDepX[x] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[x] >= (xMax - fiducialWidth) or eventTree.trueSimPartEDepY[x] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[x] >= (yMax - fiducialWidth) or eventTree.trueSimPartEDepZ[x] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[x] >= (zMax - fiducialWidth):
-      killCount += 1
       continue
   
   #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
@@ -180,4 +179,3 @@ rt.gPad.Update()
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
 
-print("The new checker eliminated", killCount, "events")

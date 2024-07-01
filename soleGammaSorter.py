@@ -60,6 +60,7 @@ fiducialWidth = 10
 #Set variables for program review
 problemCount = 0
 
+
 #begin loop over events in ntuple file
 
 for i in range(eventTree.GetEntries()):
@@ -179,3 +180,5 @@ rt.gPad.Update()
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
+
+
