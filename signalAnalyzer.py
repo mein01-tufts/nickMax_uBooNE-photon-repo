@@ -31,26 +31,35 @@ for i in range(potTree.GetEntries()):
 
 #define histograms to fill
 #we will write histograms to output file for:
+noVertexHist1 = rt.TH1F("NoVertexHist1", "Only photons" ,60,0,2)
 successHist1 = rt.TH1F("SuccessHist1", "Only photons" ,60,0,2)
 NCFailHist1 = rt.TH1F("NCFailHist1", "Photons and protons",60,0,2)
 tooManyPhotonHist1 = rt.TH1F("photonFailHist1", "Photons and charged pions",60,0,2)
 tooFewPhotonHist1 = rt.TH1F("photonFailHist1", "Photons and charged pions",60,0,2)
 fiducialFailHist1 = rt.TH1F("fiducialFailHist1", "Photons, protons, and charged pions", 60, 0, 2)
 pionProtonFailHist1 = rt.TH1F("pionProtonFailHist1", "Photons, protons, and charged pions", 60, 0, 2)
+noPhotonHist1 =	rt.TH1F("noPhotonHist1", "Photons and charged pions",60,0,2)
+totalHist1 = rt.TH1F("totalHist1", "Photons and charged pions",60,0,2)
 
+noVertexHist2 =	rt.TH1F("NoVertexHist2", "Only photons" ,60,0,2)
 successHist2 = rt.TH1F("SuccessHist1", "Only photons" ,60,0,2)
 NCFailHist2 = rt.TH1F("NCFailHist1", "Photons and protons",60,0,2)
 tooManyPhotonHist2 = rt.TH1F("photonFailHist2", "Photons and charged pions",60,0,2)
 tooFewPhotonHist2 = rt.TH1F("photonFailHist2", "Photons and charged pions",60,0,2)
 fiducialFailHist2 = rt.TH1F("fiducialFailHist1", "Photons, protons, and charged pions", 60, 0, 2)
 pionProtonFailHist2 = rt.TH1F("pionProtonFailHist1", "Photons, protons, and charged pions", 60, 0, 2)
+noPhotonHist2 =	rt.TH1F("noPhotonHist3", "Photons and charged pions",60,0,2)
+totalHist2 = rt.TH1F("totalHist2", "Photons and charged pions",60,0,2)
 
+noVertexHist3 =	rt.TH1F("NoVertexHist3", "Only photons" ,60,0,2)
 successHist3 = rt.TH1F("SuccessHist1", "Only photons" ,60,0,2)
 NCFailHist3 = rt.TH1F("NCFailHist1", "Photons and protons",60,0,2)
 tooManyPhotonHist3 = rt.TH1F("photonFailHist3", "Photons and charged pions",60,0,2)
 tooFewPhotonHist3 = rt.TH1F("photonFailHist3", "Photons and charged pions",60,0,2)
+noPhotonHist3 = rt.TH1F("noPhotonHist3", "Photons and charged pions",60,0,2)
 fiducialFailHist3 = rt.TH1F("fiducialFailHist1", "Photons, protons, and charged pions", 60, 0, 2)
 pionProtonFailHist3 = rt.TH1F("pionProtonFailHist1", "Photons, protons, and charged pions", 60, 0, 2)
+totalHist3 = rt.TH1F("totalHist3", "Photons and charged pions",60,0,2)
 
 #set histogram axis titles and increase line width
 def configureHist(h):
@@ -60,26 +69,35 @@ def configureHist(h):
   return h
 
 #Scale the histograms
+noVertexHist1 = configureHist(noVertexHist1)
+totalHist1 = configureHist(totalHist1)
 successHist1 = configureHist(successHist1)
 NCFailHist1  = configureHist(NCFailHist1)
 tooManyPhotonHist1 = configureHist(tooManyPhotonHist1)
 tooFewPhotonHist1 = configureHist(tooFewPhotonHist1)
 fiducialFailHist1 = configureHist(fiducialFailHist1)
 pionProtonFailHist1 = configureHist(pionProtonFailHist1)
+noPhotonHist1 = configureHist(noPhotonHist1)
 
-successHist2 = configureHist(successHist3)
-NCFailHist2  = configureHist(NCFailHist3)
+noVertexHist2 =	configureHist(noVertexHist2)
+totalHist2 = configureHist(totalHist2)
+successHist2 = configureHist(successHist2)
+NCFailHist2  = configureHist(NCFailHist2)
 tooManyPhotonHist2 = configureHist(tooManyPhotonHist2)
 tooFewPhotonHist2 = configureHist(tooFewPhotonHist2)
-fiducialFailHist2 = configureHist(fiducialFailHist3)
-pionProtonFailHist2 = configureHist(pionProtonFailHist3)
+fiducialFailHist2 = configureHist(fiducialFailHist2)
+pionProtonFailHist2 = configureHist(pionProtonFailHist2)
+noPhotonHist2 =	configureHist(noPhotonHist2)
 
+noVertexHist3 =	configureHist(noVertexHist3)
+totalHist3 = configureHist(totalHist3)
 successHist3 = configureHist(successHist3)
 NCFailHist3 = configureHist(NCFailHist3)
 tooManyPhotonHist3 = configureHist(tooManyPhotonHist3)
 tooFewPhotonHist3 = configureHist(tooFewPhotonHist3)
 fiducialFailHist3 = configureHist(fiducialFailHist3)
 pionProtonFailHist3 = configureHist(pionProtonFailHist3)
+noPhotonHist3 =	configureHist(noPhotonHist3)
 
 #Set detector min/max and fiducial width (cm)
 xMin, xMax = 0, 256
@@ -89,16 +107,14 @@ fiducialWidth = 10
 
 #Establish variables for program evaluation
 signalEvents = 0
+successCount = 0
 NCCuts = 0
 CosmicCuts = 0
 FiducialCuts = 0
 DepositCuts = 0
 PionProtonCuts = 0
 CountCuts = 0
-
-#Establish firmly held beliefs
-SantaReal = True
-
+oddSuccessCount = 0
 
 #begin loop over events in ntuple file
 
@@ -119,6 +135,7 @@ for i in range(eventTree.GetEntries()):
   photonIDList = []
   protonPresent = False
   PionPresent = False
+  notAllPass = False
 
   #checking for neutral current
   if eventTree.trueNuCCNC != 1:
@@ -136,24 +153,26 @@ for i in range(eventTree.GetEntries()):
 
 
   #Determining presence of suitably energetic protons and charged pions - if they're present, the event is beyond the scope of our investigation
-  if badEvent == False:
-    for x in range(len(eventTree.truePrimPartPDG)):
-      if eventTree.truePrimPartPDG[x] == 211:
-        pionEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
-        if pionEnergy >= 0.03:
-          pionPresent = True
-          badEvent = True
-          PionProtonCuts += 1
-          break
+  for x in range(len(eventTree.truePrimPartPDG)):
+    if eventTree.truePrimPartPDG[x] == 211:
+      pionEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
+      if pionEnergy >= 0.03:
+        pionPresent = True
+        badEvent = True
+        PionProtonCuts += 1
+        break
       
-      elif eventTree.truePrimPartPDG[x] == 2212:
-        protonEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
-        if protonEnergy >= 0.06:
-          protonPresent = True
-          badEvent = True
-          PionProtonCuts += 1
-          break
+    elif eventTree.truePrimPartPDG[x] == 2212:
+      protonEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
+      if protonEnergy >= 0.06:
+        protonPresent = True
+        badEvent = True
+        PionProtonCuts += 1
+        break
 
+  if badEvent == True:
+    continue
+  
   #Establish a list of TIDs for primary particles (we'll use this in a moment)
   for x in range(len(eventTree.trueSimPartTID)):
     if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
@@ -179,7 +198,7 @@ for i in range(eventTree.GetEntries()):
     truePhotonList = []
     for x in photonIDList:
       if eventTree.trueSimPartEDepX[x] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[x] >= (xMax - fiducialWidth) or eventTree.trueSimPartEDepY[x] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[x] >= (yMax - fiducialWidth) or eventTree.trueSimPartEDepZ[x] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[x] >= (zMax - fiducialWidth):
-        SantaReal = False
+        notAllPass = True
       else:
         truePhotonList.append(x)
     if len(truePhotonList) == 0:
@@ -200,10 +219,28 @@ for i in range(eventTree.GetEntries()):
   recoPhotonIDs = []
   scaledEnergy = []
 
-
   for x in range(len(truePhotonList)):
     energyGeV = eventTree.trueSimPartE[truePhotonList[x]]/1000
     scaledEnergy.append(energyGeV)
+
+  #Events with no vertex!
+  if eventTree.foundVertex != 1:
+    if len(truePhotonList) == 1:
+      noVertexHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonList) == 2:
+      leadingPhoton = scaledEnergy[0]
+      for x in range(len(scaledEnergy)):
+        if scaledEnergy[x] > leadingPhoton:
+          leadingPhoton = scaledEnergy[x]
+      noVertexHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      leadingPhoton = scaledEnergy[0]
+      for x in range(len(scaledEnergy)):
+        if scaledEnergy[x] > leadingPhoton:
+          leadingPhoton = scaledEnergy[x]
+      noVertexHist3.Fill(leadingPhoton, eventTree.xsecWeight)
 
   for x in range(eventTree.nTracks):
     if eventTree.trackClassified[x] == 1:
@@ -232,7 +269,43 @@ for i in range(eventTree.GetEntries()):
       fiducialFail = True
   
   #NOW WE FILL THE HISTOGRAMS
+  #Fillin the histogram displaying total events
+  if len(truePhotonList) == 1:
+    totalHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
 
+  elif len(truePhotonList) == 2:
+    leadingPhoton = scaledEnergy[0]
+    for x in range(len(scaledEnergy)):
+      if scaledEnergy[x] > leadingPhoton:
+        leadingPhoton = scaledEnergy[x]
+    totalHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+  else:
+    leadingPhoton = scaledEnergy[0]
+    for x in range(len(scaledEnergy)):
+      if scaledEnergy[x] > leadingPhoton:
+        leadingPhoton = scaledEnergy[x]
+    totalHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+
+  #Filling in the graph for no photons
+  if len(recoPhotonIDs) == 0:
+    if len(truePhotonList) == 1:
+      noPhotonHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonList) == 2:
+      leadingPhoton = scaledEnergy[0]
+      for x in range(len(scaledEnergy)):
+        if scaledEnergy[x] > leadingPhoton:
+          leadingPhoton = scaledEnergy[x]
+      noPhotonHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      leadingPhoton = scaledEnergy[0]
+      for x in range(len(scaledEnergy)):
+        if scaledEnergy[x] > leadingPhoton:
+          leadingPhoton = scaledEnergy[x]
+      noPhotonHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+    
   #Filling graphs for the erroneous detection of charged current
   if chargeCurrent == True:
     if len(truePhotonList) == 1:
@@ -271,8 +344,8 @@ for i in range(eventTree.GetEntries()):
           leadingPhoton = scaledEnergy[x]
       pionProtonFailHist3.Fill(leadingPhoton, eventTree.xsecWeight)
 
-  #Filling graphs for erroneously low photon counts
-  if len(truePhotonList) > len(recoPhotonIDs):
+  #Filling graphs for erroneously low nonzero photon counts
+  if len(truePhotonList) > len(recoPhotonIDs) and len(recoPhotonIDs) != 0:
     if len(truePhotonList) == 1:
       tooFewPhotonHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
 
@@ -309,6 +382,8 @@ for i in range(eventTree.GetEntries()):
           leadingPhoton = scaledEnergy[x]
       tooManyPhotonHist3.Fill(leadingPhoton, eventTree.xsecWeight)
 
+  
+      
   #Filling graphs for vertices erroneously placed outside of fiducial
   if fiducialFail == True:
     if len(truePhotonList) == 1:
@@ -331,6 +406,9 @@ for i in range(eventTree.GetEntries()):
 
   #Filling the success graph:
   if fiducialFail == False and len(truePhotonList) == len(recoPhotonIDs) and chargedPionFound == False and protonFound == False and chargeCurrent == False:
+    successCount += 1
+    if notAllPass == True:
+      oddSuccessCount += 1
     if len(truePhotonList) == 1:
       successHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
 
@@ -357,6 +435,8 @@ tooManyPhotonHist1.Scale(targetPOT/ntuplePOTsum)
 tooFewPhotonHist1.Scale(targetPOT/ntuplePOTsum)
 fiducialFailHist1.Scale(targetPOT/ntuplePOTsum)
 pionProtonFailHist1.Scale(targetPOT/ntuplePOTsum)
+totalHist1.Scale(targetPOT/ntuplePOTsum)
+noVertexHist1.Scale(targetPOT/ntuplePOTsum)
 
 successHist2.Scale(targetPOT/ntuplePOTsum)
 NCFailHist2.Scale(targetPOT/ntuplePOTsum)
@@ -364,6 +444,8 @@ tooManyPhotonHist2.Scale(targetPOT/ntuplePOTsum)
 tooFewPhotonHist2.Scale(targetPOT/ntuplePOTsum)
 fiducialFailHist2.Scale(targetPOT/ntuplePOTsum)
 pionProtonFailHist2.Scale(targetPOT/ntuplePOTsum)
+totalHist2.Scale(targetPOT/ntuplePOTsum)
+noVertexHist2.Scale(targetPOT/ntuplePOTsum)
 
 successHist3.Scale(targetPOT/ntuplePOTsum)
 NCFailHist3.Scale(targetPOT/ntuplePOTsum)
@@ -371,158 +453,228 @@ tooManyPhotonHist3.Scale(targetPOT/ntuplePOTsum)
 tooFewPhotonHist3.Scale(targetPOT/ntuplePOTsum)
 fiducialFailHist3.Scale(targetPOT/ntuplePOTsum)
 pionProtonFailHist3.Scale(targetPOT/ntuplePOTsum)
+totalHist3.Scale(targetPOT/ntuplePOTsum)
+noVertexHist3.Scale(targetPOT/ntuplePOTsum)
 
 #Create stack histograms and add the filled graphs to them
-#Too many photons                                                                                              
-successStack = rt.THStack("successStack", "Events in which the reco matched the signal")
+#Total Histogram
+totalStack = rt.THStack("totalStack", "All events that passed true selection")
+totalHist1.SetLineColor(rt.kRed)
+totalStack.Add(totalHist1)
 
-successHist1.SetLineColor(rt.kRed)
-successStack.Add(successHist1)
+totalHist2.SetLineColor(rt.kBlue)
+totalStack.Add(totalHist2)
 
-successHist2.SetLineColor(rt.kBlue)
-successStack.Add(successHist2)
+totalHist3.SetLineColor(rt.kOrange)
+totalStack.Add(totalHist3)
 
-successHist3.SetLineColor(rt.kOrange)
-successStack.Add(successHist3)
+totalInt1 = totalHist1.Integral(0,60)
+totalInt2 = totalHist2.Integral(0,60)
+totalInt3 = totalHist3.Integral(0,60)
 
-successLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates                    
 
-successLegend.AddEntry(successHist1, "One Photon", "l")
-successLegend.AddEntry(successHist2, "Two Photons", "l")
-successLegend.AddEntry(successHist3, "Three Photons", "l")
+totalLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates                          
 
-successCanvas = rt.TCanvas()
-successStack.Draw("HIST")
-successLegend.Draw()
+totalLegend.AddEntry(totalHist1, "One Photon "+str(round(totalInt1, 1))+" Events", "l")
+totalLegend.AddEntry(totalHist2, "Two Photons "+str(round(totalInt2, 1))+" Events", "l")
+totalLegend.AddEntry(totalHist3, "Three or More Photons "+str(round(totalInt3, 1))+" Events", "l")
+
+totalCanvas = rt.TCanvas()
+totalStack.Draw("HIST")
+totalLegend.Draw()
 rt.gPad.Update()
 
+#One, two, and three photon stacks
+onePhotonStack = rt.THStack("onePhotonStack", "All one-photon events that passed true selection")
+twoPhotonStack = rt.THStack("twoPhotonStack", "All two-photon events that passed true selection")
+threePhotonStack = rt.THStack("threePhotonStack", "All three-photon events that passed true selection")
+
+onePhotonLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)
+twoPhotonLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)
+threePhotonLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)
+
+successHist1.SetLineColor(rt.kGreen)
+onePhotonStack.Add(successHist1)
+
+successHist2.SetLineColor(rt.kGreen)
+twoPhotonStack.Add(successHist2)
+
+successHist3.SetLineColor(rt.kGreen)
+threePhotonStack.Add(successHist3)
+
+successInt1 = successHist1.Integral(0,60)
+successInt2 = successHist2.Integral(0,60)
+successInt3 = successHist3.Integral(0,60)
+
+onePhotonLegend.AddEntry(successHist1, "Successful reconstruction: "+str(round(successInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(successHist2, "Successful reconstruction: "+str(round(successInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(successHist3, "Successful reconstruction: "+str(round(successInt3, 1))+" Events", "l")
+
 #Too many photons
-tooManyPhotonStack = rt.THStack("tooManyPhotonStack", "Events in which the reco found too many photons")
+tooManyPhotonHist1.SetLineColor(rt.kCyan)
+onePhotonStack.Add(tooManyPhotonHist1)
 
-tooManyPhotonHist1.SetLineColor(rt.kRed)
-tooManyPhotonStack.Add(tooManyPhotonHist1)
+tooManyPhotonHist2.SetLineColor(rt.kCyan)
+twoPhotonStack.Add(tooManyPhotonHist2)
 
-tooManyPhotonHist2.SetLineColor(rt.kBlue)
-tooManyPhotonStack.Add(tooManyPhotonHist2)
+tooManyPhotonHist3.SetLineColor(rt.kCyan)
+threePhotonStack.Add(tooManyPhotonHist3)
 
-tooManyPhotonHist3.SetLineColor(rt.kOrange)
-tooManyPhotonStack.Add(tooManyPhotonHist3)
+tooManyPhotonInt1 = tooManyPhotonHist1.Integral(0,60)
+tooManyPhotonInt2 = tooManyPhotonHist2.Integral(0,60)
+tooManyPhotonInt3 = tooManyPhotonHist3.Integral(0,60)
 
 tooManyPhotonLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
-tooManyPhotonLegend.AddEntry(tooManyPhotonHist1, "One Photon", "l")
-tooManyPhotonLegend.AddEntry(tooManyPhotonHist2, "Two Photons", "l")
-tooManyPhotonLegend.AddEntry(tooManyPhotonHist3, "Three Photons", "l")
-
-tooManyPhotonCanvas = rt.TCanvas()
-tooManyPhotonStack.Draw("HIST")
-tooManyPhotonLegend.Draw()
-rt.gPad.Update()
+onePhotonLegend.AddEntry(tooManyPhotonHist1, "Too many photons: "+str(round(tooManyPhotonInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(tooManyPhotonHist2, "Too many photons: "+str(round(tooManyPhotonInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(tooManyPhotonHist3, "Too many photons: "+str(round(tooManyPhotonInt3, 1))+" Events", "l")
 
 #Too few photons
-tooFewPhotonStack = rt.THStack("tooFewPhotonStack", "Events in which the reco did not find all photons")
+tooFewPhotonHist1.SetLineColor(rt.kOrange)
+onePhotonStack.Add(tooFewPhotonHist1)
 
-tooFewPhotonHist1.SetLineColor(rt.kRed)
-tooFewPhotonStack.Add(tooFewPhotonHist1)
-
-tooFewPhotonHist2.SetLineColor(rt.kBlue)
-tooFewPhotonStack.Add(tooFewPhotonHist2)
+tooFewPhotonHist2.SetLineColor(rt.kOrange)
+onePhotonStack.Add(tooFewPhotonHist2)
 
 tooFewPhotonHist3.SetLineColor(rt.kOrange)
-tooFewPhotonStack.Add(tooFewPhotonHist3)
+onePhotonStack.Add(tooFewPhotonHist3)
+
+tooFewPhotonInt1 = tooFewPhotonHist1.Integral(0,60)
+tooFewPhotonInt2 = tooFewPhotonHist2.Integral(0,60)
+tooFewPhotonInt3 = tooFewPhotonHist3.Integral(0,60)
 
 tooFewPhotonLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates                    
 
-tooFewPhotonLegend.AddEntry(tooFewPhotonHist1, "One Photon", "l")
-tooFewPhotonLegend.AddEntry(tooFewPhotonHist2, "Two Photons", "l")
-tooFewPhotonLegend.AddEntry(tooFewPhotonHist3, "Three Photons", "l")
-
-tooFewPhotonCanvas = rt.TCanvas()
-tooFewPhotonStack.Draw("HIST")
-tooFewPhotonLegend.Draw()
-rt.gPad.Update()
+onePhotonLegend.AddEntry(tooFewPhotonHist1, "Too few photons: "+str(round(tooFewPhotonInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(tooFewPhotonHist2, "Too few photons: "+str(round(tooFewPhotonInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(tooFewPhotonHist3, "Too few photons: "+str(round(tooFewPhotonInt3, 1))+" Events", "l")
 
 #Protons or Pions detected                                                                                              
-pionProtonStack = rt.THStack("pionProtonStack", "Events in which the reco found pions and protons, but they did not in fact exist")
-
-pionProtonFailHist1.SetLineColor(rt.kRed)
-pionProtonStack.Add(tooManyPhotonHist1)
+pionProtonFailHist1.SetLineColor(rt.kBlue)
+onePhotonStack.Add(pionProtonFailHist1)
 
 pionProtonFailHist2.SetLineColor(rt.kBlue)
-pionProtonStack.Add(tooManyPhotonHist2)
+twoPhotonStack.Add(pionProtonFailHist2)
 
-pionProtonFailHist3.SetLineColor(rt.kOrange)
-pionProtonStack.Add(tooManyPhotonHist3)
+pionProtonFailHist3.SetLineColor(rt.kBlue)
+threePhotonStack.Add(pionProtonFailHist3)
 
-pionProtonFailLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
+pionProtonFailInt1 = pionProtonFailHist1.Integral(0,60)
+pionProtonFailInt2 = pionProtonFailHist2.Integral(0,60)
+pionProtonFailInt3 = pionProtonFailHist3.Integral(0,60)
 
-pionProtonFailLegend.AddEntry(pionProtonFailHist1, "One Photon", "l")
-pionProtonFailLegend.AddEntry(pionProtonFailHist2, "Two Photons", "l")
-pionProtonFailLegend.AddEntry(pionProtonFailHist3, "Three Photons", "l")
-
-pionProtonCanvas = rt.TCanvas()
-pionProtonStack.Draw("HIST")
-pionProtonFailLegend.Draw()
-rt.gPad.Update()
+onePhotonLegend.AddEntry(pionProtonFailHist1, "Charged Pion/Proton false positive: "+str(round(pionProtonFailInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(pionProtonFailHist2, "Charged Pion/Proton false positive: "+str(round(pionProtonFailInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(pionProtonFailHist3, "Charged Pion/Proton false positive: "+str(round(pionProtonFailInt3, 1))+" Events", "l")
 
 #Outside of fiducial detected
                                                                                                               
-fiducialStack = rt.THStack("fiducialStack", "Events in which the reco thought the event was out of the fiducial, but it was not")
+fiducialFailHist1.SetLineColor(rt.kYellow+2)
+onePhotonStack.Add(fiducialFailHist1)
 
-fiducialFailHist1.SetLineColor(rt.kRed)
-fiducialStack.Add(fiducialFailHist1)
+fiducialFailHist2.SetLineColor(rt.kYellow+2)
+twoPhotonStack.Add(fiducialFailHist2)
 
-fiducialFailHist2.SetLineColor(rt.kBlue)
-fiducialStack.Add(fiducialFailHist2)
+fiducialFailHist3.SetLineColor(rt.kYellow+2)
+threePhotonStack.Add(fiducialFailHist3)
 
-fiducialFailHist3.SetLineColor(rt.kOrange)
-fiducialStack.Add(fiducialFailHist3)
+fiducialFailInt1 = fiducialFailHist1.Integral(0,60)
+fiducialFailInt2 = fiducialFailHist2.Integral(0,60)
+fiducialFailInt3 = fiducialFailHist3.Integral(0,60)
 
 fiducialFailLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates                   
 
-fiducialFailLegend.AddEntry(fiducialFailHist1, "One Photon", "l")
-fiducialFailLegend.AddEntry(fiducialFailHist2, "Two Photons", "l")
-fiducialFailLegend.AddEntry(fiducialFailHist3, "Three Photons", "l")
-
-fiducialFailCanvas = rt.TCanvas()
-fiducialStack.Draw("HIST")
-fiducialFailLegend.Draw()
-rt.gPad.Update()
-
+onePhotonLegend.AddEntry(fiducialFailHist1, "Misplaced out of fiducial: "+str(round(fiducialFailInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(fiducialFailHist2, "Misplaced out of fiducial: "+str(round(fiducialFailInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(fiducialFailHist3, "Misplaced out of fiducial: "+str(round(fiducialFailInt3, 1))+" Events", "l")
 
 #CC detected
 
-NCStack = rt.THStack("fiducialStack", "Events in which the reco thought the event was charge current")
-
 NCFailHist1.SetLineColor(rt.kRed)
-NCStack.Add(NCFailHist1)
+onePhotonStack.Add(NCFailHist1)
 
-NCFailHist2.SetLineColor(rt.kBlue)
-NCStack.Add(NCFailHist2)
+NCFailHist2.SetLineColor(rt.kRed)
+twoPhotonStack.Add(NCFailHist2)
 
-NCFailHist3.SetLineColor(rt.kOrange)
-NCStack.Add(NCFailHist3)
+NCFailHist3.SetLineColor(rt.kRed)
+threePhotonStack.Add(NCFailHist3)
 
-NCFailLegend = rt.TLegend(0.7, 0.7, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates                    
 
-NCFailLegend.AddEntry(NCFailHist1, "One Photon", "l")
-NCFailLegend.AddEntry(NCFailHist2, "Two Photons", "l")
-NCFailLegend.AddEntry(NCFailHist3, "Three Photons", "l")
+NCFailInt1 = NCFailHist1.Integral(0,60)
+NCFailInt2 = NCFailHist2.Integral(0,60)
+NCFailInt3 = NCFailHist3.Integral(0,60)
 
-NCFailCanvas = rt.TCanvas()
-NCStack.Draw("HIST")
-NCFailLegend.Draw()
+
+onePhotonLegend.AddEntry(NCFailHist1, "Charged current false positive: "+str(round(NCFailInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(NCFailHist2, "Charged current false positive: "+str(round(NCFailInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(NCFailHist3, "Charged current false positive: "+str(round(NCFailInt3, 1))+" Events" "l")
+
+
+#No Vertex Found
+
+noVertexHist1.SetLineColor(rt.kMagenta)
+onePhotonStack.Add(noVertexHist1)
+
+noVertexHist2.SetLineColor(rt.kMagenta)
+twoPhotonStack.Add(noVertexHist2)
+
+noVertexHist3.SetLineColor(rt.kMagenta)
+threePhotonStack.Add(noVertexHist3)
+
+
+noVertexInt1 = noVertexHist1.Integral(0,60)
+noVertexInt2 = noVertexHist2.Integral(0,60)
+noVertexInt3 = noVertexHist3.Integral(0,60)
+
+
+onePhotonLegend.AddEntry(noVertexHist1, "No vertex found: "+str(round(noVertexInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(noVertexHist2, "No vertex found: "+str(round(noVertexInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(noVertexHist3, "No vertex found: "+str(round(noVertexInt3, 1))+" Events" "l")
+
+#No photons found
+
+noPhotonHist1.SetLineColor(rt.kBlack)
+onePhotonStack.Add(noPhotonHist1)
+
+noPhotonHist2.SetLineColor(rt.kBlack)
+twoPhotonStack.Add(noPhotonHist2)
+
+noPhotonHist3.SetLineColor(rt.kBlack)
+threePhotonStack.Add(noPhotonHist3)
+
+
+noPhotonInt1 = noPhotonHist1.Integral(0,60)
+noPhotonInt2 = noPhotonHist2.Integral(0,60)
+noPhotonInt3 = noPhotonHist3.Integral(0,60)
+
+
+onePhotonLegend.AddEntry(noPhotonHist1, "No photons found: "+str(round(noPhotonInt1, 1))+" Events", "l")
+twoPhotonLegend.AddEntry(noPhotonHist2, "No photons found: "+str(round(noPhotonInt2, 1))+" Events", "l")
+threePhotonLegend.AddEntry(noPhotonHist3, "No photons found: "+str(round(noPhotonInt3, 1))+" Events" "l")
+
+onePhotonCanvas = rt.TCanvas()
+onePhotonStack.Draw("HIST")
+onePhotonLegend.Draw()
 rt.gPad.Update()
 
+twoPhotonCanvas = rt.TCanvas()
+twoPhotonStack.Draw("HIST")
+twoPhotonLegend.Draw()
+rt.gPad.Update()
+
+threePhotonCanvas = rt.TCanvas()
+threePhotonStack.Draw("HIST")
+threePhotonLegend.Draw()
+rt.gPad.Update()
 
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
-NCFailCanvas.Write()
-fiducialFailCanvas.Write()
-tooManyPhotonCanvas.Write()
-tooFewPhotonCanvas.Write()
-successCanvas.Write()
-pionProtonCanvas.Write()
-
+totalCanvas.Write()
+onePhotonCanvas.Write()
+twoPhotonCanvas.Write()
+threePhotonCanvas.Write()
 
 print("There were", signalEvents, "total signal events")
+print("Of these, the reco identified", successCount)
+print("Of the correctly identified events,", oddSuccessCount, "contained at least one misidentified photon that happened to coincide with a real, missed photon")
