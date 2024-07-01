@@ -535,10 +535,10 @@ tooFewPhotonHist1.SetLineColor(rt.kOrange)
 onePhotonStack.Add(tooFewPhotonHist1)
 
 tooFewPhotonHist2.SetLineColor(rt.kOrange)
-onePhotonStack.Add(tooFewPhotonHist2)
+twoPhotonStack.Add(tooFewPhotonHist2)
 
 tooFewPhotonHist3.SetLineColor(rt.kOrange)
-onePhotonStack.Add(tooFewPhotonHist3)
+threePhotonStack.Add(tooFewPhotonHist3)
 
 tooFewPhotonInt1 = tooFewPhotonHist1.Integral(0,60)
 tooFewPhotonInt2 = tooFewPhotonHist2.Integral(0,60)
