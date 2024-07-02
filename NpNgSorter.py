@@ -51,8 +51,6 @@ yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
 fiducialWidth = 10
 
-entryTotal = 0
-
 #begin loop over events in ntuple file
 for i in range(eventTree.GetEntries()):
     eventTree.GetEntry(i)
