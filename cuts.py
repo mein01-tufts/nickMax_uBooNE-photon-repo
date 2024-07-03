@@ -7,32 +7,36 @@ import ROOT as rt
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
 
-def trueCutNCC(eventTree):
+def trueCutNC(eventTree):
 #Filter for neutral current using truth - False if CC, True if NC
   if eventTree.trueNuCCNC != 1:
     return False
   else:
     return True
 
-def trueCutPionPhoton(eventTree):
+def trueCutPionProton(eventTree):
 #Filter for pions and photons using truth - False if either (or both) are present, True otherwise
   pionPresent = False
   protonPresent = False                                    
   for x in range(len(eventTree.truePrimPartPDG)):
-    if eventTree.truePrimPartPDG[x] == 211 and eventTree.truePrimPartE[x] >= 0.03:
-      pionPresent = True
+    if eventTree.truePrimPartPDG[x] == 211:
+      pionEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
+      if pionEnergy > 0.03:
+        pionPresent = True
       break
-    elif eventTree.truePrimPartPDG[x] == 2212 and eventTree.truePrimPartE[x] >= 0.06:
-      protonPresent = True
-      break
+    elif eventTree.truePrimPartPDG[x] == 2212:
+      protonEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2)+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2)
+      if protonEnergy > 0:
+        protonPresent = True
+        break
   if pionPresent == True or protonPresent == True:
     return False
   else:
     return True
   
-def trueCutFiducials(eventTree, fiducialWidth):
+def trueCutFiducials(eventTree, fiducialData):
 #Filter by determining if the event vertex falls within the fiducial width using truth  - True if it's not within the radius, false if it is
-  if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
+  if eventTree.trueVtxX <= (fiducialData["xMin"] + fiducialData["width"]) or eventTree.trueVtxX >= (fiducialData["xMax"] - fiducialData["width"]) or eventTree.trueVtxY <= (fiducialData["yMin"] + fiducialData["width"]) or eventTree.trueVtxY >= (fiducialData["yMax"] - fiducialData["width"]) or eventTree.trueVtxZ <= (fiducialData["zMin"] + fiducialData["width"]) or eventTree.trueVtxZ >= (fiducialData["zMax"] - fiducialData["width"]):
     return False
   else:
     return True
@@ -56,7 +60,6 @@ def trueCheckPionKaon(eventTree):
 #Use truth to determine if a pion or kaon is present - True if either is present (or both), False if neither
   foundOne = False
   if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
-    #Check if there is actually a detectable photon
     return True
   else:
     return False
@@ -107,80 +110,110 @@ def trueCutEDep(eventTree):
     return True
 
 
-
-
-
-
-
-  
-def trueSignalFinder(eventTree):
-#Uses a series of truth-based checks to determine signal as thoroughly as possible
-  xMin, xMax = 0, 256
-  yMin, yMax = -116.5, 116.5
-  zMin, zMax = 0, 1036
-  fiducialWidth = 10
-
-  badEvent = False
-
-  if eventTree.trueNuCCNC != 1:
-    badEvent = True
-
-#fiducial cut removes everything within fiducial
-
-  if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
-    eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or \
-    eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
-    badEvent = True
-        
-  #skip events where all hits overlap with tagged cosmic rays
-  if eventTree.vtxFracHitsOnCosmic >= 1.:
-    badEvent = True
-
-  photonInSecondary = False
+def truePhotonList(eventTree, list1, fiducial):
+#Uses truth to create a list of photons that pass the vertex and deposit tests
+  list1 = []
+  secondaryList = []
   primList = []
-  photonIDList = []
-  protonPresent = False
-  PionPresent = False
-
-  #Determining presence of suitably energetic protons and charged pions - if they're present, the event is beyond the scope of our investigation
-  for x in range(len(eventTree.truePrimPartPDG)):
-    if eventTree.truePrimPartPDG[x] == 211:
-      pionEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
-      if pionEnergy >= 0.03:
-        pionPresent = True
-        badEvent = True
-    elif eventTree.truePrimPartPDG[x] == 2212:
-      protonEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
-      if protonEnergy >= 0.06:
-        protonPresent = True
-        badEvent = True
-  
   for x in range(len(eventTree.trueSimPartTID)):
     if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
       primList.append(eventTree.trueSimPartTID[x])
-    #Iterate through to find photons
-  for x in range(len(eventTree.trueSimPartPDG)):
+  for x in range(eventTree.nTrueSimParts):
     if eventTree.trueSimPartPDG[x] == 22:
-      #Check for parent particle in the primary list
       if eventTree.trueSimPartMID[x] in primList:
-        photonInSecondary = True
-        photonIDList.append(x)
-      #Failing that, check if the photon has coordinates within 15 mm of those of the event vertex
+        secondaryList.append(x)
       elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
-        photonInSecondary = True
-        photonIDList.append(x)
-  #Discard event unless a secondary photon is found
-  if photonInSecondary == False:
-    badEvent = True  
-
-    #Discard event unless the photon begins to deposit energy within the fiducial volume
-  for x in range(len(photonIDList)):
-    if eventTree.trueSimPartEDepX[x] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[x] >= (xMax - fiducialWidth) or eventTree.trueSimPartEDepY[x] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[x] >= (yMax - fiducialWidth) or eventTree.trueSimPartEDepZ[x] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[x] >= (zMax - fiducialWidth):
-      badEvent = True
+        secondaryList.append(x)
+  for x in secondaryList:
+    if eventTree.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and eventTree.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and eventTree.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["width"]) and eventTree.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and eventTree.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and eventTree.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
+      list1.append(x)  
+  return list1
 
 
-  if badEvent == True:
+def histStack(title, histList):
+  #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
+  colors = [rt.kGreen, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow]
+  targetPOT = 6.67e+20
+  ntuplePOTSum = 4.675690535431973e+20
+  for x in range(len(histList)):
+    hist = histList[x]
+    bins = hist.GetNbinsX()
+    hist.Scale(targetPOT/ntuplePOTSum)
+    hist.SetLineColor(colors[x%7])
+    histInt = hist.Integral(1, int(bins))
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(histInt)+" events", "l")
+    stack.Add(hist)
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas() 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle("Photon Energy (GeV)")
+  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
+  legend.Draw()
+  histCanvas.Update()
+
+  return histCanvas, stack, legend, histInt
+
+#RECO FUNCTIONS
+def recoNoVertex(eventTree):
+  #Checks to see if the event has a reconstructed vertex; returns True if so, False if not
+  if eventTree.foundVertex != 1:
     return False
-  
+  else:
+    return True
+
+
+def recoFiducials(eventTree, fiducial):
+  #Checks to see if the reconstructed event vertex is within the fiducial volume
+  if eventTree.foundVertex == 1:
+    if eventTree.vtxX > (fiducial["xMin"] + fiducial["width"]) and eventTree.vtxX < (fiducial["xMax"] - fiducial["width"]) and eventTree.vtxY > (fiducial["yMin"] + fiducial["width"]) and eventTree.vtxY < (fiducial["yMax"] - fiducial["width"]) and eventTree.vtxZ > (fiducial["zMin"] + fiducial["width"]) and eventTree.vtxZ < (fiducial["zMax"] - fiducial["width"]):
+      return True
+    else:
+      return False
+
+
+def recoPhotonList(eventTree):
+  #Creates a list of photons based on the showers in the event
+  recoList = []
+  for x in range(eventTree.nShowers):
+    if eventTree.showerClassified[x] == 1:
+      if eventTree.showerPID[x] == 22:
+        recoList.append(x)
+  return recoList
+
+def recoPionProton(eventTree):
+  #Checks for sufficiently energetic protons and charged pions in the event
+  chargedPionFound = False
+  protonFound = False
+  for x in range(eventTree.nTracks):
+    if eventTree.trackPID[x] == 2212:
+      if eventTree.trackRecoE[x] >= 60:
+        protonFound = True
+        break
+    elif eventTree.trackPID[x] == 211:
+      if eventTree.trackRecoE[x] >= 30:
+        chargedPionFound = True
+        break
+  if protonFound == True or chargedPionFound == True:
+    return False
+  else:
+    return True
+
+def recoNeutralCurrent(eventTree):
+  #Checks for signs of a neutral current event; returns True if it thinks the event is NC, False if CC
+  chargeCurrent = False
+  for x in range(eventTree.nTracks):
+    if eventTree.trackClassified[x] == 1:
+      if eventTree.trackPID[x] == 13:
+        chargeCurrent = True
+        break
+  for x in range(eventTree.nShowers):
+    if eventTree.showerClassified[x] == 1:
+      if eventTree.showerPID[x] == 11:
+        chargeCurrent = True
+        break
+  if chargeCurrent == True:
+    return False
   else:
     return True
