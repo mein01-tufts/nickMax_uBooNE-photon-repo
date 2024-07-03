@@ -51,25 +51,39 @@ yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
 fiducialWidth = 10
 
+trueFiducialCut = 0
+trueCosmicCut = 0
+trueCCcut = 0
+
+NCcounter = 0
+
+recoFound = 0
 #begin loop over events in ntuple file
 for i in range(eventTree.GetEntries()):
     eventTree.GetEntry(i)
 
-#cut charge current events
-    if eventTree.trueNuCCNC != 1:
+    if eventTree.foundVertex != 1:
         continue
-
+    
+    recoFound += 1
 #cut everything with a vertex within fiducialWidth (10cm) of detector wall
     if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
         eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or \
         eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
-        continue
+        trueFiducialCut += 1
+        
         
 #cut out cosmics: this cuts events tagged as overlapping w/cosmics
 #NTS: will need algorithm for this when using reco/real data - upping fiducial to 12-13cm
 #seems like the way to go re: assuring cosmics are cut
     if eventTree.vtxFracHitsOnCosmic >= 1.:
-        continue
+        trueCosmicCut += 1
+        
+
+#cut charge current events
+    if eventTree.trueNuCCNC != 1:
+        trueCCcut += 1
+        
 
 #determine whether there are photons as secondary particles
 #need a list of where photons occur, can then use len() as the photon counter later
@@ -120,55 +134,8 @@ for i in range(eventTree.GetEntries()):
 
 #fill histograms based on number of photons
 
-    if len(photonIndexList) == 1:
-        onePhotonHist.Fill(nProtons, eventTree.xsecWeight)
-    elif len(photonIndexList) == 2:
-        twoPhotonHist.Fill(nProtons, eventTree.xsecWeight)
-    elif len(photonIndexList) >= 3:
-        threePhotonHist.Fill(nProtons, eventTree.xsecWeight)
-    
-#----- end of event loop ---------------------------------------------#
 
-
-onePhotonHist.Scale(targetPOT/ntuplePOTsum)
-twoPhotonHist.Scale(targetPOT/ntuplePOTsum)
-threePhotonHist.Scale(targetPOT/ntuplePOTsum)
-
-#create empty stacked histogram, add to it below
-histStack = rt.THStack("stackedHist", "NC Events, N Gamma + N Proton")
-
-#this function iteratively scales and fills each histogram to the stack
-def histScalerStacker(hist, kColor):
-    hist.SetFillColor(kColor)
-    hist.SetMarkerStyle(21)
-    hist.SetMarkerColor(kColor)
-    histStack.Add(hist)
-
-#add each histogram to stack, choose their color
-histScalerStacker(onePhotonHist, rt.kRed)
-histScalerStacker(twoPhotonHist, rt.kCyan)
-histScalerStacker(threePhotonHist, rt.kGreen)
-
-#integrate all events in the stack
-oneInt = round(onePhotonHist.Integral(0,60), 2)
-twoInt = round(twoPhotonHist.Integral(0,60), 2)
-threeInt = round(threePhotonHist.Integral(0,60), 2)
-
-legend = rt.TLegend(0.5, 0.65, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
-
-#add color key to legend
-legend.AddEntry(onePhotonHist, "#splitline{1 secondary photon,}" + "{" + str(oneInt) + " events per 6.67e+20 POT}", "f")
-legend.AddEntry(twoPhotonHist, "#splitline{2 secondary photons,}" + "{" + str(twoInt) + " events per 6.67e+20 POT}", "f")
-legend.AddEntry(threePhotonHist, "#splitline{3+ secondary photons,}" + "{" + str(threeInt) + " events per 6.67e+20 POT}", "f")
-
-histCanvas = rt.TCanvas()
-histStack.Draw("HIST")
-histStack.GetXaxis().SetTitle("Number of Protons")
-histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
-legend.Draw()
-rt.gPad.SetLogy(1)
-rt.gPad.Update()
-
-#create output root file and write histograms to file
-outFile = rt.TFile(args.outfile, "RECREATE")
-histCanvas.Write()
+print("There are " + str(trueFiducialCut) + " events cut by true fiducial")
+print("There are " + str(trueCosmicCut) + " events cut by true cosmic")
+print("There are " + str(trueCCcut) + " events cut by true cc")
+print("There are " + str(recoFound) + " total events where reco found the vertex")
