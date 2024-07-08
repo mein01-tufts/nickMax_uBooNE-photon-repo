@@ -26,7 +26,7 @@ def trueCutPionProton(eventTree):
       break
     elif eventTree.truePrimPartPDG[x] == 2212:
       protonEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2)+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2)
-      if protonEnergy > 0:
+      if protonEnergy > 0.06:
         protonPresent = True
         break
   if pionPresent == True or protonPresent == True:
@@ -134,7 +134,7 @@ def histStack(title, histList):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt.kGreen, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow]
+  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
   targetPOT = 6.67e+20
   ntuplePOTSum = 4.675690535431973e+20
   for x in range(len(histList)):
@@ -143,7 +143,7 @@ def histStack(title, histList):
     hist.Scale(targetPOT/ntuplePOTSum)
     hist.SetLineColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
-    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(histInt)+" events", "l")
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" events", "l")
     stack.Add(hist)
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
   histCanvas = rt.TCanvas() 
@@ -217,3 +217,22 @@ def recoNeutralCurrent(eventTree):
     return False
   else:
     return True
+
+
+def trickyPionProtonCuts(eventTree):
+#Filter for pions and photons using truth - False if either (or both) are present, True otherwise                                               
+  pionPresent = False
+  protonPresent = False
+  for x in range(len(eventTree.truePrimPartPDG)):
+    if eventTree.truePrimPartPDG[x] == 211:
+      if eventTree.truePrimPartE[x] > 0.03:
+        pionPresent = True
+      break
+    elif eventTree.truePrimPartPDG[x] == 2212:
+      if eventTree.truePrimPartE[x] > 0.06:
+        protonPresent = True
+        break
+  if pionPresent == True or protonPresent == True:
+    return True
+  else:
+    return False
