@@ -155,7 +155,6 @@ def histStack(title, histList):
 
   return histCanvas, stack, legend, histInt
 
-<<<<<<< HEAD
 def histStackFill(title, histList, legendTitle):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
@@ -183,7 +182,7 @@ def histStackFill(title, histList, legendTitle):
   histCanvas.Update()
 
   return histCanvas, stack, legend, histInt
-=======
+
 def scaleRecoEnergy(eventTree, recoIDs):
   scaledEnergy = []
   for x in recoIDs:
@@ -211,7 +210,6 @@ def scaleTrueEnergy(eventTree, truePhotonIDs):
 
   return leadingPhoton
 
->>>>>>> 8259eb8a5b07a4ea6f11d400a6a0414fac1f496a
 
 #RECO FUNCTIONS
 def recoNoVertex(eventTree):
