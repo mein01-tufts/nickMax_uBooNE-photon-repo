@@ -19,11 +19,11 @@ def trueCutPionProton(eventTree):
   pionPresent = False
   protonPresent = False                                    
   for x in range(len(eventTree.truePrimPartPDG)):
-    if eventTree.truePrimPartPDG[x] == 211:
+    if abs(eventTree.truePrimPartPDG[x]) == 211:
       pionEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
       if pionEnergy > 0.03:
         pionPresent = True
-      break
+        break
     elif eventTree.truePrimPartPDG[x] == 2212:
       protonEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2)+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2)
       if protonEnergy > 0.06:
@@ -129,7 +129,7 @@ def truePhotonList(eventTree, list1, fiducial):
       list1.append(x)  
   return list1
 
-
+#HISTOGRAM FUNCTIONS
 def histStack(title, histList):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
@@ -155,6 +155,7 @@ def histStack(title, histList):
 
   return histCanvas, stack, legend, histInt
 
+<<<<<<< HEAD
 def histStackFill(title, histList, legendTitle):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
@@ -182,6 +183,35 @@ def histStackFill(title, histList, legendTitle):
   histCanvas.Update()
 
   return histCanvas, stack, legend, histInt
+=======
+def scaleRecoEnergy(eventTree, recoIDs):
+  scaledEnergy = []
+  for x in recoIDs:
+    energyGeV = eventTree.showerRecoE[x]/1000
+    scaledEnergy.append(energyGeV)
+
+  leadingPhoton = scaledEnergy[0]
+  for x in range(len(scaledEnergy)):
+    if scaledEnergy[x] > leadingPhoton:
+      leadingPhoton = scaledEnergy[x]
+
+  return leadingPhoton
+
+
+def scaleTrueEnergy(eventTree, truePhotonIDs):
+  scaledEnergy = []
+  for x in truePhotonIDs:
+    energyGeV = eventTree.trueSimPartE[x]/1000
+    scaledEnergy.append(energyGeV)
+
+  leadingPhoton = scaledEnergy[0]
+  for x in range(len(scaledEnergy)):
+    if scaledEnergy[x] > leadingPhoton:
+      leadingPhoton = scaledEnergy[x]
+
+  return leadingPhoton
+
+>>>>>>> 8259eb8a5b07a4ea6f11d400a6a0414fac1f496a
 
 #RECO FUNCTIONS
 def recoNoVertex(eventTree):
@@ -219,7 +249,7 @@ def recoPionProton(eventTree):
       if eventTree.trackRecoE[x] >= 60:
         protonFound = True
         break
-    elif eventTree.trackPID[x] == 211:
+    elif abs(eventTree.trackPID[x]) == 211:
       if eventTree.trackRecoE[x] >= 30:
         chargedPionFound = True
         break
@@ -233,12 +263,12 @@ def recoNeutralCurrent(eventTree):
   chargeCurrent = False
   for x in range(eventTree.nTracks):
     if eventTree.trackClassified[x] == 1:
-      if eventTree.trackPID[x] == 13:
+      if eventTree.trackPID[x] == 13 and eventTree.trackRecoE[x] > 20:
         chargeCurrent = True
         break
   for x in range(eventTree.nShowers):
     if eventTree.showerClassified[x] == 1:
-      if eventTree.showerPID[x] == 11:
+      if eventTree.showerPID[x] == 11 and eventTree.showerRecoE[x] > 10:
         chargeCurrent = True
         break
   if chargeCurrent == True:
@@ -248,14 +278,14 @@ def recoNeutralCurrent(eventTree):
 
 
 def trickyPionProtonCuts(eventTree):
-#Filter for pions and photons using truth - False if either (or both) are present, True otherwise                                               
+#Filter for pions and photons using truth - False if either (or both) are present, True otherwise 
   pionPresent = False
   protonPresent = False
   for x in range(len(eventTree.truePrimPartPDG)):
-    if eventTree.truePrimPartPDG[x] == 211:
+    if abs(eventTree.truePrimPartPDG[x]) == 211:
       if eventTree.truePrimPartE[x] > 0.03:
         pionPresent = True
-      break
+        break
     elif eventTree.truePrimPartPDG[x] == 2212:
       if eventTree.truePrimPartE[x] > 0.06:
         protonPresent = True
@@ -264,3 +294,4 @@ def trickyPionProtonCuts(eventTree):
     return True
   else:
     return False
+
