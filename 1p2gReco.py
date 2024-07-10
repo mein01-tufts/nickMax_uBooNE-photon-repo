@@ -240,32 +240,3 @@ histCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton
 
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
-
-
-def histStackFill(title, histList, legendTitle):
-  #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
-  stack = rt.THStack("PhotonStack", str(title))
-  legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
-  targetPOT = 6.67e+20
-  ntuplePOTSum = 4.675690535431973e+20
-  for x in range(len(histList)):
-    hist = histList[x]
-    bins = hist.GetNbinsX()
-    hist.Scale(targetPOT/ntuplePOTSum)
-    hist.SetFillColor(colors[x%7])
-    hist.SetMarkerStyle(21)
-    hist.SetMarkerColor(colors[x%7])
-    histInt = hist.Integral(1, int(bins))
-    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" events", "f")
-    stack.Add(hist)
-  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
-  histCanvas = rt.TCanvas() 
-  stack.Draw("HIST")
-  stack.GetXaxis().SetTitle("Leading Photon Energy (GeV)")
-  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
-  legend.SetHeader(str(legendTitle), "C")
-  legend.Draw()
-  histCanvas.Update()
-
-  return histCanvas, stack, legend, histInt
