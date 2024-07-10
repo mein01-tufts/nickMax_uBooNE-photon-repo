@@ -6,7 +6,7 @@ from cuts import histStackFill
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gMissingPhotons.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoOutputTrue.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -152,16 +152,14 @@ for i in range(eventTree.GetEntries()):
     #-------- end of truth selection --------#
     #-------- start of reco matching --------#
 
-#reco vertex check: does reco even find an event
+#reco vertex check: does reco even find an event, cut if not
     if eventTree.foundVertex != 1:
-        noVtxFoundHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
-#reco fiducial histogram fill
+#reco fiducial cut
     if eventTree.vtxX <= (xMin + fiducialWidth) or eventTree.vtxX >= (xMax - fiducialWidth) or \
         eventTree.vtxY <= (yMin + fiducialWidth) or eventTree.vtxY >= (yMax - fiducialWidth) or \
         eventTree.vtxZ <= (zMin + fiducialWidth) or eventTree.vtxZ >= (zMax - fiducialWidth):
-        outFiducialHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
 # don't need reco cosmic cut - it's the same as the true
@@ -185,7 +183,6 @@ for i in range(eventTree.GetEntries()):
                 recoPrimaryElectronFound == True
 #fill hist w/ events that have primary electrons/muons
     if recoPrimaryMuonFound or recoPrimaryElectronTrackFound or recoPrimaryElectronFound:    
-        chargedCurrentHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
 #reco protons: find all protons of KE >= 60MeV
@@ -194,11 +191,7 @@ for i in range(eventTree.GetEntries()):
         if abs(eventTree.trackPID[i]) == 2212:
             if eventTree.trackRecoE[i] >= 60:
                 recoNumProtons += 1
-    if recoNumProtons == 0:
-        noProtonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if recoNumProtons >= 2:
-        pluralProtonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+    if recoNumProtons != 1:
         continue
     
 #reco pi+: fill all events w/ pi+ of KE >= 30MeV
@@ -209,7 +202,6 @@ for i in range(eventTree.GetEntries()):
                     recoPiPlusPresent = True
                     break
     if recoPiPlusPresent:
-        piPlusHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
 #reco photons: find and tally all photons
@@ -218,20 +210,13 @@ for i in range(eventTree.GetEntries()):
         if eventTree.showerPID[i] == 22:
             recoNumPhotons += 1
     if recoNumPhotons == 0:
-        recoNoPhotons += 1
-        noPhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if recoNumPhotons == 1:
-        reco1Photon += 1
-        onePhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if recoNumPhotons >= 3:
-        reco3Photon += 1
-        manyPhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if recoNumPhotons == 2:
-        reco2Photon += 1
-        recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+        continue
 #----- end of event loop ---------------------------------------------#
 
 trueSignalHist.Scale(targetPOT/ntuplePOTsum)
