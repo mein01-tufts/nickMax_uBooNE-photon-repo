@@ -25,18 +25,18 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #define histograms to fill
-trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,3)
+trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,1.5)
 
-noVtxFoundHist = rt.TH1F("No Vertex Found", "Reco couldn't find a vertex",60,0,3)
-outFiducialHist = rt.TH1F("Futside Fiducial", "Reco placed vertex outside fiducial volume",60,0,3)
-chargedCurrentHist = rt.TH1F("Charged Current", "Reco identified as charged-current",60,0,3)
-piPlusHist = rt.TH1F("pi+", "Reco found a pi+",60,0,3)
-noProtonHist = rt.TH1F("No Protons", "Reco found no protons",60,0,3)
-pluralProtonHist = rt.TH1F("Multiple Protons", "Reco found multiple protons",60,0,3)
-noPhotonHist = rt.TH1F("No Photons", "Reco found no photons",60,0,3)
-onePhotonHist = rt.TH1F("One Photon", "Reco found 1 photon",60,0,3)
-manyPhotonHist = rt.TH1F("Many Photons", "Reco found 3+ photons",60,0,3)
-recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,3)
+noVtxFoundHist = rt.TH1F("No Vertex Found", "Reco couldn't find a vertex",60,0,1.5)
+outFiducialHist = rt.TH1F("Futside Fiducial", "Reco placed vertex outside fiducial volume",60,0,1.5)
+chargedCurrentHist = rt.TH1F("Charged Current", "Reco identified as charged-current",60,0,1.5)
+piPlusHist = rt.TH1F("pi+", "Reco found a pi+",60,0,1.5)
+noProtonHist = rt.TH1F("No Protons", "Reco found no protons",60,0,1.5)
+pluralProtonHist = rt.TH1F("Multiple Protons", "Reco found multiple protons",60,0,1.5)
+noPhotonHist = rt.TH1F("No Photons", "Reco found no photons",60,0,1.5)
+onePhotonHist = rt.TH1F("One Photon", "Reco found 1 photon",60,0,1.5)
+manyPhotonHist = rt.TH1F("Many Photons", "Reco found 3+ photons",60,0,1.5)
+recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,1.5)
 
 #set histogram axis titles and increase line width
 def configureHist(h):
@@ -234,9 +234,16 @@ for i in range(eventTree.GetEntries()):
         recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
 #----- end of event loop ---------------------------------------------#
 
+trueSignalHist.Scale(targetPOT/ntuplePOTsum)
+
 histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, piPlusHist, noProtonHist, pluralProtonHist, noPhotonHist, onePhotonHist, manyPhotonHist]
+
+trueSignalInt = trueSignalHist.Integral(1,60)
 
 histCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification (events per 6.67e+20 POT)")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
+trueSignalHist.Write()
+
+print(str(trueSignalInt))
