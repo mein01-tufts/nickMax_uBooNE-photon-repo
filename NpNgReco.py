@@ -109,20 +109,22 @@ for i in range(eventTree.GetEntries()):
         recoCCElectron += 1
         continue
 
-#reco pi+ finder:
+#reco pi+ finder: find all pi+ above 30 MeV and delete event
     piPlusPresent = False
     for i in range(eventTree.nTracks):
         if abs(eventTree.trackPID[i]) == 211:
-            piPlusPresent = True
-            break
+            if eventTree.trackRecoE[i] >= 30:
+                piPlusPresent = True
+                break
     if piPlusPresent:
         continue
 
-#reco protons: find and tally
+#reco protons: find and tally all protons aboe 60 MeV
     nProtons = 0
     for i in range(eventTree.nTracks):
         if abs(eventTree.trackPID[i]) == 2212: 
-            nProtons += 1
+            if eventTree.trackRecoE[i] >= 60:
+                nProtons += 1
     if nProtons == 0:
         continue
 
@@ -165,9 +167,9 @@ histScalerStacker(twoPhotonHist, rt.kCyan)
 histScalerStacker(threePhotonHist, rt.kGreen)
 
 #integrate all events in the stack
-oneInt = round(onePhotonHist.Integral(0,60), 2)
-twoInt = round(twoPhotonHist.Integral(0,60), 2)
-threeInt = round(threePhotonHist.Integral(0,60), 2)
+oneInt = round(onePhotonHist.Integral(0,24), 2)
+twoInt = round(twoPhotonHist.Integral(0,24), 2)
+threeInt = round(threePhotonHist.Integral(0,24), 2)
 
 legend = rt.TLegend(0.5, 0.65, 0.9, 0.9)  # (x1, y1, x2, y2) in NDC coordinates
 
