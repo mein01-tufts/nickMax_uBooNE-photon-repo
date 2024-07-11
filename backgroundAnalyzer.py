@@ -53,7 +53,9 @@ totalHist3 = rt.TH1F("total3", "Three photons",60,0,2)
 
 totalList = [totalHist1, totalHist2, totalHist3]
 
-chargeCurrentHist = rt.TH1F("CC1", "Charged Current",60,0,2)
+muonHist = rt.TH1F("Muon1", "Charged Current - Missed Muon",60,0,2)
+electronHist = rt.TH1F("Electron1", "Electron flagged as photon",60,0,2)
+chargeCurrentHist = rt.TH1F("CC1", "Other Charged Current",60,0,2)
 fiducialHist = rt.TH1F("fiducial1", "Out of Fiducial",60,0,2)
 cosmicHist = rt.TH1F("cosmic1", "Cosmic Overlap",60,0,2)
 pionProtonHist = rt.TH1F("pionProton1", "Charged Pion or Proton",60,0,2)
@@ -62,9 +64,11 @@ twoPhotonHist = rt.TH1F("twoPhotons1", "Two Photons",60,0,2)
 manyPhotonHist = rt.TH1F("manyPhotons1", "3+ Photons",60,0,2)
 successHist = rt.TH1F("success1", "Signal",60,0,2)
 
-histList = [chargeCurrentHist, fiducialHist, cosmicHist, pionProtonHist, noPhotonHist, twoPhotonHist, manyPhotonHist, successHist]
+histList = [successHist, electronHist, muonHist, chargeCurrentHist, fiducialHist, cosmicHist, pionProtonHist, noPhotonHist, twoPhotonHist, manyPhotonHist]
 
-chargeCurrentHist2 = rt.TH1F("CC2", "Charged current",60,0,2)
+muonHist2 = rt.TH1F("Muon2", "Charged Current - Missed Muon",60,0,2)
+electronHist2 = rt.TH1F("Electron2", "Electron flagged as photon",60,0,2)
+chargeCurrentHist2 = rt.TH1F("CC2", "Other Charged current",60,0,2)
 fiducialHist2 = rt.TH1F("fiducial2", "Out of fiducial",60,0,2)
 cosmicHist2 = rt.TH1F("cosmic2", "Cosmic overlap",60,0,2)
 pionProtonHist2 = rt.TH1F("pionProton2", "Charged Pion or Proton",60,0,2)
@@ -73,9 +77,11 @@ onePhotonHist2 = rt.TH1F("twoPhotons2", "One Photon",60,0,2)
 manyPhotonHist2 = rt.TH1F("manyPhotons2", "3+ Photons",60,0,2)
 successHist2 = rt.TH1F("success2", "Signal",60,0,2)
 
-histList2 = [chargeCurrentHist2, fiducialHist2, cosmicHist2, pionProtonHist2, noPhotonHist2, onePhotonHist2, manyPhotonHist2, successHist2]
+histList2 = [successHist2, electronHist2, muonHist2, chargeCurrentHist2, fiducialHist2, cosmicHist2, pionProtonHist2, noPhotonHist2, onePhotonHist2, manyPhotonHist2]
 
-chargeCurrentHist3 = rt.TH1F("CC3", "Charged current",60,0,2)
+muonHist3 = rt.TH1F("Muon3", "Charged Current - Missed Muon",60,0,2)
+electronHist3 = rt.TH1F("Electron3", "Electron flagged as photon",60,0,2)
+chargeCurrentHist3 = rt.TH1F("CC3", "Other Charged current",60,0,2)
 fiducialHist3 = rt.TH1F("fiducial3", "Out of fiducial",60,0,2)
 cosmicHist3 = rt.TH1F("cosmic3", "Cosmic overlap",60,0,2)
 pionProtonHist3 = rt.TH1F("pionProton3", "Charged Pion or Proton",60,0,2)
@@ -84,7 +90,7 @@ twoPhotonHist3 = rt.TH1F("twoPhotons3", "Two Photons",60,0,2)
 onePhotonHist3 = rt.TH1F("onePhotons", "One Photon",60,0,2)
 successHist3 = rt.TH1F("success3", "Signal",60,0,2)
 
-histList3 = [chargeCurrentHist3, fiducialHist3, cosmicHist3, pionProtonHist3, noPhotonHist3, twoPhotonHist3, onePhotonHist3, successHist3]
+histList3 = [successHist3, electronHist3, muonHist3, chargeCurrentHist3, fiducialHist3, cosmicHist3, pionProtonHist3, noPhotonHist3, twoPhotonHist3, onePhotonHist3]
 
 #Variables for program review
 recoCount = 0
@@ -124,25 +130,36 @@ for i in range(eventTree.GetEntries()):
     
   #SORT USING TRUTH
   #Scale energy, find leading photon
-  leadingPhoton = scaleRecoEnergy(eventTree, recoList)
+  leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
   
   #Fill total histogram
   addHist(recoList, leadingPhoton, totalHist1, totalHist2, totalHist3, eventTree.xsecWeight)
   
   #Fill for charge current
   if trueCutNC(eventTree) == False:
-    addHist(recoList, leadingPhoton, chargeCurrentHist, chargeCurrentHist2, chargeCurrentHist3, eventTree.xsecWeight)
+    added = False
+    for x in recoList:
+      if eventTree.showerTruePID[x] == 11:
+        addHist(recoList, leadingPhoton, electronHist, electronHist2, electronHist3, eventTree.xsecWeight)
+        added = True
+      elif 13 in eventTree.truePrimPartPDG:
+        addHist(recoList, leadingPhoton, muonHist, muonHist2, muonHist3, eventTree.xsecWeight)
+        added = True
+    if added == False:
+      addHist(recoList, leadingPhoton, chargeCurrentHist, chargeCurrentHist2, chargeCurrentHist3, eventTree.xsecWeight)
     continue
 
   #Fill for fiducial failures
   if trueCutFiducials(eventTree, fiducialData) == False:
     addHist(recoList, leadingPhoton, fiducialHist, fiducialHist2, fiducialHist3, eventTree.xsecWeight)
     continue
+  
   #Fill for cosmic failures
   if trueCutCosmic(eventTree) == False:
     addHist(recoList, leadingPhoton, cosmicHist, cosmicHist2, cosmicHist3, eventTree.xsecWeight)
     continue
 
+  #Fill for pions and protons slipping in
   if trueCutPionProton(eventTree) == False:
     addHist(recoList, leadingPhoton, pionProtonHist, pionProtonHist2, pionProtonHist3, eventTree.xsecWeight)
     continue
@@ -173,5 +190,3 @@ totalHistCanvas.Write()
 histCanvas.Write()
 histCanvas2.Write()
 histCanvas3.Write()
-
-print(recoCount)

@@ -243,7 +243,7 @@ for i in range(eventTree.GetEntries()):
   
 
 histCanvas, stack, legend, histInt = histStack("Outcome of single-photon true events (reco reversed)", histList)
-histCanvas2, stack2, legend2, histInt2 = histStack("Outcome of two-photon true events (reco reversed", histList2)
+histCanvas2, stack2, legend2, histInt2 = histStack("Outcome of two-photon true events (reco reversed)", histList2)
 histCanvas3, stack3, legend3, histInt3 = histStack("Outcome of three-photon true events (reco reversed)", histList3)
 totalHistCanvas, stack4, legend4, histInt4 = histStack("Chart of all true events", totalList)
 
