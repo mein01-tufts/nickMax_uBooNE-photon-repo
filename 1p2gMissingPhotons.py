@@ -2,11 +2,11 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from cuts import histStackFill
+from cuts import histStackFill, sStackFillS, sStackFillNS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoOutputTrue.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gMissingPhotonsTest.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -25,39 +25,12 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #define histograms to fill
-trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,1.5)
+trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,600)
 
-noVtxFoundHist = rt.TH1F("No Vertex Found", "Reco couldn't find a vertex",60,0,1.5)
-outFiducialHist = rt.TH1F("Futside Fiducial", "Reco placed vertex outside fiducial volume",60,0,1.5)
-chargedCurrentHist = rt.TH1F("Charged Current", "Reco identified as charged-current",60,0,1.5)
-piPlusHist = rt.TH1F("pi+", "Reco found a pi+",60,0,1.5)
-noProtonHist = rt.TH1F("No Protons", "Reco found no protons",60,0,1.5)
-pluralProtonHist = rt.TH1F("Multiple Protons", "Reco found multiple protons",60,0,1.5)
-noPhotonHist = rt.TH1F("No Photons", "Reco found no photons",60,0,1.5)
-onePhotonHist = rt.TH1F("One Photon", "Reco found 1 photon",60,0,1.5)
-manyPhotonHist = rt.TH1F("Many Photons", "Reco found 3+ photons",60,0,1.5)
-recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,1.5)
-
-#set histogram axis titles and increase line width
-def configureHist(h):
-    h.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
-    h.GetXaxis().SetTitle("photon energy (GeV)")
-    h.SetLineWidth(2)
-    return h
-
-#scale the histograms based on total good POT
-trueSignalHist = configureHist(trueSignalHist)
-
-noVtxFoundHist = configureHist(noVtxFoundHist)
-outFiducialHist = configureHist(outFiducialHist)
-chargedCurrentHist = configureHist(chargedCurrentHist)
-piPlusHist = configureHist(piPlusHist)
-noProtonHist = configureHist(noProtonHist)
-pluralProtonHist = configureHist(pluralProtonHist)
-noPhotonHist = configureHist(noPhotonHist)
-onePhotonHist = configureHist(onePhotonHist)
-manyPhotonHist = configureHist(manyPhotonHist)
-recoSignalHist = configureHist(recoSignalHist)
+noPhotonHist = rt.TH1F("No Photons", "Reco saw neither true photon",60,0,600)
+onePhotonHist = rt.TH1F("One Photon", "Reco saw one true photon",60,0,600)
+manyPhotonHist = rt.TH1F("Many Photons", "Reco saw extra photons",60,0,600)
+recoSignalHist = rt.TH1F("Reco = True", "Reco saw both true photons",60,0,600)
 
 #set detector min/max and fiducial width (cm)
 xMin, xMax = 0, 256
@@ -66,10 +39,18 @@ zMin, zMax = 0, 1036
 fiducialWidth = 10
 
 totalEvents = 0
+recoEvents = 0
 recoNoPhotons = 0
 reco1Photon = 0
 reco2Photon = 0
 reco3Photon = 0
+
+recoTotalPhotons = 0
+recoTruthMatchedPhotons = 0
+recoTruthMatchedPhotons2 = 0
+recoTruthMatchedPhotons3 = 0
+trueTotalPhotons = 0
+totalPhotonsRecoSees = 0
 
 #begin loop over events in ntuple file:
 # if we start with truth then reco-match, we can ID reco's false negatives
@@ -122,6 +103,7 @@ for i in range(eventTree.GetEntries()):
     photonInSecondary = False
     primList = []
     photonIndexList = []
+    photonTIDlist = []
     for i in range(len(eventTree.trueSimPartTID)):
         if eventTree.trueSimPartTID[i] == eventTree.trueSimPartMID[i]:
             primList.append(eventTree.trueSimPartTID[i])
@@ -129,30 +111,32 @@ for i in range(eventTree.GetEntries()):
         if eventTree.trueSimPartPDG[i] == 22:
             if eventTree.trueSimPartMID[i] in primList:
                 photonIndexList.append(i)
+                photonTIDlist.append(eventTree.trueSimPartTID[i])
                 photonInSecondary = True
             elif abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
                 photonIndexList.append(i)
-                photonInSecondary = True
+                photonTIDlist.append(eventTree.trueSimPartTID[i])
+                photonInSecondary =True
     if photonInSecondary == False:
         continue
     if len(photonIndexList) != 2:
         continue
 
+    trueTotalPhotons += 2
 #find leading photon energy
     photonEnergyList = []
     for i in range(len(photonIndexList)):
-        photonEnergyGeV = eventTree.trueSimPartE[photonIndexList[i]] / 1000
-        photonEnergyList.append(photonEnergyGeV)
-    leadingPhotonEnergy = max(photonEnergyList)
+        photonEnergyMeV = eventTree.trueSimPartE[photonIndexList[i]] 
+        photonEnergyList.append(photonEnergyMeV)
 
-    trueSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+    avgEnergy = np.mean(photonEnergyList)
 
-    totalEvents += 1
+    trueSignalHist.Fill(avgEnergy, eventTree.xsecWeight)
 
     #-------- end of truth selection --------#
     #-------- start of reco matching --------#
 
-#reco vertex check: does reco even find an event, cut if not
+#reco vertex cut:
     if eventTree.foundVertex != 1:
         continue
 
@@ -181,11 +165,11 @@ for i in range(eventTree.GetEntries()):
         if eventTree.showerIsSecondary[i] == 0:
             if abs(eventTree.showerPID[i]) == 11:
                 recoPrimaryElectronFound == True
-#fill hist w/ events that have primary electrons/muons
+#cut events w/ primary muons and/or electrons
     if recoPrimaryMuonFound or recoPrimaryElectronTrackFound or recoPrimaryElectronFound:    
         continue
 
-#reco protons: find all protons of KE >= 60MeV
+#reco protons: find all protons of KE >= 60MeV, cut if != 1
     recoNumProtons = 0
     for i in range(eventTree.nTracks):
         if abs(eventTree.trackPID[i]) == 2212:
@@ -194,7 +178,7 @@ for i in range(eventTree.GetEntries()):
     if recoNumProtons != 1:
         continue
     
-#reco pi+: fill all events w/ pi+ of KE >= 30MeV
+#reco pi+: cut all events w/ pi+ of KE >= 30MeV
     recoPiPlusPresent = False
     for i in range(eventTree.nTracks):
         if abs(eventTree.trackPID[i]) == 211:
@@ -204,31 +188,62 @@ for i in range(eventTree.GetEntries()):
     if recoPiPlusPresent:
         continue
 
+#fill to truth all events where reco 
+#fill each photon energy into true
+
+
+    totalEvents += 1
 #reco photons: find and tally all photons
     recoNumPhotons = 0
+    recoEvents += 1
+    totalPhotonsRecoSees += 2
     for i in range(eventTree.nShowers):
         if eventTree.showerPID[i] == 22:
+            recoTotalPhotons += 1
             recoNumPhotons += 1
+            if eventTree.showerTruePID[i] == 22:
+                recoTruthMatchedPhotons += 1
+                if eventTree.showerTruePID[i] == 22 and eventTree.showerTrueTID[i] in photonIndexList:
+                    recoTruthMatchedPhotons3 += 1
+
+        if eventTree.showerTrueTID[i] in photonIndexList:
+            recoTruthMatchedPhotons2 += 1
+
     if recoNumPhotons == 0:
-        continue
+        recoNoPhotons += 1
+        noPhotonHist.Fill(avgEnergy, eventTree.xsecWeight)
     if recoNumPhotons == 1:
-        continue
-    if recoNumPhotons >= 3:
-        continue
+        reco1Photon += 1
+        onePhotonHist.Fill(avgEnergy, eventTree.xsecWeight)
     if recoNumPhotons == 2:
-        continue
+        reco2Photon += 1
+        recoSignalHist.Fill(avgEnergy, eventTree.xsecWeight)
+    if recoNumPhotons >= 3:
+        reco3Photon += 1
+        manyPhotonHist.Fill(avgEnergy, eventTree.xsecWeight)
+
+    true2recoMap = {}
+    for i in photonIndexList:
+        true2recoMap[i] = []
+    
+
+
 #----- end of event loop ---------------------------------------------#
+histList = [recoSignalHist, noPhotonHist, onePhotonHist, manyPhotonHist,]
+signalCanvas, signalStack, signalLegend, signalInt = histStackFill("Reco ID of Photons in True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification: (", "(True) Average Photon Energy (MeV)", "Events per 6.67e+20 POT")
 
-trueSignalHist.Scale(targetPOT/ntuplePOTsum)
-
-histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, piPlusHist, noProtonHist, pluralProtonHist, noPhotonHist, onePhotonHist, manyPhotonHist]
-
-trueSignalInt = trueSignalHist.Integral(1,60)
-
-histCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification (events per 6.67e+20 POT)")
+trueCanvas, trueStack, trueLegend, trueInt = sStackFillS("True NC 1 Proton, 2 Gamma Events", trueSignalHist, rt.kBlue, "trueCombined")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
-histCanvas.Write()
-trueSignalHist.Write()
+signalCanvas.Write()
+trueCanvas.Write()
 
-print(str(trueSignalInt))
+#print("Reco's truth-matching photon efficiency: "+ str(recoTruthMatchedPhotons/recoTotalPhotons * 100) + " %")
+#print("Reco's efficiency at finding and truth-matching a true photon: " + str(recoTruthMatchedPhotons/totalPhotonsRecoSees*100) + "%")
+#print("Reco's efficiency at finding the same number of photons it should see: " + str(recoTotalPhotons/totalPhotonsRecoSees*100) + "%")
+#print("reco IDs a shower whose true ID is photon: " + str(recoTruthMatchedPhotons2))
+#print("reco IDs a photon shower whose true ID is also photon: " + str(recoTruthMatchedPhotons))
+#print("reco IDs a photon shower whose true ID is also photon, and whose TID is in the true photon list: " + str(recoTruthMatchedPhotons3))
+
+#print("\nreco IDs a shower as non-photon, but that shower's true ID is photon: " + str(recoTruthMatchedPhotons2-recoTruthMatchedPhotons))
+#print("reco IDs a photon shower whose true ID is also photon but is not a secondary particle: " + str(recoTruthMatchedPhotons-recoTruthMatchedPhotons3) + "\n")
