@@ -129,6 +129,27 @@ def truePhotonList(eventTree, list1, fiducial):
       list1.append(x)  
   return list1
 
+def trueCutMaxProtons(eventTree):
+#Filter for pions and photons using truth - False if either (or both) are present, True otherwise                      
+  pionPresent = False
+  protonPresent = False
+  for x in range(len(eventTree.truePrimPartPDG)):
+    if abs(eventTree.truePrimPartPDG[x]) == 211:
+      pionEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2))
+      if pionEnergy > 0.03:
+        pionPresent = True
+        break
+    elif eventTree.truePrimPartPDG[x] == 2212:
+      protonEnergy = eventTree.truePrimPartE[x] - np.sqrt(eventTree.truePrimPartE[x]**2 - (eventTree.truePrimPartPx[x]**2)+eventTree.truePrimPartPy[x]**2+eventTree.truePrimPartPz[x]**2)
+      if protonEnergy > 0.06:
+        protonPresent = True
+        break
+  if pionPresent == False and protonPresent == True:
+    return True
+  else:
+    return False
+
+
 #HISTOGRAM FUNCTIONS
 def histStack(title, histList):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
@@ -234,7 +255,9 @@ def sStackFillNS(title, hist, kColor, canvasTitle ):
 
 
 def scaleRecoEnergy(eventTree, recoIDs):
+  #Uses reconstructed variables to return scaled energy and invariant mass (if the photon count is not two, the invariant mass defaults to -1)
   scaledEnergy = []
+  invariantMass = -1
   for x in recoIDs:
     energyGeV = eventTree.showerRecoE[x]/1000
     scaledEnergy.append(energyGeV)
@@ -244,7 +267,10 @@ def scaleRecoEnergy(eventTree, recoIDs):
     if scaledEnergy[x] > leadingPhoton:
       leadingPhoton = scaledEnergy[x]
 
-  return leadingPhoton
+  if len(recoIDs) == 2:
+    invariantMass = np.sqrt((scaledEnergy[0]*scaledEnergy[1]) - (scaledEnergy[0]*scaledEnergy[1]*eventTree.showerStartDirX[0])*(eventTree.showerStartDirX[1] + eventTree.showerStartDirY[0]*eventTree.showerStartDirY[1] + eventTree.showerStartDirZ[0]*eventTree.showerStartDirZ[1]))
+  
+  return leadingPhoton, invariantMass
 
 
 def scaleTrueEnergy(eventTree, truePhotonIDs):
@@ -259,7 +285,6 @@ def scaleTrueEnergy(eventTree, truePhotonIDs):
       leadingPhoton = scaledEnergy[x]
 
   return leadingPhoton
-
 
 #RECO FUNCTIONS
 def recoNoVertex(eventTree):
@@ -326,7 +351,8 @@ def recoNeutralCurrent(eventTree):
 
 
 def trickyPionProtonCuts(eventTree):
-#Filter for pions and photons using truth - False if either (or both) are present, True otherwise 
+#Filter for pions and photons using truth - False if either (or both) are present, True otherwise
+#NOTE - This is deliberately checking for photons and charged pions the WRONG WAY, in order to inspect the specific set of events with protons that fall between this threshold and the actual kinetic energy threshold. If you're looking for the right way to do it, trueCutPionProton is the way to go (or you might want trueCutMaxProton if you're looking for protons but not charged pions) 
   pionPresent = False
   protonPresent = False
   for x in range(len(eventTree.truePrimPartPDG)):
@@ -342,4 +368,3 @@ def trickyPionProtonCuts(eventTree):
     return True
   else:
     return False
-
