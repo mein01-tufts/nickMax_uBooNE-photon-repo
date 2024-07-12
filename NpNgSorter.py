@@ -4,7 +4,7 @@ import ROOT as rt
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="NpNgOutput.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="NpNgOutputNonLog.root", help="output root file name")
 parser.add_argument("-fc", "--fullyContained", action="store_true", help="only consider fully contained events")
 parser.add_argument("-ncc", "--noCosmicCuts", action="store_true", help="don't apply cosmic rejection cuts")
 args = parser.parse_args()
@@ -163,10 +163,9 @@ legend.AddEntry(threePhotonHist, "#splitline{3+ secondary photons,}" + "{" + str
 
 histCanvas = rt.TCanvas()
 histStack.Draw("HIST")
-histStack.GetXaxis().SetTitle("Number of Protons")
+histStack.GetXaxis().SetTitle("(True) Number of Protons")
 histStack.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
 legend.Draw()
-rt.gPad.SetLogy(1)
 rt.gPad.Update()
 
 #create output root file and write histograms to file
