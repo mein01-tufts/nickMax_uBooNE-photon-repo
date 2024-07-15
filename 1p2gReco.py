@@ -6,7 +6,7 @@ from cuts import histStackFill
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gMissingPhotons.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoOutputTrueScaled.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -25,39 +25,18 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #define histograms to fill
-trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,1.5)
+trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,1500)
 
-noVtxFoundHist = rt.TH1F("No Vertex Found", "Reco couldn't find a vertex",60,0,1.5)
-outFiducialHist = rt.TH1F("Futside Fiducial", "Reco placed vertex outside fiducial volume",60,0,1.5)
-chargedCurrentHist = rt.TH1F("Charged Current", "Reco identified as charged-current",60,0,1.5)
-piPlusHist = rt.TH1F("pi+", "Reco found a pi+",60,0,1.5)
-noProtonHist = rt.TH1F("No Protons", "Reco found no protons",60,0,1.5)
-pluralProtonHist = rt.TH1F("Multiple Protons", "Reco found multiple protons",60,0,1.5)
-noPhotonHist = rt.TH1F("No Photons", "Reco found no photons",60,0,1.5)
-onePhotonHist = rt.TH1F("One Photon", "Reco found 1 photon",60,0,1.5)
-manyPhotonHist = rt.TH1F("Many Photons", "Reco found 3+ photons",60,0,1.5)
-recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,1.5)
-
-#set histogram axis titles and increase line width
-def configureHist(h):
-    h.GetYaxis().SetTitle("events per "+targetPOTstring+" POT")
-    h.GetXaxis().SetTitle("photon energy (GeV)")
-    h.SetLineWidth(2)
-    return h
-
-#scale the histograms based on total good POT
-trueSignalHist = configureHist(trueSignalHist)
-
-noVtxFoundHist = configureHist(noVtxFoundHist)
-outFiducialHist = configureHist(outFiducialHist)
-chargedCurrentHist = configureHist(chargedCurrentHist)
-piPlusHist = configureHist(piPlusHist)
-noProtonHist = configureHist(noProtonHist)
-pluralProtonHist = configureHist(pluralProtonHist)
-noPhotonHist = configureHist(noPhotonHist)
-onePhotonHist = configureHist(onePhotonHist)
-manyPhotonHist = configureHist(manyPhotonHist)
-recoSignalHist = configureHist(recoSignalHist)
+noVtxFoundHist = rt.TH1F("No Vertex Found", "Reco couldn't find a vertex",60,0,1500)
+outFiducialHist = rt.TH1F("Futside Fiducial", "Reco placed vertex outside fiducial volume",60,0,1500)
+chargedCurrentHist = rt.TH1F("Charged Current", "Reco identified as charged-current",60,0,1500)
+piPlusHist = rt.TH1F("pi+", "Reco found a pi+",60,0,1500)
+noProtonHist = rt.TH1F("No Protons", "Reco found no protons",60,0,1500)
+pluralProtonHist = rt.TH1F("Multiple Protons", "Reco found multiple protons",60,0,1500)
+noPhotonHist = rt.TH1F("No Photons", "Reco found no photons",60,0,1500)
+onePhotonHist = rt.TH1F("One Photon", "Reco found 1 photon",60,0,1500)
+manyPhotonHist = rt.TH1F("Many Photons", "Reco found 3+ photons",60,0,1500)
+recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,1500)
 
 #set detector min/max and fiducial width (cm)
 xMin, xMax = 0, 256
@@ -141,8 +120,8 @@ for i in range(eventTree.GetEntries()):
 #find leading photon energy
     photonEnergyList = []
     for i in range(len(photonIndexList)):
-        photonEnergyGeV = eventTree.trueSimPartE[photonIndexList[i]] / 1000
-        photonEnergyList.append(photonEnergyGeV)
+        photonEnergyMeV = eventTree.trueSimPartE[photonIndexList[i]] 
+        photonEnergyList.append(photonEnergyMeV)
     leadingPhotonEnergy = max(photonEnergyList)
 
     trueSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
@@ -235,15 +214,23 @@ for i in range(eventTree.GetEntries()):
 #----- end of event loop ---------------------------------------------#
 
 trueSignalHist.Scale(targetPOT/ntuplePOTsum)
+trueSignalHist.SetLineColor(rt.kBlue)
+trueStack = rt.THStack('trueStack', "True NC 1 proton 1 gamma Events")
+trueStack.Add(trueSignalHist)
+trueCanvas = rt.TCanvas()
+trueStack.Draw("HIST")
+trueStack.GetXaxis().SetTitle("Leading Photon Energy (MeV)")
+trueStack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
+trueCanvas.Update()
 
 histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, piPlusHist, noProtonHist, pluralProtonHist, noPhotonHist, onePhotonHist, manyPhotonHist]
 
 trueSignalInt = trueSignalHist.Integral(1,60)
 
-histCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification (events per 6.67e+20 POT)")
+signalHistCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification: (", "Leading Photon Energy (MeV)", "Events per 6.67e+20 POT")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
-histCanvas.Write()
-trueSignalHist.Write()
+signalHistCanvas.Write()
+trueCanvas.Write()
 
 print(str(trueSignalInt))

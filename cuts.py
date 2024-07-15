@@ -176,13 +176,14 @@ def histStack(title, histList):
 
   return histCanvas, stack, legend, histInt
 
-def histStackFill(title, histList, legendTitle):
+def histStackFill(title, histList, legendTitle, xTitle, yTitle):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
   targetPOT = 6.67e+20
   ntuplePOTSum = 4.675690535431973e+20
+  integralSum = 0
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
@@ -191,18 +192,67 @@ def histStackFill(title, histList, legendTitle):
     hist.SetMarkerStyle(21)
     hist.SetMarkerColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
-    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" events", "f")
+    integralSum += histInt
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 2))+" events per 6.67e+20 POT", "f")
     stack.Add(hist)
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
-  histCanvas = rt.TCanvas() 
+  histCanvas = rt.TCanvas(str(title)) 
   stack.Draw("HIST")
-  stack.GetXaxis().SetTitle("Leading Photon Energy (GeV)")
-  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
-  legend.SetHeader(str(legendTitle), "C")
+  stack.GetXaxis().SetTitle(str(xTitle))
+  stack.GetYaxis().SetTitle(str(yTitle))
+  legendHeaderString = str(str(legendTitle) + str(round((integralSum),1)) + " Events per 6.67e+20 POT)") 
+  legend.SetHeader(str(legendHeaderString), "C")
   legend.Draw()
   histCanvas.Update()
 
   return histCanvas, stack, legend, histInt
+
+def sStackFillS(title, hist, kColor, canvasTitle ):
+#Forms a filled stacked histogram based on only one. Returns the canvas on which the histogram is written
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.45, 0.8, 0.9, 0.9)
+  targetPOT = 6.67e+20
+  ntuplePOTSum = 4.675690535431973e+20
+  bins = hist.GetNbinsX()
+  hist.Scale(targetPOT/ntuplePOTSum)
+  hist.SetFillColor(kColor)
+  hist.SetMarkerStyle(21)
+  hist.SetMarkerColor(kColor)
+  histInt = hist.Integral(1, int(bins))
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" events per 6.67e+20 POT", "f")
+  stack.Add(hist)
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas(str(canvasTitle)) 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle("Average Photon Energy (MeV)")
+  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
+  legend.Draw()
+  histCanvas.Update()
+
+  return histCanvas, stack, legend, histInt
+
+def sStackFillNS(title, hist, kColor, canvasTitle ):
+#Same as above, except doesn't scale (designed to be used after the input histogram has already been scaled in the program)
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.45, 0.8, 0.9, 0.9)
+  bins = hist.GetNbinsX()
+  hist.SetFillColor(kColor)
+  hist.SetMarkerStyle(21)
+  hist.SetMarkerColor(kColor)
+  histInt = hist.Integral(1, int(bins))
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" events per 6.67e+20 POT", "f")
+  stack.Add(hist)
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas(str(canvasTitle)) 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle("Average Photon Energy (MeV)")
+  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
+  stack.GetYaxis().SetRange(0,150)
+  legend.Draw()
+  histCanvas.Update()
+
+  return histCanvas, stack, legend, histInt
+
 
 def scaleRecoEnergy(eventTree, recoIDs):
   #Uses reconstructed variables to return scaled energy and invariant mass (if the photon count is not two, the invariant mass defaults to -1)
