@@ -2,11 +2,11 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from cuts import histStackFill
+from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoOutputTrueScaled.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoOutputTrueScaled2.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -74,27 +74,22 @@ for i in range(eventTree.GetEntries()):
     if eventTree.vtxFracHitsOnCosmic >= 1.:
         continue
 
-#true proton check: does its kinetic energy exceed 60mev? - count it if so
+#true proton & pi+ check: include all photons above 60MeV, exclude all pi+ above 30MeV
     nProtons = 0
-    for i in range(len(eventTree.truePrimPartPDG)):
-        if eventTree.truePrimPartPDG[i] == 2212:
-            pVector = np.square(eventTree.truePrimPartPx[i]) + np.square(eventTree.truePrimPartPy[i]) + np.square(eventTree.truePrimPartPz[i])
-            kE = eventTree.truePrimPartE[i] - np.sqrt((np.square(eventTree.truePrimPartE[i])) - pVector)
-            if kE >= 0.06:
-                nProtons += 1
-    if nProtons != 1:
-        continue
-
-#true pi+ check: - we want to exclude any above 30MeV
     piPlusPresent = False
     for i in range(len(eventTree.truePrimPartPDG)):
-        if abs(eventTree.truePrimPartPDG[i] == 211):
-            pVector = np.square(eventTree.truePrimPartPx[i]) + np.square(eventTree.truePrimPartPy[i]) + np.square(eventTree.truePrimPartPz[i])
-            kE = eventTree.truePrimPartE[i] - np.sqrt((np.square(eventTree.truePrimPartE[i])) - pVector)
+        #proton checker
+        if eventTree.truePrimPartPDG[i] == 2212:
+            kE = kineticEnergyCalculator(eventTree, i)
+            if kE >= 0.06:
+                nProtons += 1
+        #pi+ checker        
+        elif abs(eventTree.truePrimPartPDG[i] == 211):
+            kE = kineticEnergyCalculator(eventTree, i)
             if kE >= 0.03:
                 piPlusPresent = True
                 break
-    if piPlusPresent == True:
+    if nProtons != 1 or piPlusPresent:
         continue
 
 #true photon check: look through primary particles to count the photon daughters
@@ -213,24 +208,12 @@ for i in range(eventTree.GetEntries()):
         recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
 #----- end of event loop ---------------------------------------------#
 
-trueSignalHist.Scale(targetPOT/ntuplePOTsum)
-trueSignalHist.SetLineColor(rt.kBlue)
-trueStack = rt.THStack('trueStack', "True NC 1 proton 1 gamma Events")
-trueStack.Add(trueSignalHist)
-trueCanvas = rt.TCanvas()
-trueStack.Draw("HIST")
-trueStack.GetXaxis().SetTitle("Leading Photon Energy (MeV)")
-trueStack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
-trueCanvas.Update()
+trueSignalCanvas, trueSignals=Stack, trueSignalLegend, trueSignalInt = sStackFillS("True NC 1 proton 2 gamma Events", trueSignalHist, rt.kBlue, "trueCanvas")
 
 histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, piPlusHist, noProtonHist, pluralProtonHist, noPhotonHist, onePhotonHist, manyPhotonHist]
 
-trueSignalInt = trueSignalHist.Integral(1,60)
-
-signalHistCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification: (", "Leading Photon Energy (MeV)", "Events per 6.67e+20 POT")
+recoSignalHistCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification: (", "Leading Photon Energy (MeV)", "Events per 6.67e+20 POT")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
-signalHistCanvas.Write()
-trueCanvas.Write()
-
-print(str(trueSignalInt))
+recoSignalHistCanvas.Write()
+trueSignalCanvas.Write()
