@@ -155,7 +155,7 @@ def histStack(title, histList):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
+  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen, rt. kOrange+1]
   targetPOT = 6.67e+20
   ntuplePOTSum = 4.675690535431973e+20
   for x in range(len(histList)):
@@ -164,7 +164,7 @@ def histStack(title, histList):
     hist.Scale(targetPOT/ntuplePOTSum)
     hist.SetLineColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
-    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" events", "l")
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
     stack.Add(hist)
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
   histCanvas = rt.TCanvas() 
@@ -218,13 +218,16 @@ def scaleRecoEnergy(eventTree, recoIDs):
       leadingPhoton = scaledEnergy[x]
 
   if len(recoIDs) == 2:
-    invariantMass = np.sqrt((scaledEnergy[0]*scaledEnergy[1]) - (scaledEnergy[0]*scaledEnergy[1]*eventTree.showerStartDirX[0])*(eventTree.showerStartDirX[1] + eventTree.showerStartDirY[0]*eventTree.showerStartDirY[1] + eventTree.showerStartDirZ[0]*eventTree.showerStartDirZ[1]))
+    a = 0
+    b = 1
+    invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(eventTree.showerStartDirX[a]*eventTree.showerStartDirX[b] + eventTree.showerStartDirY[a]*eventTree.showerStartDirY[b] + eventTree.showerStartDirZ[a]*eventTree.showerStartDirZ[b])))
   
   return leadingPhoton, invariantMass
 
 
 def scaleTrueEnergy(eventTree, truePhotonIDs):
   scaledEnergy = []
+  invariantMass = -1
   for x in truePhotonIDs:
     energyGeV = eventTree.trueSimPartE[x]/1000
     scaledEnergy.append(energyGeV)
@@ -234,7 +237,14 @@ def scaleTrueEnergy(eventTree, truePhotonIDs):
     if scaledEnergy[x] > leadingPhoton:
       leadingPhoton = scaledEnergy[x]
 
-  return leadingPhoton
+    if len(truePhotonIDs) == 2:
+      a = 0
+      b = 1
+      lengthA = np.sqrt(eventTree.trueSimPartPx[a]**2 + eventTree.trueSimPartPy[a]**2 + eventTree.trueSimPartPz[a]**2)
+      lengthB = np.sqrt(eventTree.trueSimPartPx[b]**2 + eventTree.trueSimPartPy[b]**2 + eventTree.trueSimPartPz[b]**2)
+      aDotB = eventTree.trueSimPartPx[a]*eventTree.trueSimPartPx[b] + eventTree.trueSimPartPy[a]*eventTree.trueSimPartPy[b] + eventTree.trueSimPartPz[a]*eventTree.trueSimPartPz[b]
+      invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(aDotB)/(lengthA*lengthB)))
+  return leadingPhoton, invariantMass
 
 #RECO FUNCTIONS
 def recoNoVertex(eventTree):
