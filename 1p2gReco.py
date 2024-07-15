@@ -6,7 +6,7 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoOutputTrueScaled2.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDmatch.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -79,7 +79,6 @@ for i in range(eventTree.GetEntries()):
 #true proton & pi+ check: include all photons above 60MeV, exclude all pi+ above 30MeV
     nProtons = 0
     piPlusPresent = False
-    protonmap = {}
     for i in range(len(eventTree.truePrimPartPDG)):
         #proton checker
         if eventTree.truePrimPartPDG[i] == 2212:
@@ -132,7 +131,8 @@ for i in range(eventTree.GetEntries()):
     for i in range(len(eventTree.trueSimPartTID)):
         if eventTree.trueSimPartProcess[i] == 0:
             if abs(eventTree.trueSimPartPDG[i]) == 2212:
-                momentumVector = np.square(eventTree.trueSimPartPx[i]) + np.square(eventTree.trueSimPartPy[i]) + np.square(eventTree.trueSimPartPz[i])
+                momentumVector = np.square(eventTree.trueSimPartPx[i]) + \
+                    np.square(eventTree.trueSimPartPy[i]) + np.square(eventTree.trueSimPartPz[i])
                 kineticMeV = eventTree.trueSimPartE[i] - np.sqrt((np.square(eventTree.trueSimPartE[i])) - momentumVector)
                 if kineticMeV >= 60:
                     trueprotonschecked +=1
@@ -230,15 +230,17 @@ for i in range(eventTree.GetEntries()):
         recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
 #----- end of event loop ---------------------------------------------#
 
-trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = sStackFillS("True NC 1 proton 2 gamma Events", trueSignalHist, rt.kBlue, "trueCanvas")
+trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = \
+    sStackFillS("True NC 1 proton 2 gamma Events", trueSignalHist, rt.kBlue, "trueCanvas")
 
-histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, piPlusHist, noProtonHist, pluralProtonHist, wrongProtonHist, noPhotonHist, onePhotonHist, manyPhotonHist]
+histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, \
+            piPlusHist, noProtonHist, pluralProtonHist, wrongProtonHist, \
+            noPhotonHist, onePhotonHist, manyPhotonHist]
 
-recoSignalHistCanvas, stack, legend, histInt = histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, "Reco Identification: (", "Leading Photon Energy (MeV)", "Events per 6.67e+20 POT")
+recoSignalHistCanvas, stack, legend, histInt = \
+    histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, \
+                  "Reco Identification: (", "Leading Photon Energy (MeV)", "Events per 6.67e+20 POT")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
 recoSignalHistCanvas.Write()
 trueSignalCanvas.Write()
-
-print(trueprotonschecked/trueprotonevents)
-print(trueprotonschecked)
