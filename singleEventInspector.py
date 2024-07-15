@@ -4,8 +4,6 @@ import numpy as np
 import ROOT as rt
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
-#Import some functions of our own
-from cuts import trueSignalFinder
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -41,7 +39,7 @@ eventTree.GetEntry(args.eventNumber)
 
 #Initial announcment
 print("NOW READING: EVENT NUMBER", args.eventNumber)
-
+print("RUN NUMBER:", eventTree.run, "SUBRUN NUMBER:", eventTree.subrun, "EVENT:", eventTree.event)
 #RECO EVALUATION
 #Check for photon, charge current
 photonFound = False
@@ -70,15 +68,15 @@ for x in range(eventTree.nTracks):
       
 if chargeCurrent == True:
   if eventTree.trueNuCCNC == 1:
-    print("This event has a neutral current, but the reco thinks it's charged.")
+    print("This event has a charged current, but the reco thinks it's neutral.")
   else:
-    print("This event has a neutral current, and the reco is able to detect it.")
+    print("This event has a charge current, and the reco is able to detect it.")
   
 else:
   if eventTree.trueNuCCNC == 0:
-    print("This event has a charged current, and the reco is able to detect it.")
+    print("This event has a neutral current, but the reco thinks it's charged.")
   else:
-    print("This event has a charged current, but the reco thinks it's neutral.")
+    print("This event has a charged current,  and the reco is able to detect it.")
 
   
 #EVALUATION USING TRUTH

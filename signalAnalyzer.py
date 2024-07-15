@@ -111,10 +111,15 @@ successCount = 0
 NCCuts = 0
 CosmicCuts = 0
 FiducialCuts = 0
+motherVertexCuts = 0
 DepositCuts = 0
 PionProtonCuts = 0
 CountCuts = 0
 oddSuccessCount = 0
+makesSense = 0
+noPhotons = 0
+noVertex = 0
+noVertexNoPhotons = 0
 
 #begin loop over events in ntuple file
 
@@ -122,13 +127,6 @@ for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
   
-  #Defining detector dimensions for fiducial
-  xMin, xMax = 0, 256
-  yMin, yMax = -116.5, 116.5
-  zMin, zMax = 0, 1036
-  #Defining fiducial width
-  fiducialWidth = 10
-
   #Defining/resetting our variables
   badEvent = False
   primList = []
@@ -139,18 +137,21 @@ for i in range(eventTree.GetEntries()):
 
   #checking for neutral current
   if eventTree.trueNuCCNC != 1:
-    NCCuts += 1
     continue
+  else:
+    NCCuts += 1
     
   #fiducial cut removes events within fiducial
   if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
-    FiducialCuts += 1
     continue
-    
+  else:
+    FiducialCuts += 1
+  
   #skip events where all hits overlap with tagged cosmic rays
   if eventTree.vtxFracHitsOnCosmic >= 1.:
     continue
-
+  else:
+    CosmicCuts += 1
 
   #Determining presence of suitably energetic protons and charged pions - if they're present, the event is beyond the scope of our investigation
   for x in range(len(eventTree.truePrimPartPDG)):
@@ -159,7 +160,6 @@ for i in range(eventTree.GetEntries()):
       if pionEnergy >= 0.03:
         pionPresent = True
         badEvent = True
-        PionProtonCuts += 1
         break
       
     elif eventTree.truePrimPartPDG[x] == 2212:
@@ -167,12 +167,13 @@ for i in range(eventTree.GetEntries()):
       if protonEnergy >= 0.06:
         protonPresent = True
         badEvent = True
-        PionProtonCuts += 1
         break
 
   if badEvent == True:
     continue
-  
+  else:
+    PionProtonCuts += 1
+    
   #Establish a list of TIDs for primary particles (we'll use this in a moment)
   for x in range(len(eventTree.trueSimPartTID)):
     if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
@@ -192,7 +193,8 @@ for i in range(eventTree.GetEntries()):
   if len(photonIDList) == 0:
     CountCuts += 1
     badEvent = True
-    
+  else:
+    motherVertexCuts += 1
   #Discard the photon unless it begins to deposit energy within the fiducial volume
   if badEvent == False:
     truePhotonList = []
@@ -222,25 +224,6 @@ for i in range(eventTree.GetEntries()):
   for x in range(len(truePhotonList)):
     energyGeV = eventTree.trueSimPartE[truePhotonList[x]]/1000
     scaledEnergy.append(energyGeV)
-
-  #Events with no vertex!
-  if eventTree.foundVertex != 1:
-    if len(truePhotonList) == 1:
-      noVertexHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
-
-    elif len(truePhotonList) == 2:
-      leadingPhoton = scaledEnergy[0]
-      for x in range(len(scaledEnergy)):
-        if scaledEnergy[x] > leadingPhoton:
-          leadingPhoton = scaledEnergy[x]
-      noVertexHist2.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    else:
-      leadingPhoton = scaledEnergy[0]
-      for x in range(len(scaledEnergy)):
-        if scaledEnergy[x] > leadingPhoton:
-          leadingPhoton = scaledEnergy[x]
-      noVertexHist3.Fill(leadingPhoton, eventTree.xsecWeight)
 
   for x in range(eventTree.nTracks):
     if eventTree.trackClassified[x] == 1:
@@ -287,8 +270,35 @@ for i in range(eventTree.GetEntries()):
         leadingPhoton = scaledEnergy[x]
     totalHist3.Fill(leadingPhoton, eventTree.xsecWeight)
 
+  #Events with no vertex!                                                                                      
+  if eventTree.foundVertex != 1:
+    if len(truePhotonList) == 1:
+      noVertex += 1
+      if len(recoPhotonIDs) == 0:
+        makesSense += 1
+    if len(truePhotonList) == 1:
+      noVertexHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
+    elif len(truePhotonList) == 2:
+      leadingPhoton = scaledEnergy[0]
+      for x in range(len(scaledEnergy)):
+        if scaledEnergy[x] > leadingPhoton:
+          leadingPhoton = scaledEnergy[x]
+      noVertexHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      leadingPhoton = scaledEnergy[0]
+      for x in range(len(scaledEnergy)):
+        if scaledEnergy[x] > leadingPhoton:
+          leadingPhoton = scaledEnergy[x]
+      noVertexHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+
+
   #Filling in the graph for no photons
   if len(recoPhotonIDs) == 0:
+    if len(truePhotonList) == 1:
+      noPhotons += 1
+      if eventTree.foundVertex != 1:
+        noVertexNoPhotons += 1
     if len(truePhotonList) == 1:
       noPhotonHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
 
@@ -675,6 +685,9 @@ onePhotonCanvas.Write()
 twoPhotonCanvas.Write()
 threePhotonCanvas.Write()
 
-print("There were", signalEvents, "total signal events")
-print("Of these, the reco identified", successCount)
-print("Of the correctly identified events,", oddSuccessCount, "contained at least one misidentified photon that happened to coincide with a real, missed photon")
+print(NCCuts, "events passed the neutral current test")
+print(FiducialCuts, "events passed the fiducial test")
+print(CosmicCuts, "events passed the cosmic test")
+print(PionProtonCuts, "events passed the pion/proton check")
+print(motherVertexCuts, "events passed the mother particle/vertex check")
+print(signalEvents, "events passed the energy deposit check and were declared signal")

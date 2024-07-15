@@ -39,7 +39,7 @@ def addHist(recoList, leadingPhoton, Hist1, Hist2, Hist3, weight):
   if len(recoList) == 1:
     Hist1.Fill(leadingPhoton, weight)
   elif len(recoList) == 2:
-    Hist2.Fill(leadingPhoton, weight)
+    Hist2.Fill(invariantMass, weight)
   else:
     Hist3.Fill(leadingPhoton, weight)
 
@@ -53,29 +53,29 @@ totalHist3 = rt.TH1F("total3", "Three photons",60,0,2)
 
 totalList = [totalHist1, totalHist2, totalHist3]
 
-muonHist = rt.TH1F("Muon1", "Charged Current - Missed Muon",60,0,2)
-electronHist = rt.TH1F("Electron1", "Electron flagged as photon",60,0,2)
-chargeCurrentHist = rt.TH1F("CC1", "Other Charged Current",60,0,2)
-fiducialHist = rt.TH1F("fiducial1", "Out of Fiducial",60,0,2)
-cosmicHist = rt.TH1F("cosmic1", "Cosmic Overlap",60,0,2)
-pionProtonHist = rt.TH1F("pionProton1", "Charged Pion or Proton",60,0,2)
-noPhotonHist = rt.TH1F("noPhotons1", "No Photons",60,0,2)
-twoPhotonHist = rt.TH1F("twoPhotons1", "Two Photons",60,0,2)
-manyPhotonHist = rt.TH1F("manyPhotons1", "3+ Photons",60,0,2)
-successHist = rt.TH1F("success1", "Signal",60,0,2)
+muonHist = rt.TH1F("Muon1", "Charged Current - Missed Muon",60,0,1.2)
+electronHist = rt.TH1F("Electron1", "Electron flagged as photon",60,0,1.2)
+chargeCurrentHist = rt.TH1F("CC1", "Other Charged Current",60,0,1.2)
+fiducialHist = rt.TH1F("fiducial1", "Out of Fiducial",60,0,1.2)
+cosmicHist = rt.TH1F("cosmic1", "Cosmic Overlap",60,0,1.2)
+pionProtonHist = rt.TH1F("pionProton1", "Charged Pion or Proton",60,0,1.2)
+noPhotonHist = rt.TH1F("noPhotons1", "No Photons",60,0,1.2)
+twoPhotonHist = rt.TH1F("twoPhotons1", "Two Photons",60,0,1.2)
+manyPhotonHist = rt.TH1F("manyPhotons1", "3+ Photons",60,0,1.2)
+successHist = rt.TH1F("success1", "Signal",60,0,1.2)
 
 histList = [successHist, electronHist, muonHist, chargeCurrentHist, fiducialHist, cosmicHist, pionProtonHist, noPhotonHist, twoPhotonHist, manyPhotonHist]
 
-muonHist2 = rt.TH1F("Muon2", "Charged Current - Missed Muon",60,0,2)
-electronHist2 = rt.TH1F("Electron2", "Electron flagged as photon",60,0,2)
-chargeCurrentHist2 = rt.TH1F("CC2", "Other Charged current",60,0,2)
-fiducialHist2 = rt.TH1F("fiducial2", "Out of fiducial",60,0,2)
-cosmicHist2 = rt.TH1F("cosmic2", "Cosmic overlap",60,0,2)
-pionProtonHist2 = rt.TH1F("pionProton2", "Charged Pion or Proton",60,0,2)
-noPhotonHist2 = rt.TH1F("noPhotons2", "No Photons",60,0,2)
-onePhotonHist2 = rt.TH1F("twoPhotons2", "One Photon",60,0,2)
-manyPhotonHist2 = rt.TH1F("manyPhotons2", "3+ Photons",60,0,2)
-successHist2 = rt.TH1F("success2", "Signal",60,0,2)
+muonHist2 = rt.TH1F("Muon2", "Charged Current - Missed Muon",60,0,0.8)
+electronHist2 = rt.TH1F("Electron2", "Electron flagged as photon",60,0,0.8)
+chargeCurrentHist2 = rt.TH1F("CC2", "Other Charged current",60,0,0.8)
+fiducialHist2 = rt.TH1F("fiducial2", "Out of fiducial",60,0,0.8)
+cosmicHist2 = rt.TH1F("cosmic2", "Cosmic overlap",60,0,0.8)
+pionProtonHist2 = rt.TH1F("pionProton2", "Charged Pion or Proton",60,0,0.8)
+noPhotonHist2 = rt.TH1F("noPhotons2", "No Photons",60,0,0.8)
+onePhotonHist2 = rt.TH1F("twoPhotons2", "One Photon",60,0,0.8)
+manyPhotonHist2 = rt.TH1F("manyPhotons2", "3+ Photons",60,0,0.8)
+successHist2 = rt.TH1F("success2", "Signal",60,0,0.8)
 
 histList2 = [successHist2, electronHist2, muonHist2, chargeCurrentHist2, fiducialHist2, cosmicHist2, pionProtonHist2, noPhotonHist2, onePhotonHist2, manyPhotonHist2]
 
@@ -163,7 +163,8 @@ for i in range(eventTree.GetEntries()):
   if trueCutPionProton(eventTree) == False:
     addHist(recoList, leadingPhoton, pionProtonHist, pionProtonHist2, pionProtonHist3, eventTree.xsecWeight)
     continue
-    
+
+  #Find out the actual number of photons, and sort according to whether we got it right
   truePhotonIDs = truePhotonList(eventTree, truePhotonIDs, fiducialData)
   if len(truePhotonIDs) == 0:
     addHist(recoList, leadingPhoton, noPhotonHist, noPhotonHist2, noPhotonHist3, eventTree.xsecWeight)
@@ -183,6 +184,8 @@ histCanvas, stack, legend, histInt = histStack("Outcome of single-photon reco ev
 histCanvas2, stack2, legend2, histInt2 = histStack("Outcome of two-photon reco events", histList2)
 histCanvas3, stack3, legend3, histInt3 = histStack("Outcome of three-photon reco events", histList3)
 
+stack.GetXaxis().SetTitle("Reconstructed Leading Photon Energy (GeV)")
+stack2.GetXaxis().SetTitle("Reconstructed Invariant Mass (GeV)")
 
 #Export canvases to file
 outFile = rt.TFile(args.outfile, "RECREATE")

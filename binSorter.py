@@ -55,9 +55,12 @@ yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
 fiducialWidth = 10
 
+motherOnly = 0
+
 #begin loop over events in ntuple file
-
-
+signalCount = 0
+pionPass = 0
+nonPionCount = 0
 for i in range(eventTree.GetEntries()):
 
   eventTree.GetEntry(i)
@@ -86,40 +89,36 @@ for i in range(eventTree.GetEntries()):
   photonInBox = False
   photonIDList = []
   
-  #Check if Neutral Pion and Kaon in primaries
-  if 111 in eventTree.truePrimPartPDG or 311 in eventTree.truePrimPartPDG:
-    #Check if there is actually a detectable photon
-    for x in range(eventTree.nTrueSimParts):
-      if eventTree.trueSimPartPDG[x] == 22:
-        photonIDList.append(x)
-        photonInSecondary = True
-  else:
   #Create a list of prime particle Track IDs
-    for x in range(len(eventTree.trueSimPartTID)):
-      if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
-        primList.append(eventTree.trueSimPartTID[x])
+  for x in range(len(eventTree.trueSimPartTID)):
+    if eventTree.trueSimPartTID[x] == eventTree.trueSimPartMID[x]:
+      primList.append(eventTree.trueSimPartTID[x])
     #Iterate through to find photons
-    for x in range(len(eventTree.trueSimPartPDG)):
-      if eventTree.trueSimPartPDG[x] == 22:
-        photonIDList.append(x)
-        #Check for parent particle in the primary list
-        if eventTree.trueSimPartMID[x] in primList:
-          photonInSecondary = True      
+  for x in range(len(eventTree.trueSimPartPDG)):
+    if eventTree.trueSimPartPDG[x] == 22:
+      photonIDList.append(x)
+      #Check for parent particle in the primary list
+      if eventTree.trueSimPartMID[x] in primList:
+        photonInSecondary = True      
         #Failing that, check if the photon has coordinates within 15 mm of those of the event vertex
-        elif abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
+        if abs(eventTree.trueSimPartX[x] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[x] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[x] -eventTree.trueVtxZ) <= 0.15:
           photonInSecondary = True
+        else:
+          motherOnly += 1
   #Discard event unless a secondary photon is found
   if photonInSecondary == False:
     continue
 
+  else:
+    nonPionCount += 1
+    
   #Discard event unless the photon begins to deposit energy within the fiducial volume
-  for x in range(len(photonIDList)):
+  for x in photonIDList:
     if eventTree.trueSimPartEDepX[x] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[x] >= (xMax - fiducialWidth) or eventTree.trueSimPartEDepY[x] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[x] >= (yMax - fiducialWidth) or eventTree.trueSimPartEDepZ[x] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[x] >= (zMax - fiducialWidth):
       continue
-  
   #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS
-
   #Determining presence of suitably energetic protons and pions
+  signalCount += 1
   for x in range(len(eventTree.truePrimPartPDG)):
     if eventTree.truePrimPartPDG[x] == 211 and eventTree.truePrimPartE[x] >= 0.03:
       pionPresent = True
@@ -179,3 +178,4 @@ rt.gPad.Update()
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
 
+print("Signal count:", signalCount)

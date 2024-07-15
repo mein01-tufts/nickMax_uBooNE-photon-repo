@@ -40,6 +40,11 @@ twoFound = rt.TH1F("twoFound", "Two Found",60,0,1.6)
 
 totalList2 = [noneFound, oneFound, twoFound]
 
+effHist = rt.TH1F("DistanceEfficiency", "Efficiency of Reco over Distance of Photon from Nucleus",60,0,3)
+effHistE = rt.TH1F("EnergyEfficiency", "Efficiency of Reco over Energy of Photon",60,0,3)
+
+effList = [effHist, effHistE]
+
 foundPhotonDist2 = rt.TH1F("Found2", "Found Photons",60,0,200)
 lostPhotonDist2 = rt.TH1F("Lost2", "Shower not found",60,0,200)
 electronHist2 = rt.TH1F("Electron2", "Misclassified as electron",60,0,200)
@@ -146,17 +151,39 @@ for i in range(eventTree.GetEntries()):
       twoFound.Fill(invariantMass, eventTree.xsecWeight)
     else:
       print("Something wrong with the number of matches here in event", i)
-        
 
+#Fill efficiency histograms
+for x in range(1, 61):
+  if lostPhotonDist2.GetBinContent(x) > 0:
+    efficiency = foundPhotonDist2.GetBinContent(x)/(foundPhotonDist2.GetBinContent(x)+lostPhotonDist2.GetBinContent(x)+weirdHist2.GetBinContent(x)+unclassifiedHist2.GetBinContent(x))
+  elif foundPhotonDist2.GetBinContent(x) == 0:
+    efficiency = 0
+  else:
+    efficiency = 0
+  effHist.SetBinContent(x, efficiency)
+
+for x in range(1, 61):
+  if lostPhotonE2.GetBinContent(x) >0:
+    efficiency = foundPhotonE2.GetBinContent(x)/(foundPhotonE2.GetBinContent(x)+lostPhotonE2.GetBinContent(x)+weirdE2.GetBinContent(x)+unclassifiedE2.GetBinContent(x))
+  else:
+    efficiency = 0
+  effHistE.SetBinContent(x, efficiency)
 
 histCanvas1, stack1, legend1, histInt1 = histStack("Distances of all Photons in Two-Photon True Events", distanceList2)
 histCanvas2, stack2, legend2, histInt2 = histStack("Energy of all Photons in Two-Photon True Events", energyList2)
 histCanvas3, stack3, legend3, histInt3 = histStack("Invariant Mass of All Events", totalList2)
-
+#effCanvas, stack4, legend4, histInt3 = histStack("Efficiency of Reco for all Two-Photon Events", effList)
 
 stack1.GetXaxis().SetTitle("True Distance to Vertex (cm)")
 stack3.GetXaxis().SetTitle("True Invariant Mass")
+effHist.GetYaxis().SetTitle("Efficiency")
+effHist.GetXaxis().SetTitle("Event Number")
+effHistE.GetYaxis().SetTitle("Efficiency")
+effHistE.GetXaxis().SetTitle("Event Number")
+
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas3.Write()
 histCanvas1.Write()
 histCanvas2.Write()
+effHist.Write()
+effHistE.Write()
