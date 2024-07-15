@@ -378,3 +378,9 @@ def trickyPionProtonCuts(eventTree):
     return True
   else:
     return False
+
+# This function uses a particle's momentum vector and total energy to calculate its kinetic energy, then returns its kinetic energy in GeV
+def kineticEnergyCalculator(eventTree, i):
+  momentumVector = np.square(eventTree.truePrimPartPx[i]) + np.square(eventTree.truePrimPartPy[i]) + np.square(eventTree.truePrimPartPz[i])
+  kineticGeV = eventTree.truePrimPartE[i] - np.sqrt((np.square(eventTree.truePrimPartE[i])) - momentumVector)
+  return kineticGeV
