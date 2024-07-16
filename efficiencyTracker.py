@@ -35,47 +35,42 @@ for i in range(potTree.GetEntries()):
   ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #HISTOGRAMS DEFINED AND PREPARED HERE
-noneFound = rt.TH1F("noneFound", "None Found",30,0,1.6)
-oneFound = rt.TH1F("oneFound", "One Found",30,0,1.6)
-twoFound = rt.TH1F("twoFound", "Two Found",30,0,1.6)
+effHist1 = rt.TH1F("DistanceEfficiency1", "Vertex < 1 cm from true (distance)",30,0,200)
+effHist2 = rt.TH1F("DistanceEfficiency2", "Vertex 1-3 cm from true (distance)",30,0,200)
+effHist3 = rt.TH1F("DistanceEfficiency3", "Vertex 3-5 cm from true (distance)",30,0,200)
+effHist4 = rt.TH1F("DistanceEfficiency4", "Vertex 5+ cm from true (distance)",30,0,200)
 
-totalList2 = [noneFound, oneFound, twoFound]
+effHistE1 = rt.TH1F("EnergyEfficiency1", "Vertex < 1 cm from true (energy)",30,0,1.6)
+effHistE2 = rt.TH1F("EnergyEfficiency2", "Vertex 1-3 cm from true (energy)",30,0,1.6)
+effHistE3 = rt.TH1F("EnergyEfficiency3", "Vertex 3-5 cm from true (energy)",30,0,1.6)
+effHistE4 = rt.TH1F("EnergyEfficiency4", "Vertex 5+ cm from true (energy)",30,0,1.6)
 
-effHist1 = rt.TH1F("DistanceEfficiency", "Vertex < 1 cm from true (distance)",30,0,200)
-effHist2 = rt.TH1F("DistanceEfficiency", "Vertex < 3 cm from true (distance)",30,0,200)
-effHist3 = rt.TH1F("DistanceEfficiency", "Vertex < 5 cm from true (distance)",30,0,200)
-effHist4 = rt.TH1F("DistanceEfficiency", "Vertex > 5 cm from true (distance)",30,0,200)
-
-effHistE1 = rt.TH1F("DistanceEfficiency", "Vertex < 1 cm from true (energy)",30,0,200)
-effHistE2 = rt.TH1F("DistanceEfficiency", "Vertex < 3 cm from true (energy)",30,0,200)
-effHistE3 = rt.TH1F("DistanceEfficiency", "Vertex < 5 cm from true (energy)",30,0,200)
-effHistE4 = rt.TH1F("DistanceEfficiency", "Vertex > 5 cm from true (energy)",30,0,200)
 
 effList = [effHist1, effHist2, effHist3, effHist4]
 effListE = [effHistE1, effHistE2, effHistE3, effHistE4]
 
-effTotal = rt.TH1F("DistanceEfficiency", "Total Efficiency",30,0,200)
-effTotalE = rt.TH1F("Found2", "Total Efficiency",30,0,1.6)
+effTotal = rt.TH1F("TotalEfficiency", "Total Efficiency",30,0,200)
+effTotalE = rt.TH1F("TotalEfficiencyE", "Total Efficiency",30,0,1.6)
 
-foundPhotonHist1 = rt.TH1F("Found2", "Found Photons",30,0,200)
-lostPhotonHist1 = rt.TH1F("Lost2", "Shower not found",30,0,200)
-weirdHist1 = rt.TH1F("Weird2", "Misclassified shower",30,0,200)
-unclassifiedHist1 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,200)
+foundPhotonHist1 = rt.TH1F("Found1", "Found Photons",30,0,200)
+lostPhotonHist1 = rt.TH1F("Lost1", "Shower not found",30,0,200)
+weirdHist1 = rt.TH1F("Weird1", "Misclassified shower",30,0,200)
+unclassifiedHist1 = rt.TH1F("Unclassified1", "Unclassified shower",30,0,200)
 
 foundPhotonHist2 = rt.TH1F("Found2", "Found Photons",30,0,200)
 lostPhotonHist2 = rt.TH1F("Lost2", "Shower not found",30,0,200)
 weirdHist2 = rt.TH1F("Weird2", "Misclassified shower",30,0,200)
 unclassifiedHist2 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,200)
 
-foundPhotonHist3 = rt.TH1F("Found2", "Found Photons",30,0,200)
-lostPhotonHist3 = rt.TH1F("Lost2", "Shower not found",30,0,200)
-weirdHist3 = rt.TH1F("Weird2", "Misclassified shower",30,0,200)
-unclassifiedHist3 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,200)
+foundPhotonHist3 = rt.TH1F("Found3", "Found Photons",30,0,200)
+lostPhotonHist3 = rt.TH1F("Lost3", "Shower not found",30,0,200)
+weirdHist3 = rt.TH1F("Weird3", "Misclassified shower",30,0,200)
+unclassifiedHist3 = rt.TH1F("Unclassified3", "Unclassified shower",30,0,200)
 
-foundPhotonHist4 = rt.TH1F("Found2", "Found Photons",30,0,200)
-lostPhotonHist4 = rt.TH1F("Lost2", "Shower not found",30,0,200)
-weirdHist4 = rt.TH1F("Weird2", "Misclassified shower",30,0,200)
-unclassifiedHist4 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,200)
+foundPhotonHist4 = rt.TH1F("Found4", "Found Photons",30,0,200)
+lostPhotonHist4 = rt.TH1F("Lost4", "Shower not found",30,0,200)
+weirdHist4 = rt.TH1F("Weird4", "Misclassified shower",30,0,200)
+unclassifiedHist4 = rt.TH1F("Unclassified4", "Unclassified shower",30,0,200)
 
 distanceList1 = [lostPhotonHist1, weirdHist1, unclassifiedHist1, foundPhotonHist1]
 distanceList2 = [lostPhotonHist2, weirdHist2, unclassifiedHist2, foundPhotonHist2]
@@ -86,28 +81,28 @@ distanceListList = [distanceList1, distanceList2, distanceList3, distanceList4]
 
 foundList = [foundPhotonHist1, foundPhotonHist2, foundPhotonHist3, foundPhotonHist4]
 lostList = [lostPhotonHist1, lostPhotonHist2, lostPhotonHist3, lostPhotonHist4]
-weirdList = [weirdHist2, weirdHist3, weirdHist4, weirdHist1]
+weirdList = [weirdHist1, weirdHist2, weirdHist3, weirdHist4]
 unclassifiedList = [unclassifiedHist1, unclassifiedHist2, unclassifiedHist3, unclassifiedHist4]
 
-foundPhotonE1 = rt.TH1F("Found2", "Found Photons",30,0,1.6)
-lostPhotonE1 = rt.TH1F("Lost2", "Shower not found",30,0,1.6)
-weirdE1 = rt.TH1F("Weird2", "Misclassified shower",30,0,1.6)
-unclassifiedE1 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,1.6)
+foundPhotonE1 = rt.TH1F("FoundE1", "Found Photons",30,0,1.6)
+lostPhotonE1 = rt.TH1F("LostE1", "Shower not found",30,0,1.6)
+weirdE1 = rt.TH1F("WeirdE1", "Misclassified shower",30,0,1.6)
+unclassifiedE1 = rt.TH1F("UnclassifiedE1", "Unclassified shower",30,0,1.6)
 
-foundPhotonE2 = rt.TH1F("Found2", "Found Photons",30,0,1.6)
-lostPhotonE2 = rt.TH1F("Lost2", "Shower not found",30,0,1.6)
-weirdE2 = rt.TH1F("Weird2", "Misclassified shower",30,0,1.6)
-unclassifiedE2 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,1.6)
+foundPhotonE2 = rt.TH1F("FoundE2", "Found Photons",30,0,1.6)
+lostPhotonE2 = rt.TH1F("LostE2", "Shower not found",30,0,1.6)
+weirdE2 = rt.TH1F("WeirdE2", "Misclassified shower",30,0,1.6)
+unclassifiedE2 = rt.TH1F("UnclassifiedE2", "Unclassified shower",30,0,1.6)
 
-foundPhotonE3 = rt.TH1F("Found2", "Found Photons",30,0,1.6)
-lostPhotonE3 = rt.TH1F("Lost2", "Shower not found",30,0,1.6)
-weirdE3 = rt.TH1F("Weird2", "Misclassified shower",30,0,1.6)
-unclassifiedE3 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,1.6)
+foundPhotonE3 = rt.TH1F("FoundE3", "Found Photons",30,0,1.6)
+lostPhotonE3 = rt.TH1F("LostE3", "Shower not found",30,0,1.6)
+weirdE3 = rt.TH1F("WeirdE3", "Misclassified shower",30,0,1.6)
+unclassifiedE3 = rt.TH1F("UnclassifiedE3", "Unclassified shower",30,0,1.6)
 
-foundPhotonE4 = rt.TH1F("Found2", "Found Photons",30,0,1.6)
-lostPhotonE4 = rt.TH1F("Lost2", "Shower not found",30,0,1.6)
-weirdE4 = rt.TH1F("Weird2", "Misclassified shower",30,0,1.6)
-unclassifiedE4 = rt.TH1F("Unclassified2", "Unclassified shower",30,0,1.6)
+foundPhotonE4 = rt.TH1F("FoundE4", "Found Photons",30,0,1.6)
+lostPhotonE4 = rt.TH1F("LostE4", "Shower not found",30,0,1.6)
+weirdE4 = rt.TH1F("WeirdE4", "Misclassified shower",30,0,1.6)
+unclassifiedE4 = rt.TH1F("UnclassifiedE4", "Unclassified shower",30,0,1.6)
 
 energyList1 = [lostPhotonE1, weirdE1, unclassifiedE1, foundPhotonE1]
 energyList2 = [lostPhotonE2, weirdE2, unclassifiedE2, foundPhotonE2]
@@ -118,7 +113,7 @@ energyListList = [energyList1, energyList2, energyList3, energyList4]
 
 foundListE = [foundPhotonE1, foundPhotonE2, foundPhotonE3, foundPhotonE4]
 lostListE = [lostPhotonE1, lostPhotonE2, lostPhotonE3, lostPhotonE4]
-weirdListE = [weirdE2, weirdE3, weirdE4, weirdE1]
+weirdListE = [weirdE1, weirdE2, weirdE3, weirdE4]
 unclassifiedListE = [unclassifiedE1, unclassifiedE2, unclassifiedE3, unclassifiedE4]
 
 
@@ -133,17 +128,18 @@ def addHist(distVtx, distance, energy, HistList1, HistList2, weight):
   elif eventTree.vtxDistToTrue <= 5:
     HistList1[2].Fill(distance, weight)
     HistList2[2].Fill(energy, weight)
-  else:
+  elif eventTree.vtxDistToTrue > 5:
     HistList1[3].Fill(distance, weight)
     HistList2[3].Fill(energy, weight)
 
 def addEffHist(effHist, histList):
-  for x in range(1, 61):
+  for x in range(1, 31):
     if histList[3].GetBinContent(x)+histList[0].GetBinContent(x)+histList[1].GetBinContent(x)+histList[2].GetBinContent(x) > 0:
       efficiency = histList[3].GetBinContent(x)/(histList[3].GetBinContent(x)+histList[0].GetBinContent(x)+histList[1].GetBinContent(x)+histList[2].GetBinContent(x))
     else:
       efficiency = 0
     effHist.SetBinContent(x, efficiency)
+
 
 #Variables for program review
 
@@ -152,6 +148,8 @@ def addEffHist(effHist, histList):
 recoPhotonIDs = []
 truePhotonIDs = []
 fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
+firstTime = True
+firstTimeE = True
 
 #Event loop begins
 for i in range(eventTree.GetEntries()):
@@ -214,77 +212,84 @@ for i in range(eventTree.GetEntries()):
     else:
       addHist(distVtx, distancexyz, eventTree.trueSimPartE[x]/1000, lostList, lostListE, eventTree.xsecWeight)
 
+
 #Fill efficiency histograms
 for x in range(len(effList)):
   addEffHist(effList[x], distanceListList[x])
   addEffHist(effListE[x], energyListList[x])
-  addEffHist(effTotal, distanceListList[x])
-  addEffHist(effTotalE, energyListList[x])
 
+for x in range(effHist1.GetNbinsX()):
+  total = (effHist1.GetBinContent(x) + effHist2.GetBinContent(x) + effHist3.GetBinContent(x) + effHist4.GetBinContent(x))/4
+  effTotal.SetBinContent(x, total)
+
+  totalE = (effHistE1.GetBinContent(x) + effHistE2.GetBinContent(x) + effHistE3.GetBinContent(x) + effHistE4.GetBinContent(x))/4
+  effTotalE.SetBinContent(x, totalE)
+  
 #effCanvas, effStack, effLegend, effInt = histStack("Efficiencies of photon showers over distance", effList)
 #effCanvasE, effStackE, effLegendE, effIntE = histStack("Efficiencies of photon showers over energy", effListE)
 
 effTotal.SetLineColor(rt.kRed)
 effTotalE.SetLineColor(rt.kRed)
 
-effCanvas1 = rt.TCanvas()
-effHist1.SetLineColor(rt.kGreen)
+#Create canvases for efficiency histograms
+effCanvas1 = rt.TCanvas("effCanvas1","effCanvas1")
+effHist1.SetLineColor(rt.kGreen+2)
 effHist1.Draw()
 effTotal.Draw("Same")
 
-effCanvas1 = rt.TCanvas()
-effHist1.SetLineColor(rt.kGreen)
-effHist1.Draw()
-effTotal.Draw("Same")
 
-effCanvas2 = rt.TCanvas()
-effHist2.SetLineColor(rt.kGreen)
+effCanvas2 = rt.TCanvas("effCanvas2","effCanvas2")
+effHist2.SetLineColor(rt.kGreen+2)
 effHist2.Draw()
 effTotal.Draw("Same")
 
-effCanvas3 = rt.TCanvas()
-effHist3.SetLineColor(rt.kGreen)
+effCanvas3 = rt.TCanvas("effCanvas3","effCanvas3")
+effHist3.SetLineColor(rt.kGreen+2)
 effHist3.Draw()
 effTotal.Draw("Same")
 
-effCanvas4 = rt.TCanvas()
-effHist4.SetLineColor(rt.kGreen)
+effCanvas4 = rt.TCanvas("effCanvas4","effCanvas4")
+effHist4.SetLineColor(rt.kGreen+2)
 effHist4.Draw()
 effTotal.Draw("Same")
 
-effCanvasE1 = rt.TCanvas()
-effHistE1.SetLineColor(rt.kGreen)
+effCanvasE1 = rt.TCanvas("effCanvasE1","effCanvasE1")
+effHistE1.SetLineColor(rt.kGreen+2)
 effHistE1.Draw()
 effTotalE.Draw("Same")
 
-effCanvasE2 = rt.TCanvas()
-effHistE2.SetLineColor(rt.kGreen)
+effCanvasE2 = rt.TCanvas("effCanvasE2","effCanvasE2")
+effHistE2.SetLineColor(rt.kGreen+2)
 effHistE2.Draw()
 effTotalE.Draw("Same")
 
-effCanvasE3 = rt.TCanvas()
-effHistE3.SetLineColor(rt.kGreen)
+effCanvasE3 = rt.TCanvas("effCanvasE3","effCanvasE3")
+effHistE3.SetLineColor(rt.kGreen+2)
 effHistE3.Draw()
 effTotalE.Draw("Same")
 
-effCanvasE4 = rt.TCanvas()
-effHistE4.SetLineColor(rt.kGreen)
+effCanvasE4 = rt.TCanvas("effCanvasE4","effCanvasE4")
+effHistE4.SetLineColor(rt.kGreen+2)
 effHistE4.Draw()
 effTotalE.Draw("Same")
 
 
+#Create canvases for distance histograms
 histCanvas1, stack1, legend1, histInt1 = histStack("Distances - Vertex within 1 cm of true vertex", distanceList1)
-histCanvas2, stack2, legend2, histInt2 = histStack("Distances - Vertex within 3 cm of true vertex", distanceList2)
-histCanvas3, stack3, legend3, histInt3 = histStack("Distances - Vertex within 5 cm of true vertex", distanceList3)
+histCanvas2, stack2, legend2, histInt2 = histStack("Distances - Vertex 1-3 cm from true vertex", distanceList2)
+histCanvas3, stack3, legend3, histInt3 = histStack("Distances - Vertex 3-5 cm from true vertex", distanceList3)
 histCanvas4, stack4, legend4, histInt4 = histStack("Distances - Vertex more than 5 cm from true vertex", distanceList4)
 
+#Create canvases for energy histograms
 histCanvasE1, stackE1, legendE1, histIntE1 = histStack("Energy - Vertex within 1 cm of true vertex", energyList1)
-histCanvasE2, stackE2, legendE2, histIntE2 = histStack("Energy - Vertex within 3 cm of true vertex", energyList2)
-histCanvasE3, stackE3, legendE3, histIntE3 = histStack("Energy - Vertex within 5 cm of true vertex", energyList3)
+histCanvasE2, stackE2, legendE2, histIntE2 = histStack("Energy - Vertex 1-3 cm from true vertex", energyList2)
+histCanvasE3, stackE3, legendE3, histIntE3 = histStack("Energy - Vertex 3-5 cm from true vertex", energyList3)
 histCanvasE4, stackE4, legendE4, histIntE4 = histStack("Energy - Vertex more than 5 cm from true vertex", energyList4)
 
+#Make canvas list so we can export efficiently
 canvasList = [effCanvas1, effCanvas2, effCanvas3, effCanvas4, effCanvasE1, effCanvasE2, effCanvasE3, effCanvasE4, histCanvas1, histCanvas2, histCanvas3, histCanvas4, histCanvasE1, histCanvasE2, histCanvasE3, histCanvasE4]
 
+#Change axes
 effHist1.GetXaxis().SetTitle("True Shower Distance to Vertex (cm)")
 effHistE1.GetXaxis().SetTitle("True Energy (GeV)")
 effHist1.GetYaxis().SetTitle("Efficiency")
@@ -299,7 +304,8 @@ stackListE = [stackE1, stackE2, stackE3, stackE4]
 for stack in stackListE:
   stack.GetXaxis().SetTitle("True Photon Energy GeV")
   stack.GetYaxis().SetTitle("Number of Photons")
-  
+
+#Save to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 for canvas in canvasList:
   canvas.Write()
