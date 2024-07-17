@@ -252,6 +252,23 @@ def sStackFillNS(title, hist, kColor, canvasTitle ):
 
   return histCanvas, stack, legend, histInt
 
+#takes a total event space histogram, signal histogram, blank hist to be filled with the ratio of signal to total
+#returns an efficiency plot of the event reconstruction
+def efficiencyPlot(totalHist, signalHist, ratioHist, title, xTitle):
+  totalHist.Scale(6.67e+20/4.675690535431973e+20)
+  signalHist.Scale(6.67e+20/4.675690535431973e+20)
+  ratioHist.Scale(6.67e+20/4.675690535431973e+20)
+  ratioHist = (signalHist)/(totalHist)
+  efficiencyStack = rt.THStack("EfficiencyStack", str(title))
+  ratioHist.SetFillColor(rt.kGreen+2)
+  efficiencyStack.Add(ratioHist)
+  efficiencyCanvas = rt.TCanvas("Efficiency Plot") 
+  efficiencyStack.Draw("HIST")
+  efficiencyStack.GetXaxis().SetTitle(str(xTitle))
+  efficiencyStack.GetYaxis().SetTitle("Percent Efficiency")
+  efficiencyCanvas.Update()
+
+  return efficiencyCanvas, efficiencyStack  
 
 def scaleRecoEnergy(ntuple, recoIDs):
   #Uses reconstructed variables to return scaled energy and invariant mass (if the photon count is not two, the invariant mass defaults to -1)
