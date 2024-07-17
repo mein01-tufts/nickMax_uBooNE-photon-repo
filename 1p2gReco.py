@@ -263,7 +263,7 @@ recoHistList = [photonReconstructedHist, photonNotReconstructedHist]
 
 recoPhotonCanvas, recoStack, recoLegend, recoInt = \
     histStackFill("Photon Energy in NC 1 Proton 2 Photon Events", recoHistList, \
-                  "Reco Identification: (", "Photon Energy (MeV)", "Events per 6.67e+20 POT")
+                  "Reco Identification: (", "Photon Energy (MeV)", "Photons per 6.67e+20 POT")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
 recoSignalHistCanvas.Write()
