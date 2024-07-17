@@ -2,7 +2,7 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
+from cuts import kineticEnergyCalculator, efficiencyPlot
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -239,7 +239,6 @@ for i in range(eventTree.GetEntries()):
                 deltaY = eventTree.trueSimPartEDepY[j] - eventTree.trueSimPartY[j]
                 deltaZ = eventTree.trueSimPartEDepZ[j] - eventTree.trueSimPartZ[j]
                 trueEDepDistanceList.append(np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ)))
-                alltimeEDepList.append(np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ)))
                 
 #truth match checker: currently, i'm just checking that each true tid appears in the reco tid
     for i in range(len(truePhotonTIDList)):
@@ -248,47 +247,14 @@ for i in range(eventTree.GetEntries()):
             photonReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
         else:
             photonNotReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
-                
-    if len(recoPhotonTIDList) == 0:
-        noPhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(recoPhotonTIDList) == 1:
-        onePhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(recoPhotonTIDList) >= 3:
-        manyPhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(recoPhotonTIDList) == 2:
-        recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+
 #----- end of event loop ---------------------------------------------#
 
-trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = \
-    sStackFillS("True NC 1 proton 2 gamma Events", trueSignalHist, rt.kBlue, "trueCanvas")
+truthMatchEDepHist = rt.TH1F("Photon Reconstruction Efficiency", "Efficiency of photon reconstruction as a function of EDep-Vtx Distance",60,0,200)
 
-histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, \
-            piPlusHist, noProtonHist, pluralProtonHist, wrongProtonHist, \
-            noPhotonHist, onePhotonHist, manyPhotonHist]
-
-recoSignalHistCanvas, stack, legend, histInt = \
-    histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, \
-                  "Reco Identification: (", "Leading Photon Energy (MeV)", "Events per 6.67e+20 POT")
-
-recoHistList = [photonReconstructedHist, photonNotReconstructedHist]
-
-recoPhotonCanvas, recoStack, recoLegend, recoInt = \
-    histStackFill("Photon Distance to Vertex in NC 1 Proton 2 Photon Events", recoHistList, \
-                  "Reco Identification: (", "Photon EDep-Vtx DIstance (cm)", "Photons per 6.67e+20 POT")
-
-truthMatchEDepHist = rt.TH1F("hopefully the efficiency plot", "Efficiency of truth-matching photons as a function of EDep-Vtx Distance",60,0,200)
-
-truePhotonHist.Scale(targetPOT/ntuplePOTsum)
-truthMatchEDepHist.Scale(targetPOT/ntuplePOTsum)
-
-truthMatchEDepHist = (photonReconstructedHist)/(truePhotonHist)
+truthMatchedEfficiencyCanvas, truthMatchedEfficiencyStack = efficiencyPlot(truePhotonHist, \
+    photonReconstructedHist, truthMatchEDepHist, "Efficiency of photon reconstruction as a function of EDep-Vtx Distance", \
+        "EDep-Vtx Distance (cm)")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
-recoSignalHistCanvas.Write()
-trueSignalCanvas.Write()
-recoPhotonCanvas.Write()
-truePhotonHist.Write()
-truthMatchEDepHist.Write()
+truthMatchedEfficiencyCanvas.Write()
