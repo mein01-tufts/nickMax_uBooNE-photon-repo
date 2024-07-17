@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent
+from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, recoCutLowEnergy
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -39,6 +39,7 @@ totalHist2 = rt.TH1F("total2", "Two photons",60,0,2)
 totalHist3 = rt.TH1F("total3", "Three photons",60,0,2)
 totalList = [totalHist1, totalHist2, totalHist3]
 
+lowEnergyHist = rt.TH1F("lowEnergy1", "Only photon < 0.1 GeV",60,0,2)
 noVertexHist = rt.TH1F("noVertex1", "No vertex",60,0,2)
 NCHist = rt.TH1F("NC1", "Charged current detected",60,0,2)
 pionProtonHist = rt.TH1F("pionProton1", "Pion/Proton detected",60,0,2)
@@ -48,10 +49,11 @@ tooManyHist = rt.TH1F("tooMany1", "Excess Photons detected",60,0,2)
 tooFewHist = rt.TH1F("tooFew1", "Too few photons detected",60,0,2)
 successHist = rt.TH1F("success1", "Signal",60,0,2)
 
-histList = [tooManyHist, pionProtonHist, fiducialHist, NCHist, noVertexHist, noPhotonHist, tooFewHist, successHist]
+histList = [lowEnergyHist, tooManyHist, pionProtonHist, fiducialHist, NCHist, noVertexHist, noPhotonHist, tooFewHist, successHist]
 
+lowEnergyHist2 = rt.TH1F("lowEnergy2", "Only photon < 0.1 GeV",60,0,2)
 noVertexHist2 = rt.TH1F("noVertex2", "No vertex",60,0,2)
-NCHist2 = rt.TH1F("NC1", "Charged current detected",60,0,2)
+NCHist2 = rt.TH1F("NC2", "Charged current detected",60,0,2)
 pionProtonHist2 = rt.TH1F("pionProton2", "Pion/Proton detected",60,0,2)
 fiducialHist2 = rt.TH1F("fiducial2", "Out of fiducial",60,0,2)
 noPhotonHist2 = rt.TH1F("noPhotons2", "No Photons detected",60,0,2)
@@ -61,8 +63,9 @@ successHist2 = rt.TH1F("success2", "Signal",60,0,2)
 
 histList2 = [tooManyHist2, pionProtonHist2, fiducialHist2, NCHist2, noVertexHist2, noPhotonHist2, tooFewHist2, successHist2]
 
+lowEnergyHist3 = rt.TH1F("lowEnergy3", "Only photon < 0.1 GeV",60,0,2)
 noVertexHist3 = rt.TH1F("noVertex3", "No vertex",60,0,2)
-NCHist3 = rt.TH1F("NC1", "Charged current detected",60,0,2)
+NCHist3 = rt.TH1F("NC3", "Charged current detected",60,0,2)
 pionProtonHist3 = rt.TH1F("pionProton3", "Pion/Proton detected",60,0,2)
 fiducialHist3 = rt.TH1F("fiducial3", "Out of fiducial",60,0,2)
 noPhotonHist3 = rt.TH1F("noPhotons3", "No Photons detected",60,0,2)
@@ -130,6 +133,7 @@ for i in range(eventTree.GetEntries()):
     if scaledEnergy[x] > leadingPhoton:
       leadingPhoton = scaledEnergy[x]
 
+  
   #Fill total graph
   if len(truePhotonIDs) == 1:
     totalHist1.Fill(scaledEnergy[0], eventTree.xsecWeight)
@@ -143,6 +147,17 @@ for i in range(eventTree.GetEntries()):
   #Checking the number of photons the reco finds
   recoList = recoPhotonList(eventTree)
 
+  if recoCutLowEnergy(recoList, eventTree) == False:
+    if len(truePhotonIDs) == 1:
+      lowEnergyHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonIDs) == 2:
+      lowEnergyHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      lowEnergyHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+    continue
+  
   #Too many photons
   if len(recoList) > len(truePhotonIDs):
     if len(truePhotonIDs) == 1:
@@ -242,10 +257,10 @@ for i in range(eventTree.GetEntries()):
     successHist3.Fill(leadingPhoton, eventTree.xsecWeight)
   
 
-histCanvas, stack, legend, histInt = histStack("Outcome of single-photon true events (reco reversed)", histList)
-histCanvas2, stack2, legend2, histInt2 = histStack("Outcome of two-photon true events (reco reversed)", histList2)
-histCanvas3, stack3, legend3, histInt3 = histStack("Outcome of three-photon true events (reco reversed)", histList3)
-totalHistCanvas, stack4, legend4, histInt4 = histStack("Chart of all true events", totalList)
+histCanvas, stack, legend, histInt = histStack("Outcome of single-photon true events (reco reversed)", histList, ntuplePOTsum)
+histCanvas2, stack2, legend2, histInt2 = histStack("Outcome of two-photon true events (reco reversed)", histList2, ntuplePOTsum)
+histCanvas3, stack3, legend3, histInt3 = histStack("Outcome of three-photon true events (reco reversed)", histList3, ntuplePOTsum)
+totalHistCanvas, stack4, legend4, histInt4 = histStack("Chart of all true events", totalList, ntuplePOTsum)
 
 
 

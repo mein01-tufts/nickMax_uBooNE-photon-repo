@@ -358,7 +358,19 @@ def recoNeutralCurrent(ntuple):
   else:
     return True
 
+def recoCutLowEnergy(recoList, ntuple):
+#Seeks to sharply reduce background in single-photon events by slicing out events in which the photon has less than 0.1 GeV, as a considerable number of cosmic events fit that bill
+  if len(recoList) == 1:
+    if ntuple.showerRecoE[recoList[0]] < 70:
+      return False
+    else:
+      return True
+  else:
+    return True
 
+
+  
+#OTHER MISCELLANIOUS FUNCTIONS
 def trickyPionProtonCuts(ntuple):
 #Filter for pions and photons using truth - False if either (or both) are present, True otherwise
 #NOTE - This is deliberately checking for photons and charged pions the WRONG WAY, in order to inspect the specific set of events with protons that fall between this threshold and the actual kinetic energy threshold. If you're looking for the right way to do it, trueCutPionProton is the way to go (or you might want trueCutMaxProton if you're looking for protons but not charged pions) 
@@ -378,6 +390,7 @@ def trickyPionProtonCuts(ntuple):
   else:
     return False
 
+  
 # This function uses a particle's momentum vector and total energy to calculate its kinetic energy, then returns its kinetic energy in GeV
 def kineticEnergyCalculator(ntuple, i):
   momentumVector = np.square(ntuple.truePrimPartPx[i]) + np.square(ntuple.truePrimPartPy[i]) + np.square(ntuple.truePrimPartPz[i])
