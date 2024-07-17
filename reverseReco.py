@@ -112,7 +112,7 @@ for i in range(eventTree.GetEntries()):
   else:
     pionProtonSuccess += 1
   
-  truePhotonIDs = truePhotonList(eventTree, truePhotonIDs, fiducialData)
+  truePhotonIDs = truePhotonList(eventTree, fiducialData)
   if len(truePhotonIDs) > 0:
     trueSuccess += 1
   else:
