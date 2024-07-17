@@ -151,17 +151,16 @@ def trueCutMaxProtons(ntuple):
 
 
 #HISTOGRAM FUNCTIONS
-def histStack(title, histList):
+def histStack(title, histList, POTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen, rt. kOrange+1]
-  targetPOT = 6.67e+20
-  ntuplePOTSum = 4.675690535431973e+20
+  POTTarget = 6.67e+20
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
-    hist.Scale(targetPOT/ntuplePOTSum)
+    hist.Scale(POTTarget/POTSum)
     hist.SetLineColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
     legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
@@ -181,7 +180,7 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle):
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
-  targetPOT = 6.67e+20
+  targetPOT = 3.2974607516739725e+20
   ntuplePOTSum = 4.675690535431973e+20
   integralSum = 0
   for x in range(len(histList)):
@@ -270,7 +269,7 @@ def scaleRecoEnergy(ntuple, recoIDs):
   if len(recoIDs) == 2:
     a = 0
     b = 1
-    invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(eventTree.showerStartDirX[a]*eventTree.showerStartDirX[b] + eventTree.showerStartDirY[a]*eventTree.showerStartDirY[b] + eventTree.showerStartDirZ[a]*eventTree.showerStartDirZ[b])))
+    invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(ntuple.showerStartDirX[a]*ntuple.showerStartDirX[b] + ntuple.showerStartDirY[a]*ntuple.showerStartDirY[b] + ntuple.showerStartDirZ[a]*ntuple.showerStartDirZ[b])))
   
   return leadingPhoton, invariantMass
 
@@ -320,7 +319,7 @@ def recoPhotonList(ntuple):
   for x in range(ntuple.nShowers):
     if ntuple.showerClassified[x] == 1:
       if ntuple.showerPID[x] == 22:
-        recoList.append(x)
+        recoIDs.append(x)
   return recoIDs
 
 def recoPionProton(ntuple):
