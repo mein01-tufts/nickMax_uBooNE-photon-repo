@@ -131,6 +131,16 @@ for i in range(eventTree.GetEntries()):
     if len(photonIndexList) != 2:
         continue
 
+# check that both photons deposit energy within the fiducial volume
+    photonEDepOutsideFiducial = False
+    for i in range(len(photonIndexList)):
+        if eventTree.trueSimPartEDepX[photonIndexList[i]] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[photonIndexList[i]] >= (xMax - fiducialWidth)\
+            or eventTree.trueSimPartEDepY[photonIndexList[i]] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[photonIndexList[i]] >= (yMax - fiducialWidth)\
+            or eventTree.trueSimPartEDepZ[photonIndexList[i]] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[photonIndexList[i]] >= (zMax - fiducialWidth):
+            photonEDepOutsideFiducial = True
+    if photonEDepOutsideFiducial == True:
+        continue
+
 #find leading photon energy
     photonEnergyList = []
     for i in range(len(photonIndexList)):
