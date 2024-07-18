@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy
+from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, recoCutLowEnergy
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -123,11 +123,16 @@ for i in range(eventTree.GetEntries()):
 
   #See if there are any photons in the event - if so, list them
   recoList = recoPhotonList(eventTree)
+
+  #This thing reduces cosmic background by ~85%
+  if recoCutLowEnergy(recoList, eventTree) == False:
+    continue
+  
   if len(recoList) == 0:
     continue
   else:
     recoCount += 1
-    
+
   #SORT USING TRUTH
   #Scale energy, find leading photon
   leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
@@ -165,7 +170,7 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Find out the actual number of photons, and sort according to whether we got it right
-  truePhotonIDs = truePhotonList(eventTree, truePhotonIDs, fiducialData)
+  truePhotonIDs = truePhotonList(eventTree, fiducialData)
   if len(truePhotonIDs) == 0:
     addHist(recoList, leadingPhoton, noPhotonHist, noPhotonHist2, noPhotonHist3, eventTree.xsecWeight)
 
@@ -179,10 +184,10 @@ for i in range(eventTree.GetEntries()):
   
 #END OF LOOP
 #Stack Histograms
-totalHistCanvas, stack0, legend0, histInt0 = histStack("Chart of all reconstructed events", totalList)
-histCanvas, stack, legend, histInt = histStack("Outcome of single-photon reco events", histList)
-histCanvas2, stack2, legend2, histInt2 = histStack("Outcome of two-photon reco events", histList2)
-histCanvas3, stack3, legend3, histInt3 = histStack("Outcome of three-photon reco events", histList3)
+totalHistCanvas, stack0, legend0, histInt0 = histStack("Chart of all reconstructed events", totalList, ntuplePOTsum)
+histCanvas, stack, legend, histInt = histStack("Outcome of single-photon reco events", histList, ntuplePOTsum)
+histCanvas2, stack2, legend2, histInt2 = histStack("Outcome of two-photon reco events", histList2, ntuplePOTsum)
+histCanvas3, stack3, legend3, histInt3 = histStack("Outcome of three-photon reco events", histList3, ntuplePOTsum)
 
 stack.GetXaxis().SetTitle("Reconstructed Leading Photon Energy (GeV)")
 stack2.GetXaxis().SetTitle("Reconstructed Invariant Mass (GeV)")

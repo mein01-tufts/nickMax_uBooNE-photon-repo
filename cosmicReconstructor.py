@@ -1,0 +1,118 @@
+import sys, argparse
+import numpy as np
+import ROOT as rt
+rt.PyConfig.IgnoreCommandLineOptions = True
+rt.gROOT.SetBatch(True)
+rt.gStyle.SetOptStat(0)
+
+from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy
+
+from helpers.larflowreco_ana_funcs import getCosThetaGravVector
+
+parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
+parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
+parser.add_argument("-o", "--outfile", type=str, default="example_ntuple_analysis_script_output.root", help="output root file name")
+parser.add_argument("-fc", "--fullyContained", action="store_true", help="only consider fully contained events")
+parser.add_argument("-ncc", "--noCosmicCuts", action="store_true", help="don't apply cosmic rejection cuts")
+args = parser.parse_args()
+
+#open input file and get event and POT trees
+ntuple_file = rt.TFile(args.infile)
+eventTree = ntuple_file.Get("EventTree")
+potTree = ntuple_file.Get("potTree")
+
+#we will scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
+targetPOT = 6.67e+20
+targetPOTstring = "6.67e+20"
+
+
+#calculate POT represented by full ntuple file after applying cross section weights
+ntuplePOTSum = 3.2974607516739725e+20
+
+#HISTOGRAMS DEFINED AND PREPARED HERE
+#noVertexHist = rt.TH1F("NoVertex", "No Vertex Detected" ,60,0,10)
+#chargeCurrentHist = rt.TH1F("ChargeCurrent", "Charge Current Detected" ,60,0,10)
+#fiducialHist = rt.TH1F("fiducials", "Caught by fiducials" ,60,0,10)
+#pionProtonHist = rt.TH1F("pionsProtons", "Pion or Proton Detected" ,60,0,10)
+cosmicHist = rt.TH1F("cosmics", "Caught by Cosmic Check" ,60,0,1.4)
+#noPhotonHist = rt.TH1F("noPhotons", "No photons detected" ,60,0,2)
+singlePhotonHist = rt.TH1F("Through1", "One Photon" ,60,0,1.4)
+twoPhotonHist = rt.TH1F("Through2", "Two Photons" ,60,0,1.4)
+morePhotonHist = rt.TH1F("Through3", "Three Photons" ,60,0,1.4)
+
+#cutList = [noVertexHist, chargeCurrentHist, fiducialHist, pionProtonHist, cosmicHist]
+passList = [singlePhotonHist, twoPhotonHist, morePhotonHist]
+
+#Functions for making histograms
+def configureHist(h):
+  h.GetYaxis().SetTitle("Events per "+targetPOTstring+" POT")
+  h.GetXaxis().SetTitle("Leading Photon Energy (GeV)")
+  h.SetLineWidth(2)
+  return h
+
+for hist in passList:
+  hist = configureHist(hist)
+
+#Variables for program review
+cosmicHits = 0
+
+#Variables for program function
+fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
+
+#Event loop begins
+for i in range(eventTree.GetEntries()):
+  eventTree.GetEntry(i)
+
+  #RECO CUTS
+  if recoNoVertex(eventTree) == False:
+    continue
+
+  #See if the event is neutral current
+  if recoNeutralCurrent(eventTree) == False:
+    continue
+
+  #Make sure the event is within the fiducial volume
+  if recoFiducials(eventTree, fiducialData) == False:
+    continue
+
+  #Cut events with suitably energetic protons or charged pions
+  if recoPionProton(eventTree) == False:
+    continue
+
+  #See if there are actually any photons. If so, list them; if not, cut them
+  recoList = recoPhotonList(eventTree)
+
+  if len(recoList) == 0:
+    continue
+
+  leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
+  
+  #See if we can put the cosmic cut to use
+  if trueCutCosmic(eventTree) == False:
+    cosmicHist.Fill(leadingPhoton, 1)
+    cosmicHits += 1
+    continue
+
+  #See if this can't git rid of a reasonable number here
+  if recoCutLowEnergy(recoList, eventTree) == False:
+    continue
+  
+  #If the event makes it through, we store it here
+  if len(recoList) == 1:
+    singlePhotonHist.Fill(leadingPhoton, 1)
+  elif len(recoList) == 2:
+    twoPhotonHist.Fill(leadingPhoton, 1)
+  else:
+    morePhotonHist.Fill(leadingPhoton, 1)
+
+#End of loop
+passCanvas1, passStack1, passLegend1, passHistInt1 = histStack("Cosmic background that reco lets in", passList, ntuplePOTSum)
+
+passStack1.GetXaxis().SetTitle("Leading Photon Energy (GeV)")
+passStack1.GetYaxis().SetTitle("No of Events (scaled to 6.67e+20)")
+
+outFile = rt.TFile(args.outfile, "RECREATE")
+passCanvas1.Write()
+cosmicHist.Write()
+
+print("The cosmic cut got", cosmicHits, "events.")
