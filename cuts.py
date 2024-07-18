@@ -223,7 +223,7 @@ def sStackFillS(title, hist, kColor, canvasTitle ):
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
   histCanvas = rt.TCanvas(str(canvasTitle)) 
   stack.Draw("HIST")
-  stack.GetXaxis().SetTitle("Average Photon Energy (MeV)")
+  stack.GetXaxis().SetTitle("Leading Photon Energy (MeV)")
   stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
   legend.Draw()
   histCanvas.Update()
