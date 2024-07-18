@@ -357,6 +357,30 @@ def recoPionProton(ntuple):
   else:
     return True
 
+
+def recoProton(ntuple):
+  protonFound = False
+  for x in range(ntuple.nTracks):
+    if ntuple.trackPID[x] == 2212:
+      if ntuple.trackRecoE[x] >= 60:
+        protonFound = True
+        break
+  if protonFound == True:
+    return False
+  else:
+    return True
+
+def recoPion(ntuple):
+  pionFound = False
+  for x in range(ntuple.nTracks):
+    if abs(ntuple.trackPID[x]) == 211:
+      if ntuple.trackRecoE[x] >= 30:
+        chargedPionFound = True
+        break
+  if pionFound == True:
+    return False
+  else: return True
+  
 def recoNeutralCurrent(ntuple):
   #Checks for signs of a neutral current event; returns True if it thinks the event is NC, False if CC
   chargeCurrent = False
