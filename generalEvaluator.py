@@ -59,7 +59,6 @@ purityNoPhotons2 = rt.TH1F("PNoPhoton2", "No Real Photons",60,0,2)
 purityOnePhoton2 = rt.TH1F("POnePhoton2", "1 Real Photon",60,0,2)
 purityManyPhotons2 = rt.TH1F("PManyPhoton2", "3+ Real Photons",60,0,2)
 
-
 purityTotal3 = rt.TH1F("PTotal3", "One Photon",60,0,2)
 puritySignal3 =	 rt.TH1F("PSignal3", "Signal",60,0,2)
 purityCC3 = rt.TH1F("PCC3", "Actually Charged Current",60,0,2)
@@ -187,7 +186,12 @@ def purityStack(title, purityList, cosmicHist, POTSum, cosmicSum):
   return histCanvas, stack, legend, histInt
 
 #Variables for program review
-
+initialCount = 0
+vertexCount = 0
+NCCount = 0
+fiducialCount = 0
+noPionCount = 0
+recoCount = 0
 
 #Variables for program function
 fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
@@ -223,7 +227,7 @@ for i in range(eventTree.GetEntries()):
   
   #Calculating graphing values
   leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
-  
+
   #Neutral current!
   if trueCutNC(eventTree) == False:
     addHist(eventTree, recoList, CCPHists, leadingPhoton, eventTree.xsecWeight)
@@ -236,12 +240,13 @@ for i in range(eventTree.GetEntries()):
 
   if trueCutFiducials(eventTree, fiducialData) == False:
     addHist(eventTree, recoList, fiducialPHists, leadingPhoton, eventTree.xsecWeight)
+    continue
   
   #pions and protons!
   if trueCutPionProton(eventTree) == False:
     addHist(eventTree, recoList, pionProtonPHists, leadingPhoton, eventTree.xsecWeight)
     continue
-    
+
   #Now we make a list of the actual photons!
   truePhotonIDs = truePhotonList(eventTree, fiducialData)
 
@@ -251,7 +256,7 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Is there one Photon?
-  elif len(truePhotonIDs) == 1:
+  if len(truePhotonIDs) == 1:
     addHist(eventTree, recoList, onePhotonPHists, leadingPhoton, eventTree.xsecWeight)
   #Are there two?
   elif len(truePhotonIDs) == 2:
@@ -266,30 +271,31 @@ for i in range(cosmicTree.GetEntries()):
 
   #COSMICS - SELECTING EVENTS BASED ON RECO
   #See if the event has a vertex
-  if recoNoVertex(eventTree) == False:
+  if recoNoVertex(cosmicTree) == False:
     continue
 
   #See if the event is neutral current                                                                                                  
-  if recoNeutralCurrent(eventTree) == False:
+  if recoNeutralCurrent(cosmicTree) == False:
     continue
 
   #Make sure the event is within the fiducial volume
-  if recoFiducials(eventTree, fiducialData) == False:
+  if recoFiducials(cosmicTree, fiducialData) == False:
     continue
 
   #Cut events with suitably energetic protons or charged pions
-  if recoPionProton(eventTree) == False:
+  if recoPionProton(cosmicTree) == False:
     continue
 
   #See if there are any photons in the event - if so, list them
-  recoList = recoPhotonList(eventTree)
+  recoList = recoPhotonList(cosmicTree)
   if len(recoList) == 0:
     continue
 
+
   #graphing based on photon count
   #Calculating graphing values
-  leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
-  addHist(eventTree, recoList, cosmicList, leadingPhoton, 1)
+  leadingPhoton, invariantMass = scaleRecoEnergy(cosmicTree, recoList)
+  addHist(cosmicTree, recoList, cosmicList, leadingPhoton, 1)
 
   
 #BEGINNING EVENT LOOP FOR EFFICIENCY
@@ -318,21 +324,21 @@ for i in range(eventTree.GetEntries()):
   #EFFICIENCY - GRAPHING BASED ON RECO
 
   leadingPhoton, invariantMass = scaleTrueEnergy(eventTree, truePhotonIDs)
-  
+  initialCount += 1
   if recoNoVertex(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effNoVertexHists, leadingPhoton, eventTree.xsecWeight)
     continue
-
+  vertexCount += 1
   #See if the event is neutral current                                                                                                  
   if recoNeutralCurrent(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effCCHists, leadingPhoton, eventTree.xsecWeight)
     continue
-
+  NCCount += 1
   #Make sure the event is within the fiducial volume
   if recoFiducials(eventTree, fiducialData) == False:
     addHist(eventTree, truePhotonIDs, effFiducialHists, leadingPhoton, eventTree.xsecWeight)
     continue
-
+  fiducialCount += 1
   #Cut events with suitably energetic protons or charged pions
   if recoProton(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effProtonHists, leadingPhoton, eventTree.xsecWeight)
@@ -341,7 +347,7 @@ for i in range(eventTree.GetEntries()):
   if recoPion(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effPionHists, leadingPhoton, eventTree.xsecWeight)
     continue
-  
+  noPionCount += 1
   #See if there are any photons in the event - if so, list them
   recoList = recoPhotonList(eventTree)
   if len(recoList) == 0:
@@ -373,3 +379,10 @@ effCanvas1.Write()
 effCanvas2.Write()
 effCanvas3.Write()
 cosmicCanvas.Write()
+
+print("Total events:", initialCount)
+print("Total with vertex:", vertexCount) 
+print("Total with NC:", NCCount) 
+print("Total with fiducial:", fiducialCount)
+print("Total without pions or protons:", noPionCount)
+print("Total purity events reconstructed:", recoCount)
