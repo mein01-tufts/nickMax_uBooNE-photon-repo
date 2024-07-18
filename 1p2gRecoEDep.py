@@ -6,7 +6,7 @@ from cuts import kineticEnergyCalculator, efficiencyPlot
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDmatchEDep.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDMatchEDep.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -88,17 +88,20 @@ for i in range(eventTree.GetEntries()):
     piPlusPresent = False
     for i in range(len(eventTree.truePrimPartPDG)):
         #proton checker
-        if eventTree.truePrimPartPDG[i] == 2212:
+        if abs(eventTree.truePrimPartPDG[i]) == 2212:
             kE = kineticEnergyCalculator(eventTree, i)
             if kE >= 0.06:
                 nProtons += 1
-        #pi+ checker        
-        elif abs(eventTree.truePrimPartPDG[i] == 211):
+    if nProtons != 1:
+        continue
+
+    for i in range(len(eventTree.truePrimPartPDG)):        
+        if abs(eventTree.truePrimPartPDG[i]) == 211:
             kE = kineticEnergyCalculator(eventTree, i)
             if kE >= 0.03:
                 piPlusPresent = True
                 break
-    if nProtons != 1 or piPlusPresent:
+    if piPlusPresent:
         continue
 
 #true photon check: look through primary particles to count the photon daughters
@@ -127,8 +130,6 @@ for i in range(eventTree.GetEntries()):
         continue
     if len(photonIndexList) != 2:
         continue
-    if len(photonIndexList) == 2:
-        totaltrueevents += 2
 
 #find leading photon energy
     photonEnergyList = []
@@ -247,6 +248,7 @@ for i in range(eventTree.GetEntries()):
             photonReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
         else:
             photonNotReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
+
 
 #----- end of event loop ---------------------------------------------#
 
