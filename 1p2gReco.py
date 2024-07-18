@@ -6,25 +6,25 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDmatch.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID.root", help="output root file name")
 args = parser.parse_args()
 
-#open input file and get event and POT trees
+# open input file and get event and POT trees
 ntuple_file = rt.TFile(args.infile)
 eventTree = ntuple_file.Get("EventTree")
 potTree = ntuple_file.Get("potTree")
 
-#scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
+# scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
 targetPOT = 6.67e+20
 targetPOTstring = "6.67e+20" #for plot axis titles
 
-#calculate POT represented by full ntuple file after applying cross section weights
+# calculate POT represented by full ntuple file after applying cross section weights
 ntuplePOTsum = 0.
 for i in range(potTree.GetEntries()):
     potTree.GetEntry(i)
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
-#define histograms to fill
+# define histograms to fill
 trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,1500)
 
 noVtxFoundHist = rt.TH1F("No Vertex Found", "Reco couldn't find a vertex",60,0,1500)
@@ -41,14 +41,13 @@ recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,1500
 photonReconstructedHist = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,1500)
 photonNotReconstructedHist = rt.TH1F("reco didn't reconstruct the photon", "Photon not TID-matched in Reco",60,0,1500)
 
-#set detector min/max and fiducial width (cm)
+# set detector min/max and fiducial width (cm)
 xMin, xMax = 0, 256
 yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
 fiducialWidth = 10
 
 totaltruephotons = 0
-totaltrueevents = 0
 
 totalrecophotons = 0
 truthMatchedPhotons = 0
@@ -57,41 +56,44 @@ avglen =0
 nonunique = 0
 unique = 0
 exhaustive = 0
-#begin loop over events in ntuple file:
+totalSimProtons=0
+totalPrimProtons = 0
+totalPDGProtons = 0
+photonEDepOutsideFiducialCounter =0
+# begin loop over events in ntuple file:
 # if we start with truth then reco-match, we can ID reco's false negatives
 # if we start with reco then truth-match, we can ID reco's false positives
 
-#start by using truth to cut all background, then do the same checks in reco
-#after reco-matching, sort events by how reco identifies the true signal, 
-#then create a stacked histogram w/ x-axis of photon energy
+# start by using truth to cut all background, then do the same checks in reco
+# after reco-matching, sort events by how reco identifies the true signal
 for i in range(eventTree.GetEntries()):
     eventTree.GetEntry(i)
 
-#true charged-current cut
+# true charged-current cut
     if eventTree.trueNuCCNC != 1:
         continue
 
-#true fiducial volume cut
+# true fiducial volume cut
     if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
         eventTree.trueVtxY <= (yMin + fiducialWidth) or eventTree.trueVtxY >= (yMax - fiducialWidth) or \
         eventTree.trueVtxZ <= (zMin + fiducialWidth) or eventTree.trueVtxZ >= (zMax - fiducialWidth):
         continue
 
-#true cosmic background cut
+# true cosmic background cut
     if eventTree.vtxFracHitsOnCosmic >= 1.:
         continue
 
-#true proton & pi+ check: include all photons above 60MeV, exclude all pi+ above 30MeV
+# true proton & pi+ check: include all photons above 60MeV, exclude all pi+ above 30MeV
     nProtons = 0
     piPlusPresent = False
     for i in range(len(eventTree.truePrimPartPDG)):
         #proton checker
-        if eventTree.truePrimPartPDG[i] == 2212:
+        if abs(eventTree.truePrimPartPDG[i]) == 2212:
             kE = kineticEnergyCalculator(eventTree, i)
             if kE >= 0.06:
                 nProtons += 1
         #pi+ checker        
-        elif abs(eventTree.truePrimPartPDG[i] == 211):
+        elif abs(eventTree.truePrimPartPDG[i]) == 211:
             kE = kineticEnergyCalculator(eventTree, i)
             if kE >= 0.03:
                 piPlusPresent = True
@@ -99,7 +101,8 @@ for i in range(eventTree.GetEntries()):
     if nProtons != 1 or piPlusPresent:
         continue
 
-#true photon check: look through primary particles to count the photon daughters
+# true photon check: look through primary particles to count the photons, 
+# then cut if != 2 photons present
     photonInSecondary = False
     primList = []
     photonIndexList = []
@@ -125,8 +128,17 @@ for i in range(eventTree.GetEntries()):
         continue
     if len(photonIndexList) != 2:
         continue
-    if len(photonIndexList) == 2:
-        totaltrueevents += 2
+    
+# check that both photons deposit energy within the fiducial volume
+    photonEDepOutsideFiducial = False
+    for i in range(len(photonIndexList)):
+        if eventTree.trueSimPartEDepX[photonIndexList[i]] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[photonIndexList[i]] >= (xMax - fiducialWidth)\
+            or eventTree.trueSimPartEDepY[photonIndexList[i]] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[photonIndexList[i]] >= (yMax - fiducialWidth)\
+            or eventTree.trueSimPartEDepZ[photonIndexList[i]] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[photonIndexList[i]] >= (zMax - fiducialWidth):
+            photonEDepOutsideFiducial = True
+    if photonEDepOutsideFiducial == True:
+        photonEDepOutsideFiducialCounter += 1
+        continue
 
 #find leading photon energy
     photonEnergyList = []
@@ -137,14 +149,16 @@ for i in range(eventTree.GetEntries()):
 
     trueSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
 
+    totalPrimProtons += 1
 #find and store the true trackID of the proton
     for i in range(len(eventTree.trueSimPartTID)):
-        if eventTree.trueSimPartProcess[i] == 0:
+        if eventTree.trueSimPartMID[i] == eventTree.trueSimPartTID[i]:
             if abs(eventTree.trueSimPartPDG[i]) == 2212:
                 momentumVector = np.square(eventTree.trueSimPartPx[i]) + \
                     np.square(eventTree.trueSimPartPy[i]) + np.square(eventTree.trueSimPartPz[i])
                 kineticMeV = eventTree.trueSimPartE[i] - np.sqrt((np.square(eventTree.trueSimPartE[i])) - momentumVector)
                 if kineticMeV >= 60:
+                    totalSimProtons += 1
                     trueProtonTID = eventTree.trueSimPartTID[i]
 
     #-------- end of truth selection --------#
@@ -269,3 +283,6 @@ outFile = rt.TFile(args.outfile, "RECREATE")
 recoSignalHistCanvas.Write()
 trueSignalCanvas.Write()
 recoPhotonCanvas.Write()
+print(totalPrimProtons)
+print(totalSimProtons)
+print("there are " + str(photonEDepOutsideFiducialCounter) + " events where 1 or more photons edep outside the fiducial volume")
