@@ -180,7 +180,7 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle):
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
-  targetPOT = 3.2974607516739725e+20
+  targetPOT = 6.67e+20
   ntuplePOTSum = 4.675690535431973e+20
   integralSum = 0
   for x in range(len(histList)):
