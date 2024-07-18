@@ -179,6 +179,8 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
+  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kOrange]
+  targetPOT = 3.2974607516739725e+20
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
   targetPOT = 6.67e+20
   ntuplePOTSum = 4.675690535431973e+20
@@ -375,7 +377,7 @@ def recoPion(ntuple):
   for x in range(ntuple.nTracks):
     if abs(ntuple.trackPID[x]) == 211:
       if ntuple.trackRecoE[x] >= 30:
-        chargedPionFound = True
+        pionFound = True
         break
   if pionFound == True:
     return False
