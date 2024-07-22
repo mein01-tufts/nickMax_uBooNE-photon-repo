@@ -2,7 +2,7 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from cuts import kineticEnergyCalculator, efficiencyPlot
+from cuts import kineticEnergyCalculator, efficiencyPlot, histStackFill
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -25,21 +25,9 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #define histograms to fill
-trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,0,1500)
-
-noVtxFoundHist = rt.TH1F("No Vertex Found", "Reco couldn't find a vertex",60,0,1500)
-outFiducialHist = rt.TH1F("Futside Fiducial", "Reco placed vertex outside fiducial volume",60,0,1500)
-chargedCurrentHist = rt.TH1F("Charged Current", "Reco identified as charged-current",60,0,1500)
-piPlusHist = rt.TH1F("pi+", "Reco found a pi+",60,0,1500)
-noProtonHist = rt.TH1F("No Protons", "Reco found no protons",60,0,1500)
-pluralProtonHist = rt.TH1F("Multiple Protons", "Reco found multiple protons",60,0,1500)
-wrongProtonHist = rt.TH1F("1 Wrong Proton", "Reco found 1 proton but failed TID matching",60,0,1500)
-noPhotonHist = rt.TH1F("No Photons", "Reco found no photons",60,0,1500)
-onePhotonHist = rt.TH1F("One Photon", "Reco found 1 photon",60,0,1500)
-manyPhotonHist = rt.TH1F("Many Photons", "Reco found 3+ photons",60,0,1500)
-recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,1500)
 truePhotonHist = rt.TH1F("True EDep Dist of all Photons", "EDep-Vtx Distance of all True Photons",60,0,200)
 photonReconstructedHist = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,200)
+photonReconstructedHist2 = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,200)
 photonNotReconstructedHist = rt.TH1F("reco didn't reconstruct the photon", "Photon not TID-matched in Reco",60,0,200)
 
 #set detector min/max and fiducial width (cm)
@@ -48,17 +36,6 @@ yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
 fiducialWidth = 10
 
-totaltruephotons = 0
-totaltrueevents = 0
-
-totalrecophotons = 0
-truthMatchedPhotons = 0
-nonTruthMatchedPhotons = 0
-avglen =0
-nonunique = 0
-unique = 0
-exhaustive = 0
-alltimeEDepList = []
 #begin loop over events in ntuple file:
 # if we start with truth then reco-match, we can ID reco's false negatives
 # if we start with reco then truth-match, we can ID reco's false positives
@@ -141,15 +118,6 @@ for i in range(eventTree.GetEntries()):
     if photonEDepOutsideFiducial == True:
         continue
 
-#find leading photon energy
-    photonEnergyList = []
-    for i in range(len(photonIndexList)):
-        photonEnergyMeV = eventTree.trueSimPartE[photonIndexList[i]] 
-        photonEnergyList.append(photonEnergyMeV)
-    leadingPhotonEnergy = max(photonEnergyList)
-
-    trueSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-
 #find and store the true trackID of the proton
     for i in range(len(eventTree.trueSimPartTID)):
         if eventTree.trueSimPartProcess[i] == 0:
@@ -165,14 +133,12 @@ for i in range(eventTree.GetEntries()):
 
 #reco vertex check: does reco even find an event
     if eventTree.foundVertex != 1:
-        noVtxFoundHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
 #reco fiducial histogram fill
     if eventTree.vtxX <= (xMin + fiducialWidth) or eventTree.vtxX >= (xMax - fiducialWidth) or \
         eventTree.vtxY <= (yMin + fiducialWidth) or eventTree.vtxY >= (yMax - fiducialWidth) or \
         eventTree.vtxZ <= (zMin + fiducialWidth) or eventTree.vtxZ >= (zMax - fiducialWidth):
-        outFiducialHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
 # don't need reco cosmic cut - it's the same as the true
@@ -196,7 +162,6 @@ for i in range(eventTree.GetEntries()):
                 recoPrimaryElectronFound == True
 #fill hist w/ events that have primary electrons/muons (charged-current)
     if recoPrimaryMuonFound or recoPrimaryElectronTrackFound or recoPrimaryElectronFound:    
-        chargedCurrentHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
 #reco pi+: fill and continue all events w/ pi+ of KE >= 30MeV
@@ -207,7 +172,6 @@ for i in range(eventTree.GetEntries()):
                     recoPiPlusPresent = True
                     break
     if recoPiPlusPresent:
-        piPlusHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
 #reco protons: find all protons of KE >= 60MeV and truthmatch TID
@@ -218,15 +182,10 @@ for i in range(eventTree.GetEntries()):
             if eventTree.trackRecoE[i] >= 60.0:
                 recoNumProtons += 1
                 recoProtonTID = eventTree.trackTrueTID[i]
-    if recoNumProtons == 0:
-        noProtonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if recoNumProtons >= 2:
-        pluralProtonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+    if recoNumProtons != 1:
         continue
     if recoNumProtons == 1:
         if recoProtonTID != trueProtonTID:
-            wrongProtonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
             continue
     
 #reco photons: find all photons, then append truth-matched TID to a list
@@ -234,12 +193,6 @@ for i in range(eventTree.GetEntries()):
     for i in range(eventTree.nShowers):
         if eventTree.showerPID[i] == 22:
             recoPhotonTIDList.append(eventTree.showerTrueTID[i])
-
-
-#starting dictionary builder: all i do right now is fill the keys
-    trueToRecoMap = {}
-    for i in range (len(truePhotonTIDList)):
-        trueToRecoMap[truePhotonTIDList[i]] = []
 
 #calculate each photon's edep distance from vtx
     trueEDepDistanceList = []
@@ -256,17 +209,24 @@ for i in range(eventTree.GetEntries()):
         truePhotonHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
         if truePhotonTIDList[i] in recoPhotonTIDList:
             photonReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
+            photonReconstructedHist2.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
         else:
             photonNotReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
-
 
 #----- end of event loop ---------------------------------------------#
 
 truthMatchEDepHist = rt.TH1F("Photon Reconstruction Efficiency", "Efficiency of photon reconstruction as a function of EDep-Vtx Distance",60,0,200)
 
-truthMatchedEfficiencyCanvas, truthMatchedEfficiencyStack = efficiencyPlot(truePhotonHist, \
-    photonReconstructedHist, truthMatchEDepHist, "Efficiency of photon reconstruction as a function of EDep-Vtx Distance", \
+histList = [photonReconstructedHist, photonNotReconstructedHist]
+
+stackCanvas, stackStack, stackLegend, stackInt = histStackFill("Photon Distance From VTX in NC 1 Proton 2 Photon Events", \
+                                                               histList, "Reco Identification: (", "Photon EDep-VTX Distance (cm)", \
+                                                                "Photons per 6.67e+20 POT")
+
+efficiencyCanvas, truthMatchedEfficiencyStack = efficiencyPlot(truePhotonHist, \
+    photonReconstructedHist2, truthMatchEDepHist, "Efficiency of photon reconstruction as a function of EDep-Vtx Distance", \
         "EDep-Vtx Distance (cm)")
 
 outFile = rt.TFile(args.outfile, "RECREATE")
-truthMatchedEfficiencyCanvas.Write()
+efficiencyCanvas.Write()
+stackCanvas.Write()
