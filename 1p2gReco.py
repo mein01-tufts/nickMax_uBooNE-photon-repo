@@ -6,7 +6,7 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID722.root", help="output root file name")
 args = parser.parse_args()
 
 # open input file and get event and POT trees
@@ -34,10 +34,9 @@ piPlusHist = rt.TH1F("pi+", "Reco found a pi+",60,0,1500)
 noProtonHist = rt.TH1F("No Protons", "Reco found no protons",60,0,1500)
 pluralProtonHist = rt.TH1F("Multiple Protons", "Reco found multiple protons",60,0,1500)
 wrongProtonHist = rt.TH1F("1 Wrong Proton", "Reco found 1 proton but failed TID matching",60,0,1500)
-noPhotonHist = rt.TH1F("No Photons", "Reco found no photons",60,0,1500)
-onePhotonHist = rt.TH1F("One Photon", "Reco found 1 photon",60,0,1500)
-manyPhotonHist = rt.TH1F("Many Photons", "Reco found 3+ photons",60,0,1500)
-recoSignalHist = rt.TH1F("Reco = True", "Correctly identified by Reco",60,0,1500)
+noPhotonHist = rt.TH1F("No Photons", "Neither true photon was TID-matched in reco",60,0,1500)
+onePhotonHist = rt.TH1F("One Photon", "One true photon was TID-matched in reco",60,0,1500)
+recoSignalHist = rt.TH1F("Reco = True", "Both true photons TID-matched in reco",60,0,1500)
 photonReconstructedHist = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,1500)
 photonNotReconstructedHist = rt.TH1F("reco didn't reconstruct the photon", "Photon not TID-matched in Reco",60,0,1500)
 
@@ -243,22 +242,21 @@ for i in range(eventTree.GetEntries()):
         trueToRecoMap[truePhotonTIDList[i]] = []
 
 #truth match checker: currently, i'm just checking that each true tid appears in the reco tid
+    photonsTIDMatched = 0
     for i in range(len(truePhotonTIDList)):
         if truePhotonTIDList[i] in recoPhotonTIDList:
+            photonsTIDMatched += 1
             photonReconstructedHist.Fill(truePhotonEnergyList[i], eventTree.xsecWeight)
         else:
             photonNotReconstructedHist.Fill(truePhotonEnergyList[i], eventTree.xsecWeight)
                 
-    if len(recoPhotonTIDList) == 0:
+    if photonsTIDMatched == 0:
         noPhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
-    if len(recoPhotonTIDList) == 1:
+    if photonsTIDMatched == 1:
         onePhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
-    if len(recoPhotonTIDList) >= 3:
-        manyPhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(recoPhotonTIDList) == 2:
+    if photonsTIDMatched == 2:
         recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
 #----- end of event loop ---------------------------------------------#
 
@@ -267,7 +265,7 @@ trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = \
 
 histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, \
             piPlusHist, noProtonHist, pluralProtonHist, wrongProtonHist, \
-            noPhotonHist, onePhotonHist, manyPhotonHist]
+            noPhotonHist, onePhotonHist]
 
 recoSignalHistCanvas, stack, legend, histInt = \
     histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, \
@@ -283,6 +281,3 @@ outFile = rt.TFile(args.outfile, "RECREATE")
 recoSignalHistCanvas.Write()
 trueSignalCanvas.Write()
 recoPhotonCanvas.Write()
-print(totalPrimProtons)
-print(totalSimProtons)
-print("there are " + str(photonEDepOutsideFiducialCounter) + " events where 1 or more photons edep outside the fiducial volume")
