@@ -6,7 +6,7 @@ from cuts import kineticEnergyCalculator, efficiencyPlot, histStackFill
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDMatchEDep.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDMatchEDep722.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -27,7 +27,8 @@ for i in range(potTree.GetEntries()):
 #define histograms to fill
 truePhotonHist = rt.TH1F("True EDep Dist of all Photons", "EDep-Vtx Distance of all True Photons",60,0,200)
 photonReconstructedHist = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,200)
-photonReconstructedHist2 = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,200)
+photonReconstructedHist2 = rt.TH1F("reco reconstructed the photon2", "Photon was TID-matched in Reco",60,0,200)
+photonReconstructedHist3 = rt.TH1F("Errors on EDep Efficiency", "Errors on EDep Efficiency",60,0,200)
 photonNotReconstructedHist = rt.TH1F("reco didn't reconstruct the photon", "Photon not TID-matched in Reco",60,0,200)
 
 #set detector min/max and fiducial width (cm)
@@ -210,6 +211,7 @@ for i in range(eventTree.GetEntries()):
         if truePhotonTIDList[i] in recoPhotonTIDList:
             photonReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
             photonReconstructedHist2.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
+            photonReconstructedHist3.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
         else:
             photonNotReconstructedHist.Fill(trueEDepDistanceList[i], eventTree.xsecWeight)
 
@@ -227,6 +229,10 @@ efficiencyCanvas, truthMatchedEfficiencyStack = efficiencyPlot(truePhotonHist, \
     photonReconstructedHist2, truthMatchEDepHist, "Efficiency of photon reconstruction as a function of EDep-Vtx Distance", \
         "EDep-Vtx Distance (cm)")
 
+photonReconstructedHist3.Scale(targetPOT/ntuplePOTsum)
+photonReconstructedHist3 = (photonReconstructedHist3 / truePhotonHist)
+
 outFile = rt.TFile(args.outfile, "RECREATE")
+photonReconstructedHist3.Write()
 efficiencyCanvas.Write()
 stackCanvas.Write()

@@ -6,7 +6,7 @@ from cuts import kineticEnergyCalculator, efficiencyPlot, histStackFill
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDMatchEnergy.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTIDMatchEnergy722.root", help="output root file name")
 args = parser.parse_args()
 
 #open input file and get event and POT trees
@@ -30,6 +30,7 @@ trueSignalHist = rt.TH1F("trueSignalHist", "True NC 1 proton 2 gamma Events",60,
 truePhotonHist = rt.TH1F("True EDep Dist of all Photons", "EDep-Vtx Distance of all True Photons",60,0,1500)
 photonReconstructedHist = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,1500)
 photonReconstructedHist2 = rt.TH1F("reco reconstructed the photon2", "Photon was TID-matched in Reco",60,0,1500)
+photonReconstructedHist3 = rt.TH1F("Errors on Energy Efficiency", "Errors on Energy Efficiency",60,0,1500)
 photonNotReconstructedHist = rt.TH1F("reco didn't reconstruct the photon", "Photon not TID-matched in Reco",60,0,1500)
 
 #set detector min/max and fiducial width (cm)
@@ -215,6 +216,7 @@ for i in range(eventTree.GetEntries()):
         if truePhotonTIDList[i] in recoPhotonTIDList:
             photonReconstructedHist.Fill(truePhotonEnergyList[i], eventTree.xsecWeight)
             photonReconstructedHist2.Fill(truePhotonEnergyList[i], eventTree.xsecWeight)
+            photonReconstructedHist3.Fill(truePhotonEnergyList[i], eventTree.xsecWeight)
         else:
             photonNotReconstructedHist.Fill(truePhotonEnergyList[i], eventTree.xsecWeight)
 
@@ -230,6 +232,10 @@ efficiencyPlotCanvas, truthMatchedEfficiencyStack = efficiencyPlot(truePhotonHis
     photonReconstructedHist2, truthMatchEnergyHist, "Efficiency of photon reconstruction as a function of photon energy", \
         "Photon Energy (MeV)")
 
+photonReconstructedHist3.Scale(targetPOT/ntuplePOTsum)
+photonReconstructedHist3 = (photonReconstructedHist3 / truePhotonHist)
+
 outFile = rt.TFile(args.outfile, "RECREATE")
+photonReconstructedHist3.Write()
 efficiencyPlotCanvas.Write()
 stackCanvas.Write()
