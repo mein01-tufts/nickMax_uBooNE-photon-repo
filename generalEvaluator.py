@@ -87,6 +87,12 @@ cosmicTwoPhotons = rt.TH1F("cBackground2", "Two Photon Cosmic",60,0,2)
 cosmicThreePhotons = rt.TH1F("cBackground3", "3+ Photon Cosmic",60,0,2)
 cosmicList = [cosmicOnePhoton, cosmicTwoPhotons, cosmicThreePhotons]
 
+#Overall purity hitograms
+overallPurityE1 = rt.TH1F("overallPurityE1", "One Photon",60,0,2)
+overallPurityE2 = rt.TH1F("overallPurityE2", "One Photon",60,0,2)
+overallPurityE3 = rt.TH1F("overallPurityE3", "One Photon",60,0,2)
+overallPurityList = [overallPurityE1, overallPurityE2, overallPurityE3]
+
 #Big Lists, for Big Plots
 pList1 = [puritySignal1, purityCC1, purityFiducials1, purityCosmic1, purityPionProton1, purityNoPhotons1, purityTwoPhotons1, purityManyPhotons1]
 pList2 = [puritySignal2, purityCC2, purityFiducials2, purityCosmic2, purityPionProton2, purityNoPhotons2, purityOnePhoton2, purityManyPhotons2] 
@@ -185,6 +191,11 @@ def purityStack(title, purityList, cosmicHist, POTSum, cosmicSum):
   histCanvas.Update()
   return histCanvas, stack, legend, histInt
 
+def histScale(hist, POTSum):
+  POTTarget = 6.67e+20
+  hist.Scale(POTTarget/POTSum)
+  return hist
+
 #Variables for program review
 initialCount = 0
 vertexCount = 0
@@ -192,6 +203,9 @@ NCCount = 0
 fiducialCount = 0
 noPionCount = 0
 recoCount = 0
+onePhoton = 0
+twoPhotons = 0
+threePhotons = 0
 
 #Variables for program function
 fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
@@ -228,11 +242,14 @@ for i in range(eventTree.GetEntries()):
   #Calculating graphing values
   leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
 
+  #Fill totals
+  addHist(eventTree, recoList, totalPHists, leadingPhoton, eventTree.xsecWeight)
+  initialCount += 1
   #Neutral current!
   if trueCutNC(eventTree) == False:
     addHist(eventTree, recoList, CCPHists, leadingPhoton, eventTree.xsecWeight)
     continue
-
+  NCCount += 1
   #I suppose we can pretend that this is doing something
   if trueCutCosmic(eventTree) == False:
     addHist(eventTree, recoList, cosmicPHists, leadingPhoton, eventTree.xsecWeight)
@@ -241,12 +258,12 @@ for i in range(eventTree.GetEntries()):
   if trueCutFiducials(eventTree, fiducialData) == False:
     addHist(eventTree, recoList, fiducialPHists, leadingPhoton, eventTree.xsecWeight)
     continue
-  
+  fiducialCount += 1
   #pions and protons!
   if trueCutPionProton(eventTree) == False:
     addHist(eventTree, recoList, pionProtonPHists, leadingPhoton, eventTree.xsecWeight)
     continue
-
+  noPionCount += 1
   #Now we make a list of the actual photons!
   truePhotonIDs = truePhotonList(eventTree, fiducialData)
 
@@ -254,16 +271,19 @@ for i in range(eventTree.GetEntries()):
   if len(truePhotonIDs) == 0:
     addHist(eventTree, recoList, noPhotonPHists, leadingPhoton, eventTree.xsecWeight)
     continue
-
+  recoCount += 1
   #Is there one Photon?
   if len(truePhotonIDs) == 1:
     addHist(eventTree, recoList, onePhotonPHists, leadingPhoton, eventTree.xsecWeight)
+    onePhoton += 1
   #Are there two?
   elif len(truePhotonIDs) == 2:
     addHist(eventTree, recoList, twoPhotonPHists, leadingPhoton, eventTree.xsecWeight)
+    twoPhotons += 1
   #In that case, there should be at least three
   else:
     addHist(eventTree, recoList, manyPhotonPHists, leadingPhoton, eventTree.xsecWeight)
+    threePhotons += 1
 
 #BEGINNING EVENT LOOP FOR COSMICS
 for i in range(cosmicTree.GetEntries()):
@@ -291,13 +311,11 @@ for i in range(cosmicTree.GetEntries()):
   if len(recoList) == 0:
     continue
 
-
   #graphing based on photon count
   #Calculating graphing values
   leadingPhoton, invariantMass = scaleRecoEnergy(cosmicTree, recoList)
   addHist(cosmicTree, recoList, cosmicList, leadingPhoton, 1)
 
-  
 #BEGINNING EVENT LOOP FOR EFFICIENCY
 for i in range(eventTree.GetEntries()):
   eventTree.GetEntry(i)
@@ -324,21 +342,21 @@ for i in range(eventTree.GetEntries()):
   #EFFICIENCY - GRAPHING BASED ON RECO
 
   leadingPhoton, invariantMass = scaleTrueEnergy(eventTree, truePhotonIDs)
-  initialCount += 1
+
   if recoNoVertex(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effNoVertexHists, leadingPhoton, eventTree.xsecWeight)
     continue
-  vertexCount += 1
+
   #See if the event is neutral current                                                                                                  
   if recoNeutralCurrent(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effCCHists, leadingPhoton, eventTree.xsecWeight)
     continue
-  NCCount += 1
-  #Make sure the event is within the fiducial volume
+
+  #Cut events with vertexes outside the fiducial
   if recoFiducials(eventTree, fiducialData) == False:
     addHist(eventTree, truePhotonIDs, effFiducialHists, leadingPhoton, eventTree.xsecWeight)
     continue
-  fiducialCount += 1
+
   #Cut events with suitably energetic protons or charged pions
   if recoProton(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effProtonHists, leadingPhoton, eventTree.xsecWeight)
@@ -347,7 +365,7 @@ for i in range(eventTree.GetEntries()):
   if recoPion(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effPionHists, leadingPhoton, eventTree.xsecWeight)
     continue
-  noPionCount += 1
+
   #See if there are any photons in the event - if so, list them
   recoList = recoPhotonList(eventTree)
   if len(recoList) == 0:
@@ -369,6 +387,7 @@ effCanvas2, effStack2, effLegend2, effInt2 = histStack("Two-Photon Efficiency", 
 effCanvas3, effStack3, effLegend3, effInt3 = histStack("3+ Photon Efficiency", effList3, ntuplePOTsum)
 
 cosmicCanvas, cosmicStack, cosmicLegend, cosmicInt = histStack("Cosmic Background", cosmicList, cosmicPOTsum)
+  
 
 #Now all that's left to do is write the canvases to the file
 outFile = rt.TFile(args.outfile, "RECREATE")
@@ -379,10 +398,14 @@ effCanvas1.Write()
 effCanvas2.Write()
 effCanvas3.Write()
 cosmicCanvas.Write()
+#for hist in overallPurityList:
+#  hist.Write()
 
-print("Total events:", initialCount)
-print("Total with vertex:", vertexCount) 
-print("Total with NC:", NCCount) 
-print("Total with fiducial:", fiducialCount)
-print("Total without pions or protons:", noPionCount)
-print("Total purity events reconstructed:", recoCount)
+print("Vertex reconstructed:", initialCount)
+print("Neutral Current:", NCCount)
+print("In Fiducial:", fiducialCount)
+print("No pions, protons:", noPionCount)
+print("Fully reconstructed:", recoCount)
+print(onePhoton, "events had one photon")
+print(twoPhotons, "events had two photons")
+print(threePhotons, "events had 3+ photons")
