@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, CCSeeker, recoCutElectronScore
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -110,6 +110,8 @@ effNoPhotons1 = rt.TH1F("effNoPhotons1", "No Photons Found",60,0,2)
 effSignal1 = rt.TH1F("effSignal 1", "Signal",60,0,2)
 effTwoPhotons1 = rt.TH1F("effTwoPhotons1", "Two Photons Found",60,0,2)
 effManyPhotons1 = rt.TH1F("effManyPhotons1", "Many Photons Found",60,0,2)
+effChargeParent1 = rt.TH1F("effChargeParent1", "Charged Parent Found",60,0,2)
+effElectronScore1 = rt.TH1F("effElectronScore1", "Low Electron Score",60,0,2)
 
 effTotal2 = rt.TH1F("effTotal2", "Two Photons",60,0,2)
 effNoVertex2 = rt.TH1F("effNoVertex2", "No Vertex Found",60,0,2)
@@ -121,6 +123,8 @@ effNoPhotons2 =	rt.TH1F("effNoPhotons2", "No Photons Found",60,0,2)
 effSignal2 = rt.TH1F("effSignal2", "Signal",60,0,2)
 effOnePhoton2 = rt.TH1F("effOnePhoton2", "One Photon Found",60,0,2)
 effManyPhotons2 = rt.TH1F("effManyPhotons2", "Many Photons Found",60,0,2)
+effChargeParent2 = rt.TH1F("effChargeParent2", "Charged Parent Found",60,0,2)
+effElectronScore2 = rt.TH1F("effElectronScore2", "Low Electron Score",60,0,2)
 
 effTotal3 = rt.TH1F("effTotal3", "3+ Photons",60,0,2)
 effNoVertex3 = rt.TH1F("effNoVertex3", "No Vertex Found",60,0,2)
@@ -132,6 +136,8 @@ effNoPhotons3 =	rt.TH1F("effNoPhotons3", "No Photons Found",60,0,2)
 effSignal3 = rt.TH1F("effSignal 3", "Signal",60,0,2)
 effOnePhoton3 = rt.TH1F("effManyPhotons3", "Many Photons Found",60,0,2)
 effTwoPhotons3 = rt.TH1F("effTwoPhotons3", "Two Photons Found",60,0,2)
+effChargeParent3 = rt.TH1F("effChargeParent3", "Charged Parent Found",60,0,2)
+effElectronScore3 = rt.TH1F("effElectronScore3", "Low Electron Score",60,0,2)
 
 #Histogram Lists!
 effTotalList = [effTotal1, effTotal2, effTotal3]
@@ -144,10 +150,12 @@ effNoPhotonHists = [effNoPhotons1, effNoPhotons2, effNoPhotons3]
 effOnePhotonHists = [effSignal1, effOnePhoton2, effOnePhoton3] 
 effTwoPhotonHists = [effTwoPhotons1, effSignal2, effTwoPhotons3]
 effManyPhotonHists = [effManyPhotons1, effManyPhotons2, effSignal3]
+effChargeParentHists = [effChargeParent1, effChargeParent2, effChargeParent3]
+effElectronScoreHists = [effElectronScore1, effElectronScore2, effElectronScore3]
 
-effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effNoPhotons1, effTwoPhotons1, effManyPhotons1]
-effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effNoPhotons2, effOnePhoton2, effManyPhotons2]
-effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effNoPhotons3, effOnePhoton3, effTwoPhotons3]
+effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effChargeParent1, effElectronScore1, effNoPhotons1, effTwoPhotons1, effManyPhotons1]
+effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effChargeParent2, effElectronScore2, effNoPhotons2, effOnePhoton2, effManyPhotons2]
+effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effChargeParent3, effElectronScore3, effNoPhotons3, effOnePhoton3, effTwoPhotons3]
 
 #Built-in functions here
 def addHist(eventTree, photonList, histList, variable, weight):
@@ -208,7 +216,7 @@ twoPhotons = 0
 threePhotons = 0
 
 #Variables for program function
-fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
+fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":50}
 
 
 #BEGINNING EVENT LOOP FOR DEFAULT PURITY
@@ -231,10 +239,18 @@ for i in range(eventTree.GetEntries()):
   #Cut events with suitably energetic protons or charged pions 
   if recoPionProton(eventTree) == False:
     continue
-
+  
   #See if there are any photons in the event - if so, list them
   recoList = recoPhotonList(eventTree)
   if len(recoList) == 0:
+    continue
+  
+  #Cut events where the reco thinks the photon came from a charged parent
+  if CCSeeker(eventTree, recoList) == False:
+    continue
+
+  #Try cutting for electron score 
+  if recoCutElectronScore(eventTree, recoList) == False:
     continue
   
   #PURITY - GRAPHING BASED ON TRUTH
@@ -311,6 +327,14 @@ for i in range(cosmicTree.GetEntries()):
   if len(recoList) == 0:
     continue
 
+  #Try and put the process checker to work
+  if CCSeeker(cosmicTree, recoList) == False:
+    continue
+  
+  #Try cutting for electron score 
+  if recoCutElectronScore(cosmicTree, recoList) == False:
+    continue
+
   #graphing based on photon count
   #Calculating graphing values
   leadingPhoton, invariantMass = scaleRecoEnergy(cosmicTree, recoList)
@@ -368,6 +392,18 @@ for i in range(eventTree.GetEntries()):
 
   #See if there are any photons in the event - if so, list them
   recoList = recoPhotonList(eventTree)
+
+  #Cut events where the reco thinks the photon came from a charged parent
+  if CCSeeker(eventTree, recoList) == False:
+    addHist(eventTree, truePhotonIDs, effChargeParentHists, leadingPhoton, eventTree.xsecWeight)
+    continue
+
+  #Try cutting for electron score 
+  if recoCutElectronScore(eventTree, recoList) == False:
+    addHist(eventTree, truePhotonIDs, effElectronScoreHists, leadingPhoton, eventTree.xsecWeight)
+    continue
+
+  #Now we're pretty sure the event is legitimate, so we go ahead and graph based on the number of photons
   if len(recoList) == 0:
     addHist(eventTree, truePhotonIDs, effNoPhotonHists, leadingPhoton, eventTree.xsecWeight)
   elif len(recoList) == 1:

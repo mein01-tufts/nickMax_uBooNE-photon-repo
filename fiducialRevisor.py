@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton
+from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, trueCutBottomlessFiducial, recoBottomlessFiducials, trueBottomlessPhotonList
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -164,7 +164,7 @@ for z in range(1, 51):
       continue
 
     #Make sure the event is within the fiducial volume
-    if recoFiducials(eventTree, fiducialData) == False:
+    if recoBottomlessFiducials(eventTree, fiducialData) == False:
       continue
 
     #Cut events with suitably energetic protons or charged pions 
@@ -183,7 +183,7 @@ for z in range(1, 51):
       continue
 
     #Fiducials!
-    if trueCutFiducials(eventTree, fiducialData) == False:
+    if trueCutBottomlessFiducial(eventTree, fiducialData) == False:
       countIncrease(recoList, backgroundList)
       continue
 
@@ -193,7 +193,7 @@ for z in range(1, 51):
       continue
 
     #Now we make a list of the actual photons!
-    truePhotonIDs = truePhotonList(eventTree, fiducialData)
+    truePhotonIDs = trueBottomlessPhotonList(eventTree, fiducialData)
 
     #Are there actually any photons?
     if len(truePhotonIDs) == 0:
@@ -220,7 +220,7 @@ for z in range(1, 51):
       continue
 
     #Make sure the event is within the fiducial volume
-    if recoFiducials(cosmicTree, fiducialData) == False:
+    if recoBottomlessFiducials(cosmicTree, fiducialData) == False:
       continue
 
     #Cut events with suitably energetic protons or charged pions
@@ -254,7 +254,7 @@ for z in range(1, 51):
     if trueCutNC(eventTree) == False:
       continue
 
-    if trueCutFiducials(eventTree, fiducialData) == False:
+    if trueCutBottomlessFiducial(eventTree, fiducialData) == False:
       continue
     
     if trueCutCosmic(eventTree) == False:
@@ -263,7 +263,7 @@ for z in range(1, 51):
     if trueCutPionProton(eventTree) == False:
       continue
   
-    truePhotonIDs = truePhotonList(eventTree, fiducialData)
+    truePhotonIDs = trueBottomlessPhotonList(eventTree, fiducialData)
 
     if len(truePhotonIDs) == 0:
       continue
@@ -281,7 +281,7 @@ for z in range(1, 51):
       continue
 
     #Cut events with vertexes outside the fiducial
-    if recoFiducials(eventTree, fiducialData) == False:
+    if recoBottomlessFiducials(eventTree, fiducialData) == False:
       countIncrease(truePhotonIDs, backgroundList)
       continue
 

@@ -41,6 +41,13 @@ def trueCutFiducials(ntuple, fiducialData):
   else:
     return True
 
+def trueCutBottomlessFiducial(ntuple, fiducialData):
+#Filter by determining if the event vertex falls within the fiducial width using truth, excluding the lower y-axis cut  - True if it's not within the radius, false if it is
+  if ntuple.trueVtxX <= (fiducialData["xMin"] + fiducialData["width"]) or ntuple.trueVtxX >= (fiducialData["xMax"] - fiducialData["width"]) or ntuple.trueVtxY >= (fiducialData["yMax"] - fiducialData["width"]) or ntuple.trueVtxZ <= (fiducialData["zMin"] + fiducialData["width"]) or ntuple.trueVtxZ >= (fiducialData["zMax"] - fiducialData["width"]):
+    return False
+  else:
+    return True
+
 def trueCutCosmic(ntuple):
   #skip events where all hits overlap with tagged cosmic rays
   if ntuple.vtxFracHitsOnCosmic >= 1.:
@@ -126,6 +133,25 @@ def truePhotonList(ntuple, fiducial):
         secondaryList.append(x)
   for x in secondaryList:
     if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
+      list1.append(x)  
+  return list1
+
+def trueBottomlessPhotonList(ntuple, fiducial):
+#Uses truth to create a list of photons that pass the vertex and deposit tests
+  list1 = []
+  secondaryList = []
+  primList = []
+  for x in range(len(ntuple.trueSimPartTID)):
+    if ntuple.trueSimPartTID[x] == ntuple.trueSimPartMID[x]:
+      primList.append(ntuple.trueSimPartTID[x])
+  for x in range(ntuple.nTrueSimParts):
+    if ntuple.trueSimPartPDG[x] == 22:
+      if ntuple.trueSimPartMID[x] in primList:
+        secondaryList.append(x)
+      elif abs(ntuple.trueSimPartX[x] - ntuple.trueVtxX) <= 0.15 and abs(ntuple.trueSimPartY[x] - ntuple.trueVtxY) <= 0.15 and abs(ntuple.trueSimPartZ[x] - ntuple.trueVtxZ) <= 0.15:
+        secondaryList.append(x)
+  for x in secondaryList:
+    if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
       list1.append(x)  
   return list1
 
@@ -332,6 +358,15 @@ def recoFiducials(ntuple, fiducial):
       return False
 
 
+def recoBottomlessFiducials(ntuple, fiducial):
+  #Checks to see if the reconstructed event vertex is within the fiducial volume, excluding the lower side
+  if ntuple.foundVertex == 1:
+    if ntuple.vtxX > (fiducial["xMin"] + fiducial["width"]) and ntuple.vtxX < (fiducial["xMax"] - fiducial["width"]) and ntuple.vtxY < (fiducial["yMax"] - fiducial["width"]) and ntuple.vtxZ > (fiducial["zMin"] + fiducial["width"]) and ntuple.vtxZ < (fiducial["zMax"] - fiducial["width"]):
+      return True
+    else:
+      return False
+
+
 def recoPhotonList(ntuple):
   #Creates a list of photons based on the showers in the event
   recoIDs = []
@@ -411,6 +446,21 @@ def recoCutLowEnergy(recoList, ntuple):
   else:
     return True
 
+def CCSeeker(ntuple, recoPhotons):
+  chargeParent = False
+  for x in recoPhotons:
+    if ntuple.showerProcess[x] == 2:
+      chargeParent = True
+  if chargeParent == True:
+    return False
+  else:
+    return True
+    
+def recoCutElectronScore(ntuple, recoPhotons):
+  if len(recoPhotons) == 1 and abs(ntuple.showerElScore[recoPhotons[0]]) < 4:
+    return False
+  else:
+    return True
 
   
 #OTHER MISCELLANIOUS FUNCTIONS
