@@ -489,3 +489,35 @@ def kineticEnergyCalculator(ntuple, i):
   momentumVector = np.square(ntuple.truePrimPartPx[i]) + np.square(ntuple.truePrimPartPy[i]) + np.square(ntuple.truePrimPartPz[i])
   kineticGeV = ntuple.truePrimPartE[i] - np.sqrt((np.square(ntuple.truePrimPartE[i])) - momentumVector)
   return kineticGeV
+
+# This function takes the event ntuple and trueSimPart index number of a particle 
+# and returns the particle's track length and end distance from the detector wall
+def particleDistancesCalculator(eventTree, i):
+  endX, endY, endZ = eventTree.trueSimPartEndX[i], eventTree.trueSimPartEndY[i], eventTree.trueSimPartEndZ[i]
+  if eventTree.trueSimPartEndX[i] >= 256:
+    endX = 256
+  elif eventTree.trueSimPartEndX[i] <= 0:
+    endX = 0
+  if eventTree.trueSimPartEndY[i] >= 116.5:
+    endY = 116.5
+  elif eventTree.trueSimPartEndY[i] <= -116.5:
+    endY = -116.5
+  if eventTree.trueSimPartEndZ[i] >= 1036:
+    endZ = 1036
+  elif eventTree.trueSimPartEndZ[i] <= 0:
+    endZ = 0        
+  deltaX = endX - eventTree.trueSimPartX[i]
+  deltaY = endY - eventTree.trueSimPartY[i]
+  deltaZ = endZ - eventTree.trueSimPartZ[i]
+  particleDistance = np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ))
+
+  distToDetectorWallX, distToDetectorWallY, distToDetectorWallZ = endX, endY, endZ
+  if endX >= 128:
+    distToDetectorWallX = 256 - endX
+  if endY >= 0:
+    distToDetectorWallY = 116.5 - endY
+  if endZ >= 518:
+    distToDetectorWallZ = 1036 - endZ
+  distanceToDetectorWall = min(distToDetectorWallX, abs(distToDetectorWallY), distToDetectorWallZ)
+
+  return particleDistance, distanceToDetectorWall
