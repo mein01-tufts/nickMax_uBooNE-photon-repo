@@ -50,10 +50,10 @@ def trueCutBottomlessFiducial(ntuple, fiducialData):
 
 def trueCutCosmic(ntuple):
   #skip events where all hits overlap with tagged cosmic rays
-  if ntuple.vtxFracHitsOnCosmic >= 1.:
-    return False
-  else:
+  if ntuple.vtxFracHitsOnCosmic < 1:
     return True
+  else:
+    return False
   
 def trueCutPhotons(ntuple):
 #Checks for the presence of at least one photon using truth
@@ -301,7 +301,7 @@ def efficiencyPlot(totalHist, signalHist, ratioHist, title, xTitle):
 def scaleRecoEnergy(ntuple, recoIDs):
   #Uses reconstructed variables to return scaled energy and invariant mass (if the photon count is not two, the invariant mass defaults to -1)
   scaledEnergy = []
-  invariantMass = -1
+#  invariantMass = -1
   for x in recoIDs:
     energyGeV = ntuple.showerRecoE[x]/1000
     scaledEnergy.append(energyGeV)
@@ -311,17 +311,17 @@ def scaleRecoEnergy(ntuple, recoIDs):
     if scaledEnergy[x] > leadingPhoton:
       leadingPhoton = scaledEnergy[x]
 
-  if len(recoIDs) == 2:
-    a = 0
-    b = 1
-    invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(ntuple.showerStartDirX[a]*ntuple.showerStartDirX[b] + ntuple.showerStartDirY[a]*ntuple.showerStartDirY[b] + ntuple.showerStartDirZ[a]*ntuple.showerStartDirZ[b])))
+  #if len(recoIDs) == 2:
+  #  a = 0
+  #  b = 1
+  #  invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(ntuple.showerStartDirX[a]*ntuple.showerStartDirX[b] + ntuple.showerStartDirY[a]*ntuple.showerStartDirY[b] + ntuple.showerStartDirZ[a]*ntuple.showerStartDirZ[b])))
   
-  return leadingPhoton, invariantMass
+  return leadingPhoton#, invariantMass
 
 
 def scaleTrueEnergy(ntuple, trueIDs):
   scaledEnergy = []
-  invariantMass = -1
+#  invariantMass = -1
   for x in trueIDs:
     energyGeV = ntuple.trueSimPartE[x]/1000
     scaledEnergy.append(energyGeV)
@@ -331,14 +331,14 @@ def scaleTrueEnergy(ntuple, trueIDs):
     if scaledEnergy[x] > leadingPhoton:
       leadingPhoton = scaledEnergy[x]
 
-    if len(trueIDs) == 2:
-      a = 0
-      b = 1
-      lengthA = np.sqrt(ntuple.trueSimPartPx[a]**2 + ntuple.trueSimPartPy[a]**2 + ntuple.trueSimPartPz[a]**2)
-      lengthB = np.sqrt(ntuple.trueSimPartPx[b]**2 + ntuple.trueSimPartPy[b]**2 + ntuple.trueSimPartPz[b]**2)
-      aDotB = ntuple.trueSimPartPx[a]*ntuple.trueSimPartPx[b] + ntuple.trueSimPartPy[a]*ntuple.trueSimPartPy[b] + ntuple.trueSimPartPz[a]*ntuple.trueSimPartPz[b]
-      invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(aDotB)/(lengthA*lengthB)))
-  return leadingPhoton, invariantMass
+#    if len(trueIDs) == 2:
+#      a = 0
+#      b = 1
+#      lengthA = np.sqrt(ntuple.trueSimPartPx[a]**2 + ntuple.trueSimPartPy[a]**2 + ntuple.trueSimPartPz[a]**2)
+#      lengthB = np.sqrt(ntuple.trueSimPartPx[b]**2 + ntuple.trueSimPartPy[b]**2 + ntuple.trueSimPartPz[b]**2)
+#      aDotB = ntuple.trueSimPartPx[a]*ntuple.trueSimPartPx[b] + ntuple.trueSimPartPy[a]*ntuple.trueSimPartPy[b] + ntuple.trueSimPartPz[a]*ntuple.trueSimPartPz[b]
+#      invariantMass = np.sqrt((scaledEnergy[a]*scaledEnergy[b]) - (scaledEnergy[a]*scaledEnergy[b]*(aDotB)/(lengthA*lengthB)))
+  return leadingPhoton#, invariantMass
 
 #RECO FUNCTIONS
 def recoNoVertex(ntuple):
@@ -462,26 +462,62 @@ def recoCutElectronScore(ntuple, recoPhotons):
   else:
     return True
 
-  
-#OTHER MISCELLANIOUS FUNCTIONS
-def trickyPionProtonCuts(ntuple):
-#Filter for pions and photons using truth - False if either (or both) are present, True otherwise
-#NOTE - This is deliberately checking for photons and charged pions the WRONG WAY, in order to inspect the specific set of events with protons that fall between this threshold and the actual kinetic energy threshold. If you're looking for the right way to do it, trueCutPionProton is the way to go (or you might want trueCutMaxProton if you're looking for protons but not charged pions) 
-  pionPresent = False
-  protonPresent = False
-  for x in range(len(ntuple.truePrimPartPDG)):
-    if abs(ntuple.truePrimPartPDG[x]) == 211:
-      if ntuple.truePrimPartE[x] > 0.03:
-        pionPresent = True
-        break
-    elif ntuple.truePrimPartPDG[x] == 2212:
-      if ntuple.truePrimPartE[x] > 0.06:
-        protonPresent = True
-        break
-  if pionPresent == True or protonPresent == True:
-    return True
-  else:
+def recoCutShowerFromChargeScore(ntuple, recoPhotons):
+  #Cuts any event that has a Shower-From-Charged Score between -5 and 0. Targets cosmics very efficiently
+  if len(recoPhotons) == 1 and abs(ntuple.showerFromChargedScore[recoPhotons[0]]) < 5:
     return False
+  else:
+    return True
+
+def recoCutShowerfromNeutralScore(ntuple, recoPhotons):
+  if len(recoPhotons) == 1 and abs(ntuple.showerFromNeutralScore[recoPhotons[0]]) > 0.4:
+    return False
+  else:
+    return True
+
+def recoCutMuScore(ntuple, recoPhotons):
+  allGood = True
+  if ntuple.nTracks > 0:
+    for x in range(ntuple.nTracks):
+      if abs(ntuple.trackMuScore[x]) < 1:
+        allGood = False
+        break 
+  if allGood == False:
+    return False
+  else:
+    return True
+
+def recoCutLongTracks(ntuple):
+  #Cut any event that has any reconstructed track longer than 20 cm
+  acceptable = True
+  for x in range(ntuple.nTracks):
+    distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
+    if distxyz > 0:
+      acceptable = False
+  if acceptable == False:
+    return False
+  else:
+    return True 
+
+#OTHER MISCELLANIOUS FUNCTIONS
+#def trickyPionProtonCuts(ntuple):
+  #Filter for pions and photons using truth - False if either (or both) are present, True otherwise
+  #This is deliberately checking for photons and charged pions the WRONG WAY, in order to inspect the specific set of events with protons that fall between this threshold and the actual kinetic energy threshold. If you're looking for the right way to do it, trueCutPionProton is the way to go (or you might want trueCutMaxProton if you're looking for protons but not charged pions) 
+#  pionPresent = False
+#  protonPresent = False
+#  for x in range(len(ntuple.truePrimPartPDG)):
+#    if abs(ntuple.truePrimPartPDG[x]) == 211:
+#      if ntuple.truePrimPartE[x] > 0.03:
+#        pionPresent = True
+#        break
+#    elif ntuple.truePrimPartPDG[x] == 2212:
+#      if ntuple.truePrimPartE[x] > 0.06:
+#        protonPresent = True
+#        break
+#  if pionPresent == True or protonPresent == True:
+#    return True
+#  else:
+#    return False
 
   
 # This function uses a particle's momentum vector and total energy to calculate its kinetic energy, then returns its kinetic energy in GeV

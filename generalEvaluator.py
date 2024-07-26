@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, CCSeeker, recoCutElectronScore
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, CCSeeker, recoCutElectronScore, recoCutShowerFromChargeScore, recoCutLongTracks
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -86,12 +86,7 @@ cosmicOnePhoton = rt.TH1F("cBackground1", "One Photon Cosmic",60,0,2)
 cosmicTwoPhotons = rt.TH1F("cBackground2", "Two Photon Cosmic",60,0,2)
 cosmicThreePhotons = rt.TH1F("cBackground3", "3+ Photon Cosmic",60,0,2)
 cosmicList = [cosmicOnePhoton, cosmicTwoPhotons, cosmicThreePhotons]
-
-#Overall purity hitograms
-overallPurityE1 = rt.TH1F("overallPurityE1", "One Photon",60,0,2)
-overallPurityE2 = rt.TH1F("overallPurityE2", "One Photon",60,0,2)
-overallPurityE3 = rt.TH1F("overallPurityE3", "One Photon",60,0,2)
-overallPurityList = [overallPurityE1, overallPurityE2, overallPurityE3]
+cosmicThreshold = rt.TH1F("cosmicThreshold", "Necessary Signal to Beat Cosmics (Single Photon)",60,0,2)
 
 #Big Lists, for Big Plots
 pList1 = [puritySignal1, purityCC1, purityFiducials1, purityCosmic1, purityPionProton1, purityNoPhotons1, purityTwoPhotons1, purityManyPhotons1]
@@ -111,7 +106,8 @@ effSignal1 = rt.TH1F("effSignal 1", "Signal",60,0,2)
 effTwoPhotons1 = rt.TH1F("effTwoPhotons1", "Two Photons Found",60,0,2)
 effManyPhotons1 = rt.TH1F("effManyPhotons1", "Many Photons Found",60,0,2)
 effChargeParent1 = rt.TH1F("effChargeParent1", "Charged Parent Found",60,0,2)
-effElectronScore1 = rt.TH1F("effElectronScore1", "Low Electron Score",60,0,2)
+effShowerCharge1 = rt.TH1F("effShowerCharge1", "Shower from Charged Cut",60,0,2)
+effLongTracks1 = rt.TH1F("effLongTracks1", "Tracks with length > 20 cm",60,0,2)
 
 effTotal2 = rt.TH1F("effTotal2", "Two Photons",60,0,2)
 effNoVertex2 = rt.TH1F("effNoVertex2", "No Vertex Found",60,0,2)
@@ -124,7 +120,8 @@ effSignal2 = rt.TH1F("effSignal2", "Signal",60,0,2)
 effOnePhoton2 = rt.TH1F("effOnePhoton2", "One Photon Found",60,0,2)
 effManyPhotons2 = rt.TH1F("effManyPhotons2", "Many Photons Found",60,0,2)
 effChargeParent2 = rt.TH1F("effChargeParent2", "Charged Parent Found",60,0,2)
-effElectronScore2 = rt.TH1F("effElectronScore2", "Low Electron Score",60,0,2)
+effShowerCharge2 = rt.TH1F("effShowerCharge2", "Shower from Charged Cut",60,0,2)
+effLongTracks2 = rt.TH1F("effLongTracks2", "Tracks with length > 20 cm",60,0,2)
 
 effTotal3 = rt.TH1F("effTotal3", "3+ Photons",60,0,2)
 effNoVertex3 = rt.TH1F("effNoVertex3", "No Vertex Found",60,0,2)
@@ -137,7 +134,8 @@ effSignal3 = rt.TH1F("effSignal 3", "Signal",60,0,2)
 effOnePhoton3 = rt.TH1F("effManyPhotons3", "Many Photons Found",60,0,2)
 effTwoPhotons3 = rt.TH1F("effTwoPhotons3", "Two Photons Found",60,0,2)
 effChargeParent3 = rt.TH1F("effChargeParent3", "Charged Parent Found",60,0,2)
-effElectronScore3 = rt.TH1F("effElectronScore3", "Low Electron Score",60,0,2)
+effShowerCharge3 = rt.TH1F("effShowerCharge3", "Shower from Charged Cut",60,0,2)
+effLongTracks3 = rt.TH1F("effLongTracks3", "Tracks with length > 20 cm",60,0,2)
 
 #Histogram Lists!
 effTotalList = [effTotal1, effTotal2, effTotal3]
@@ -151,11 +149,12 @@ effOnePhotonHists = [effSignal1, effOnePhoton2, effOnePhoton3]
 effTwoPhotonHists = [effTwoPhotons1, effSignal2, effTwoPhotons3]
 effManyPhotonHists = [effManyPhotons1, effManyPhotons2, effSignal3]
 effChargeParentHists = [effChargeParent1, effChargeParent2, effChargeParent3]
-effElectronScoreHists = [effElectronScore1, effElectronScore2, effElectronScore3]
+effShowerChargeHists = [effShowerCharge1, effShowerCharge2, effShowerCharge3]
+effLongTrackHists = [effLongTracks1, effLongTracks2, effLongTracks3]
 
-effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effChargeParent1, effElectronScore1, effNoPhotons1, effTwoPhotons1, effManyPhotons1]
-effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effChargeParent2, effElectronScore2, effNoPhotons2, effOnePhoton2, effManyPhotons2]
-effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effChargeParent3, effElectronScore3, effNoPhotons3, effOnePhoton3, effTwoPhotons3]
+effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effChargeParent1, effShowerCharge1, effNoPhotons1, effTwoPhotons1, effManyPhotons1, effLongTracks1]
+effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effChargeParent2, effShowerCharge1, effNoPhotons2, effOnePhoton2, effManyPhotons2, effLongTracks2]
+effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effChargeParent3, effShowerCharge1, effNoPhotons3, effOnePhoton3, effTwoPhotons3, effLongTracks3]
 
 #Built-in functions here
 def addHist(eventTree, photonList, histList, variable, weight):
@@ -214,6 +213,17 @@ recoCount = 0
 onePhoton = 0
 twoPhotons = 0
 threePhotons = 0
+count = 0
+
+totalCosmics = 0
+vertexCosmics = 0 
+NCCosmics = 0
+MattProofCosmics = 0
+fiducialCosmics = 0
+pionlessCosmics = 0
+photonCosmics = 0
+uncutCosmics = 0
+untrackedCosmics = 0
 
 #Variables for program function
 fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":50}
@@ -232,6 +242,10 @@ for i in range(eventTree.GetEntries()):
   if recoNeutralCurrent(eventTree) == False:
     continue
 
+  #Use Matt's Cosmic Cut
+  if trueCutCosmic(eventTree) == False:
+    continue 
+
   #Make sure the event is within the fiducial volume
   if recoFiducials(eventTree, fiducialData) == False:
     continue
@@ -249,14 +263,18 @@ for i in range(eventTree.GetEntries()):
   if CCSeeker(eventTree, recoList) == False:
     continue
 
-  #Try cutting for electron score 
-  if recoCutElectronScore(eventTree, recoList) == False:
+  #Try cutting based on data for Shower from Charged
+  if recoCutShowerFromChargeScore(eventTree, recoList) == False:
     continue
   
+  #Cut based on the presence of tracks over 20 cm
+  if recoCutLongTracks(eventTree) == False:
+    continue
+
   #PURITY - GRAPHING BASED ON TRUTH
   
   #Calculating graphing values
-  leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
+  leadingPhoton = scaleRecoEnergy(eventTree, recoList)
 
   #Fill totals
   addHist(eventTree, recoList, totalPHists, leadingPhoton, eventTree.xsecWeight)
@@ -266,6 +284,7 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, recoList, CCPHists, leadingPhoton, eventTree.xsecWeight)
     continue
   NCCount += 1
+
   #I suppose we can pretend that this is doing something
   if trueCutCosmic(eventTree) == False:
     addHist(eventTree, recoList, cosmicPHists, leadingPhoton, eventTree.xsecWeight)
@@ -275,11 +294,13 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, recoList, fiducialPHists, leadingPhoton, eventTree.xsecWeight)
     continue
   fiducialCount += 1
+
   #pions and protons!
   if trueCutPionProton(eventTree) == False:
     addHist(eventTree, recoList, pionProtonPHists, leadingPhoton, eventTree.xsecWeight)
     continue
   noPionCount += 1
+
   #Now we make a list of the actual photons!
   truePhotonIDs = truePhotonList(eventTree, fiducialData)
 
@@ -307,37 +328,48 @@ for i in range(cosmicTree.GetEntries()):
 
   #COSMICS - SELECTING EVENTS BASED ON RECO
   #See if the event has a vertex
+  totalCosmics += 1
+
   if recoNoVertex(cosmicTree) == False:
     continue
-
+  vertexCosmics += 1
   #See if the event is neutral current                                                                                                  
   if recoNeutralCurrent(cosmicTree) == False:
     continue
-
+  NCCosmics += 1
+  #Use Matt's Cosmic Cut
+  if trueCutCosmic(cosmicTree) == False:
+    continue 
+  MattProofCosmics += 1
   #Make sure the event is within the fiducial volume
   if recoFiducials(cosmicTree, fiducialData) == False:
     continue
-
+  fiducialCosmics += 1
   #Cut events with suitably energetic protons or charged pions
   if recoPionProton(cosmicTree) == False:
     continue
-
+  pionlessCosmics += 1
   #See if there are any photons in the event - if so, list them
   recoList = recoPhotonList(cosmicTree)
   if len(recoList) == 0:
     continue
-
-  #Try and put the process checker to work
+  photonCosmics += 1
+  #Check for a confirmed charged parent
   if CCSeeker(cosmicTree, recoList) == False:
     continue
   
-  #Try cutting for electron score 
-  if recoCutElectronScore(cosmicTree, recoList) == False:
+  #Try cutting based on data for Shower from Charged
+  if recoCutShowerFromChargeScore(cosmicTree, recoList) == False:
     continue
+  uncutCosmics += 1
+  #Try cutting based on data for Shower from Neutral
+  if recoCutLongTracks(cosmicTree) == False:
+    continue
+  #untrackedCosmics += 1
 
   #graphing based on photon count
   #Calculating graphing values
-  leadingPhoton, invariantMass = scaleRecoEnergy(cosmicTree, recoList)
+  leadingPhoton = scaleRecoEnergy(cosmicTree, recoList)
   addHist(cosmicTree, recoList, cosmicList, leadingPhoton, 1)
 
 #BEGINNING EVENT LOOP FOR EFFICIENCY
@@ -365,7 +397,7 @@ for i in range(eventTree.GetEntries()):
   
   #EFFICIENCY - GRAPHING BASED ON RECO
 
-  leadingPhoton, invariantMass = scaleTrueEnergy(eventTree, truePhotonIDs)
+  leadingPhoton = scaleTrueEnergy(eventTree, truePhotonIDs)
 
   if recoNoVertex(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effNoVertexHists, leadingPhoton, eventTree.xsecWeight)
@@ -398,9 +430,14 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, truePhotonIDs, effChargeParentHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
-  #Try cutting for electron score 
-  if recoCutElectronScore(eventTree, recoList) == False:
-    addHist(eventTree, truePhotonIDs, effElectronScoreHists, leadingPhoton, eventTree.xsecWeight)
+  #Try cutting for Shower from Charged Score 
+  if recoCutShowerFromChargeScore(eventTree, recoList) == False:
+    addHist(eventTree, truePhotonIDs, effShowerChargeHists, leadingPhoton, eventTree.xsecWeight)
+    continue
+
+  #Try cutting based on data for Shower from Neutral
+  if recoCutLongTracks(eventTree) == False:
+    addHist(eventTree, truePhotonIDs, effLongTrackHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
   #Now we're pretty sure the event is legitimate, so we go ahead and graph based on the number of photons
@@ -412,8 +449,17 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, truePhotonIDs, effTwoPhotonHists, leadingPhoton, eventTree.xsecWeight)
   else:
     addHist(eventTree, truePhotonIDs, effManyPhotonHists, leadingPhoton, eventTree.xsecWeight)
-    
+
 #LOOPS OVER - HISTOGRAM ORGANIZING TIME
+
+#Making our threshold histogram for the cosmics
+for x in range(1, 61):
+  value = np.sqrt(cosmicOnePhoton.GetBinContent(x))
+  cosmicThreshold.SetBinContent(x, value)
+cosmicThreshold.GetXaxis().SetTitle("Leading Photon Energy (GeV)")
+cosmicThreshold.GetYaxis().SetTitle("Square Root of N")
+
+#Stacking histograms
 purityCanvas1, purityStack1, purityLegend1, purityInt1 = purityStack("Single-Photon Purity", pList1, cosmicList[0], ntuplePOTsum, cosmicPOTsum)
 purityCanvas2, purityStack2, purityLegend2, purityInt2 = purityStack("Two-Photon Purity", pList2, cosmicList[1], ntuplePOTsum, cosmicPOTsum)
 purityCanvas3, purityStack3, purityLegend3, purityInt3 = purityStack("3+ Photon Purity", pList3, cosmicList[2], ntuplePOTsum, cosmicPOTsum)
@@ -434,8 +480,7 @@ effCanvas1.Write()
 effCanvas2.Write()
 effCanvas3.Write()
 cosmicCanvas.Write()
-#for hist in overallPurityList:
-#  hist.Write()
+cosmicThreshold.Write()
 
 print("Vertex reconstructed:", initialCount)
 print("Neutral Current:", NCCount)
@@ -445,3 +490,14 @@ print("Fully reconstructed:", recoCount)
 print(onePhoton, "events had one photon")
 print(twoPhotons, "events had two photons")
 print(threePhotons, "events had 3+ photons")
+
+#print("COSMIC REPORT:")
+#print("Total cosmics:", totalCosmics)
+#print("Cosmics with vertices:", vertexCosmics)
+#print("Cosmcis with reconstructed NC:", NCCosmics)
+#print("Cosmics  which survive Matt's cut:", MattProofCosmics)
+#print("Cosmics in the fiducial:", fiducialCosmics)
+#print("Cosmics with no observed energetic pions or protons:", pionlessCosmics)
+#print("Cosmics with photons:", photonCosmics)
+#print("Cosmics which survive our current cuts:", uncutCosmics)
+#print("Cosmics which survive the long track cut:", untrackedCosmics)
