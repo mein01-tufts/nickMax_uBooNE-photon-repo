@@ -6,7 +6,7 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID722.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID725.root", help="output root file name")
 args = parser.parse_args()
 
 # open input file and get event and POT trees
