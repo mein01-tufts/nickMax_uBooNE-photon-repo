@@ -2,11 +2,11 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from cuts import histStackFill, kineticEnergyCalculator, sStackFillNS
+from cuts import histStackFill, kineticEnergyCalculator, sStackFillNS, particleDistancesCalculator
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gCC.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gCC725.root", help="output root file name")
 args = parser.parse_args()
 
 # open input file and get event and POT trees
@@ -25,19 +25,12 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 # define histograms to be filled
-muonEnergyHist = rt.TH1F("muonEnergyHist", "Muon Energy of True CC Reco NC Events",60,0,2200)
-trueChargedCurrentHist = rt.TH1F("trueCCHist", "True event is charged-current",60,0,1500)
-trueOutFiducialHist = rt.TH1F("trueOutFiducialHist", "True vertex outside fiducial volume",60,0,1500)
-truePiPlusHist = rt.TH1F("truePiPlusHist", "True event contains a pi+",60,0,1500)
-trueNoProtonHist = rt.TH1F("trueNoProtonHist", "True event contains no protons",60,0,1500)
-trueManyProtonHist = rt.TH1F("trueManyProtonHist", "True event contains multiple protons",60,0,1500)
-trueWrongProtonHist = rt.TH1F("trueWrongProtonHist", "True event proton was not TID-matched by reco",60,0,1500)
-trueNoPhotonHist = rt.TH1F("trueNoPhotonHist", "True event contains no photons",60,0,1500)
-trueOnePhotonHist = rt.TH1F("trueOnePhotonHist", "True event contains one photon",60,0,1500)
-trueThreePhotonHist = rt.TH1F("trueThreePhotonHist", "True event contains 3+ photons",60,0,1500)
-trueNoTIDMatchedPhotonHist = rt.TH1F("trueNoTIDMatchedPhotonHist", "Neither reco photon was TID-matched to true",60,0,1500)
-trueOneTIDMatchedPhotonHist = rt.TH1F("trueOneTIDMatchedPhotonHist", "One reco photon was TID-matched to true",60,0,1500)
-trueSignalHist = rt.TH1F("trueSignalHist", "Event was fully truth-matched",60,0,1500)
+muonEnergyHist = rt.TH1F("muonEnergyHist", "Primary Muons in True CC Reco NC Events",60,0,2500)
+allPrimaryMuonHist = rt.TH1F("allPrimaryMuonHist", "Primary Muons in True CC Events",60,0,2500)
+muonTrackLengthHist = rt.TH1F("muonTrackHist", "Primary Muon Track Length in True CC, Reco NC Events",60,0,1100)
+allMuonTrackHist = rt.TH1F("allMuonTrackHist", "Primary Muon Track Length in True CC Events",60,0,1100)
+muonDetectorDistanceHist = rt.TH1F("muonDistHist", "Primary Muon End Distance to Detector Wall in True CC Events",60,0,120)
+allMuonDetectorDistanceHist = rt.TH1F("allMuonDistHist", "Primary Muon Track End Distance to Detector Wall in True CC Events",60,0,120)
 
 xMin, xMax = 0, 256
 yMin, yMax = -116.5, 116.5
@@ -45,16 +38,37 @@ zMin, zMax = 0, 1036
 fiducialWidth = 10
 
 chargeCurrentEvents = 0
-muonsObserved = 0
+muonsObservedEnergy = 0
+muonsObservedLength = 0
 electronsObserved = 0
-muonKEList = []
-muonEList = []
-
+recoProtonIsProton = 0
+recoProtonIsMuon = 0
+recoProtonIsOther = 0
+nonClassifiedTracks = 0
+nonClassifiedTrackIsMuon = 0
+recoMuons = 0
 # begin loop over events in ntuple file:
 # start with culling for reco-defined 1p2g signal, then reiterate using true to
 # determine what reco actually saw
 for i in range(eventTree.GetEntries()):
     eventTree.GetEntry(i)
+
+# find and fill typical primary muon energy of events
+#    if eventTree.trueNuCCNC != 1:
+#        for i in range(eventTree.nTruePrimParts):
+#           if abs(eventTree.truePrimPartPDG[i]) == 13:
+#                muonsObservedEnergy += 1
+#                muonKE_MeV = (kineticEnergyCalculator(eventTree, i))*1000
+#                allPrimaryMuonHist.Fill(muonKE_MeV, 1)
+
+# find and fill typical primary muon track length of cc events
+    if eventTree.trueNuCCNC != 1:
+        for i in range(eventTree.nTrueSimParts):
+            if eventTree.trueSimPartProcess[i] == 0 and eventTree.trueSimPartPDG[i] == 13:
+                muonsObservedLength += 1
+                muonTrackLength, muonDetectorDistance = particleDistancesCalculator(eventTree, i)
+                allMuonTrackHist.Fill(muonTrackLength, eventTree.xsecWeight)
+                allMuonDetectorDistanceHist.Fill(muonDetectorDistance, eventTree.xsecWeight)
 
 # event vertex reconstructed cut
     if eventTree.foundVertex != 1:
@@ -107,6 +121,7 @@ for i in range(eventTree.GetEntries()):
         if abs(eventTree.trackPID[i]) == 2212:
             if eventTree.trackRecoE[i] >= 60.0:
                 nRecoProtons += 1
+                recoProtonPID = eventTree.trackTruePID[i]
                 recoProtonTID = eventTree.trackTrueTID[i]
     if nRecoProtons != 1:
         continue
@@ -121,52 +136,107 @@ for i in range(eventTree.GetEntries()):
 # cut events w/o two reco photons    
     if len(recoPhotonTIDList) != 2:
         continue
-
-# find leading photon energy in reco:
-    recoPhotonEnergyList = []
-    for i in range(len(recoPhotonIndexList)):
-        recoPhotonEnergyMeV = eventTree.showerRecoE[recoPhotonIndexList[i]] 
-        recoPhotonEnergyList.append(recoPhotonEnergyMeV)
-    leadingPhotonEnergy = max(recoPhotonEnergyList)
-
-
-
     #-------------- end reco selection --------------#
     #------------- begin truth matching -------------#
 
-# true charged-current selection
-    
-    if eventTree.trueNuCCNC != 1:
-        trueChargedCurrentHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        chargeCurrentEvents += 1
-        for i in range(eventTree.nTruePrimParts):
-            if abs(eventTree.truePrimPartPDG[i]) == 13:
-                muonsObserved += 1
-                muonKE_MeV = (kineticEnergyCalculator(eventTree, i))*1000
-                muonEnergyHist.Fill(muonKE_MeV, eventTree.xsecWeight)
+# true charged-current selection: Find true cc events, then fill primary muon's KE to histogram
+    if eventTree.trueNuCCNC == 1:
+        continue
+    chargeCurrentEvents += 1
 
-            if abs(eventTree.truePrimPartPDG[i]) == 11:
-                electronsObserved += 1
+# find track length of all primary muons
+    for i in range(eventTree.nTrueSimParts):
+        if eventTree.trueSimPartProcess[i] == 0 and eventTree.trueSimPartPDG[i] == 13:
+            muonTrackLength, muonDetectorDistance = particleDistancesCalculator(eventTree, i)
+            muonTrackLengthHist.Fill(muonTrackLength, eventTree.xsecWeight)
+            muonDetectorDistanceHist.Fill(muonDetectorDistance, eventTree.xsecWeight)
 
+#    for i in range(eventTree.nTruePrimParts):
+#        if abs(eventTree.truePrimPartPDG[i]) == 13:
+#            muonsObserved += 1
+#            muonKE_MeV = (kineticEnergyCalculator(eventTree, i))*1000
+#            muonEnergyHist.Fill(muonKE_MeV, 1)
+#        if abs(eventTree.truePrimPartPDG[i]) == 11:
+#            electronsObserved += 1
 
 #----- end of event loop ---------------------------------------------#
 
-#recoSignalCanvas, recoSignalStack, recoSignalLegend, recoSignalInt = \
-#    sStackFillS("Reco-Identified NC 1 proton 2 gamma Events", recoSignalHist, rt.kBlue, "recoSignalCanvas")
+def sStackFillS(title, hist, kColor, canvasTitle, xAxis):
+#Forms a filled stacked histogram based on only one. Returns the canvas on which the histogram is written
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.45, 0.8, 0.9, 0.9)
+  targetPOT = 6.67e+20
+  ntuplePOTSum = 4.675690535431973e+20
+  bins = hist.GetNbinsX()
+  hist.Scale(targetPOT/ntuplePOTSum)
+  hist.SetFillColor(kColor)
+  hist.SetMarkerStyle(21)
+  hist.SetMarkerColor(kColor)
+  histInt = hist.Integral(1, int(bins))
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" muons per 6.67e+20 POT", "f")
+  stack.Add(hist)
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas(str(canvasTitle)) 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle(str(xAxis))
+  stack.GetYaxis().SetTitle("Muons per 6.67e+20 POT")
+  legend.Draw()
+  histCanvas.Update()
 
-#histList = [trueSignalHist, trueChargedCurrentHist, trueOutFiducialHist, truePiPlusHist, trueNoProtonHist, \
-#            trueManyProtonHist, trueWrongProtonHist, trueNoPhotonHist, trueOnePhotonHist, trueThreePhotonHist, \
-#                trueNoTIDMatchedPhotonHist, trueOneTIDMatchedPhotonHist]
+  return histCanvas, stack, legend, histInt
 
-#purityCanvas, purityStack, purityLegend, purityInt = histStackFill("True IDs of Reco NC 1 Proton 2 Gamma Events", histList, \
-#                                                                   "Truth Identification: (", "Leading Reco Photon Energy (MeV)", \
-#                                                                    "Events per 6.67e+20 POT")
+def sStackFillS2(title, hist, kColor, canvasTitle, xAxis):
+#Forms a filled stacked histogram based on only one. Returns the canvas on which the histogram is written
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.45, 0.8, 0.9, 0.9)
+  targetPOT = 6.67e+20
+  ntuplePOTSum = 4.675690535431973e+20
+  bins = hist.GetNbinsX()
+  hist.Scale(targetPOT/ntuplePOTSum)
+  hist.SetFillColor(kColor)
+  hist.SetMarkerStyle(21)
+  hist.SetMarkerColor(kColor)
+  histInt = hist.Integral(1, int(bins))
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1))+" muons per 6.67e+20 POT", "f")
+  stack.Add(hist)
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas(str(canvasTitle)) 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle(str(xAxis))
+  stack.GetYaxis().SetTitle("Muons per 6.67e+20 POT")
+  legend.Draw()
+  rt.gPad.SetLogy(1)
+  rt.gPad.Update()
+  histCanvas.Update()
 
-muonEnergyCanvas, muonEnergyStack, muonEnergyLegend, muonEnergyInt = sStackFillNS("Muon Energy of Reco NC, True CC Events", muonEnergyHist, rt.kBlue, "muon energy")
+  return histCanvas, stack, legend, histInt
+
+
+#muonEnergyCanvas, muonEnergyStack, muonEnergyLegend, muonEnergyInt = sStackFillS("Muon Energy of Reco NC, True CC Events", muonEnergyHist, rt.kBlue, "muon energy")
+
+#allMuonCanvas, allMuonStack, allMuonLegend, allMuonInt = sStackFillS("Muon Energy in True CC Events", allPrimaryMuonHist, rt.kBlue, "all muon energy")
+
+#outFile = rt.TFile(args.outfile, "RECREATE")
+#muonEnergyCanvas.Write()
+#allMuonCanvas.Write()
+
+muonTrackCanvas, muonTrackStack, muonTrackLegend, muonTrackInt = sStackFillS("Muon Track Length of True CC, Reco NC Events", muonTrackLengthHist, rt.kBlue, "muon track length", "Muon Track Length (cm)")
+
+allMuonTrackCanvas, allMuonTrackStack, allMuonTrackLegend, allMuonTrackInt = sStackFillS("Muon Track Length in True CC Events", allMuonTrackHist, rt.kBlue, "all muon track length", "Muon Track Length (cm)")
+
+muonDistCanvas, muonDistStack, muonDistLegend, muonDistkInt = sStackFillS2("Muon-Detector Distance of True CC, Reco NC Events", muonDetectorDistanceHist, rt.kBlue, "muon distance", "Muon-Detector Distance (cm)")
+
+allMuonDistCanvas, allMuonDistStack, allMuonDistLegend, allMuonDistkInt = sStackFillS2("Muon-Detector Distance of True CC Events", allMuonDetectorDistanceHist, rt.kBlue, "all muon distance", "Muon-Detector Distance (cm)")
+
 
 outFile = rt.TFile(args.outfile, "RECREATE")
-muonEnergyCanvas.Write()
+muonTrackCanvas.Write()
+muonDistCanvas.Write()
+allMuonTrackCanvas.Write()
+allMuonDistCanvas.Write()
 
+
+print(str(muonsObservedEnergy) + "muons counted from trueprimparts")
+print(str(muonsObservedLength) + "muons counted from truesimparts")
 print(str(chargeCurrentEvents) + " total cc mis-ID events")
-print(str(muonsObserved) + " total primary muons found")
-print(str(electronsObserved) + " total primary electrons found")
+
