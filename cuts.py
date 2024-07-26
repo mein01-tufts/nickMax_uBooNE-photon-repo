@@ -183,14 +183,18 @@ def histStack(title, histList, POTSum):
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen, rt. kOrange+1]
   POTTarget = 6.67e+20
+  histIntTotal = 0
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
     hist.Scale(POTTarget/POTSum)
     hist.SetLineColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
+    histIntTotal += histInt
     legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
     stack.Add(hist)
+  legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
+  legend.SetHeader(str(legendHeaderString), "C")
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
   histCanvas = rt.TCanvas() 
   stack.Draw("HIST")
@@ -385,7 +389,7 @@ def recoPionProton(ntuple):
       if ntuple.trackRecoE[x] >= 60:
         protonFound = True
         break
-    elif abs(ntuple.trackPID[x]) == 211:
+    if abs(ntuple.trackPID[x]) == 211:
       if ntuple.trackRecoE[x] >= 30:
         chargedPionFound = True
         break
@@ -492,7 +496,7 @@ def recoCutLongTracks(ntuple):
   acceptable = True
   for x in range(ntuple.nTracks):
     distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
-    if distxyz > 0:
+    if distxyz > 20:
       acceptable = False
   if acceptable == False:
     return False

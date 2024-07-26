@@ -39,35 +39,35 @@ cosmicPOTsum = 3.2974607516739725e+20
 
 #Hists created and organized here
 #PURITY HISTOGRAMS
-purityTotal1 = rt.TH1F("PTotal1", "One Photon",60,0,15)
-puritySignal1 =  rt.TH1F("PSignal1", "Signal",60,0,15)
-purityCC1 = rt.TH1F("PCC1", "Actually Charged Current",60,0,15)
-purityFiducials1 = rt.TH1F("PFiducial1", "Out of Fiducial",60,0,15)
-purityCosmic1 = rt.TH1F("PCosmic1", "Failed Cosmic",60,0,15)
-purityPionProton1 = rt.TH1F("PPionProton1", "Charged Pion or Proton",60,0,15)
-purityNoPhotons1 = rt.TH1F("PNoPhoton1", "No Real Photons",60,0,15)
-purityTwoPhotons1 = rt.TH1F("PTwoPhoton1", "2 Real Photons",60,0,15)
-purityManyPhotons1 = rt.TH1F("PMorePhoton1", "3+ Real Photons",60,0,15)
+purityTotal1 = rt.TH1F("PTotal1", "One Photon",60,0,10)
+puritySignal1 =  rt.TH1F("PSignal1", "Signal",60,0,10)
+purityCC1 = rt.TH1F("PCC1", "Actually Charged Current",60,0,10)
+purityFiducials1 = rt.TH1F("PFiducial1", "Out of Fiducial",60,0,10)
+purityCosmic1 = rt.TH1F("PCosmic1", "Failed Cosmic",60,0,10)
+purityPionProton1 = rt.TH1F("PPionProton1", "Charged Pion or Proton",60,0,10)
+purityNoPhotons1 = rt.TH1F("PNoPhoton1", "No Real Photons",60,0,10)
+purityTwoPhotons1 = rt.TH1F("PTwoPhoton1", "2 Real Photons",60,0,10)
+purityManyPhotons1 = rt.TH1F("PMorePhoton1", "3+ Real Photons",60,0,10)
 
-purityTotal2 = rt.TH1F("PTotal2", "One Photon",60,0,15)
-puritySignal2 =	 rt.TH1F("PSignal2", "Signal",60,0,15)
-purityCC2 = rt.TH1F("PCC2", "Actually Charged Current",60,0,15)
-purityFiducials2 = rt.TH1F("PFiducial2", "Out of Fiducial",60,0,15)
-purityCosmic2 = rt.TH1F("PCosmic2", "Failed Cosmic",60,0,15)
-purityPionProton2 = rt.TH1F("PPionProton2", "Charged Pion or Proton",60,0,15)
-purityNoPhotons2 = rt.TH1F("PNoPhoton2", "No Real Photons",60,0,15)
-purityOnePhoton2 = rt.TH1F("POnePhoton2", "1 Real Photon",60,0,15)
-purityManyPhotons2 = rt.TH1F("PManyPhoton2", "3+ Real Photons",60,0,15)
+purityTotal2 = rt.TH1F("PTotal2", "One Photon",60,0,10)
+puritySignal2 =	 rt.TH1F("PSignal2", "Signal",60,0,10)
+purityCC2 = rt.TH1F("PCC2", "Actually Charged Current",60,0,10)
+purityFiducials2 = rt.TH1F("PFiducial2", "Out of Fiducial",60,0,10)
+purityCosmic2 = rt.TH1F("PCosmic2", "Failed Cosmic",60,0,10)
+purityPionProton2 = rt.TH1F("PPionProton2", "Charged Pion or Proton",60,0,10)
+purityNoPhotons2 = rt.TH1F("PNoPhoton2", "No Real Photons",60,0,10)
+purityOnePhoton2 = rt.TH1F("POnePhoton2", "1 Real Photon",60,0,10)
+purityManyPhotons2 = rt.TH1F("PManyPhoton2", "3+ Real Photons",60,0,10)
 
-purityTotal3 = rt.TH1F("PTotal3", "One Photon",60,0,15)
-puritySignal3 =	 rt.TH1F("PSignal3", "Signal",60,0,15)
-purityCC3 = rt.TH1F("PCC3", "Actually Charged Current",60,0,15)
-purityFiducials3 = rt.TH1F("PFiducial3", "Out of Fiducial",60,0,15)
-purityCosmic3 = rt.TH1F("PCosmic3", "Failed Cosmic",60,0,15)
-purityPionProton3 = rt.TH1F("PPionProton3", "Charged Pion or Proton",60,0,15)
-purityNoPhotons3 = rt.TH1F("PNoPhoton3", "No Real Photons",60,0,15)
-purityOnePhoton3 = rt.TH1F("POnePhoton3", "2 Real Photons",60,0,15)
-purityTwoPhotons3 = rt.TH1F("PTwoPhotons33", "3+ Real Photons",60,0,15)
+purityTotal3 = rt.TH1F("PTotal3", "One Photon",60,0,10)
+puritySignal3 =	 rt.TH1F("PSignal3", "Signal",60,0,10)
+purityCC3 = rt.TH1F("PCC3", "Actually Charged Current",60,0,10)
+purityFiducials3 = rt.TH1F("PFiducial3", "Out of Fiducial",60,0,10)
+purityCosmic3 = rt.TH1F("PCosmic3", "Failed Cosmic",60,0,10)
+purityPionProton3 = rt.TH1F("PPionProton3", "Charged Pion or Proton",60,0,10)
+purityNoPhotons3 = rt.TH1F("PNoPhoton3", "No Real Photons",60,0,10)
+purityOnePhoton3 = rt.TH1F("POnePhoton3", "2 Real Photons",60,0,10)
+purityTwoPhotons3 = rt.TH1F("PTwoPhotons33", "3+ Real Photons",60,0,10)
 
 #PURITY HISTLISTS
 totalPHists = [purityTotal1, purityTotal2, purityTotal3]
@@ -82,15 +82,15 @@ twoPhotonPHists = [purityTwoPhotons1, puritySignal2, purityTwoPhotons3]
 manyPhotonPHists = [purityManyPhotons1, purityManyPhotons2, puritySignal3]
 
 #Cosmics go here, so we can put them on purity
-cosmicOnePhoton = rt.TH1F("cBackground1", "One Photon Cosmic",60,0,15)
-cosmicTwoPhotons = rt.TH1F("cBackground2", "Two Photon Cosmic",60,0,15)
-cosmicThreePhotons = rt.TH1F("cBackground3", "3+ Photon Cosmic",60,0,15)
+cosmicOnePhoton = rt.TH1F("cBackground1", "One Photon Cosmic",60,0,10)
+cosmicTwoPhotons = rt.TH1F("cBackground2", "Two Photon Cosmic",60,0,10)
+cosmicThreePhotons = rt.TH1F("cBackground3", "3+ Photon Cosmic",60,0,10)
 cosmicList = [cosmicOnePhoton, cosmicTwoPhotons, cosmicThreePhotons]
 
 #Overall purity hitograms
-overallPurityE1 = rt.TH1F("overallPurityE1", "One Photon",60,0,15)
-overallPurityE2 = rt.TH1F("overallPurityE2", "One Photon",60,0,15)
-overallPurityE3 = rt.TH1F("overallPurityE3", "One Photon",60,0,15)
+overallPurityE1 = rt.TH1F("overallPurityE1", "One Photon",60,0,10)
+overallPurityE2 = rt.TH1F("overallPurityE2", "One Photon",60,0,10)
+overallPurityE3 = rt.TH1F("overallPurityE3", "One Photon",60,0,10)
 overallPurityList = [overallPurityE1, overallPurityE2, overallPurityE3]
 
 #Big Lists, for Big Plots
@@ -131,6 +131,7 @@ def purityStack(title, purityList, cosmicHist, POTSum, cosmicSum):
   histInt = hist.Integral(1, int(bins))
   legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
   stack.Add(hist)
+  
   #Finish working on the Canvas and return necessary components
   histCanvas = rt.TCanvas() 
   stack.Draw("HIST")
@@ -188,7 +189,17 @@ for i in range(eventTree.GetEntries()):
   for x in range(len(recoList)):
     if eventTree.showerRecoE[x] > eventTree.showerRecoE[leadingPhoton]:
       leadingPhoton = x
-  ElScore = abs(eventTree.showerElScore[leadingPhoton])
+  ElScore = abs(eventTree.showerFromNeutralScore[leadingPhoton])
+
+  #if eventTree.nTracks > 0:
+  #  leadingMuonTrack = eventTree.trackMuScore[0]
+  #  for x in range(eventTree.nTracks):
+  #    if eventTree.trackMuScore[x] > leadingMuonTrack:
+  #      leadingMuonTrack = eventTree.trackMuScore[x]
+  #else:
+  #  leadingMuonTrack = 13
+  #ElScore = abs(leadingMuonTrack)
+  #addHist(cosmicTree, recoList, cosmicList, ElScore, 1)
 
   #Fill totals
   addHist(eventTree, recoList, totalPHists, ElScore, eventTree.xsecWeight)
@@ -267,30 +278,16 @@ for i in range(cosmicTree.GetEntries()):
   for x in range(len(recoList)):
     if cosmicTree.showerRecoE[x] > cosmicTree.showerRecoE[leadingPhoton]:
       leadingPhoton = x
-  ElScore = abs(cosmicTree.showerElScore[leadingPhoton])
-  addHist(cosmicTree, recoList, cosmicList, ElScore, 1)
-
-#BEGINNING EVENT LOOP FOR EFFICIENCY
-for i in range(eventTree.GetEntries()):
-  eventTree.GetEntry(i)
-
-  #Selecting events using truth
-  if trueCutNC(eventTree) == False:
-    continue
-
-  if trueCutFiducials(eventTree, fiducialData) == False:
-    continue
-    
-  if trueCutCosmic(eventTree) == False:
-    continue
-    
-  if trueCutPionProton(eventTree) == False:
-    continue
-  
-  truePhotonIDs = truePhotonList(eventTree, fiducialData)
-
-  if len(truePhotonIDs) == 0:
-    continue
+  ElScore = abs(cosmicTree.showerFromNeutralScore[leadingPhoton])
+  #if eventTree.nTracks > 0:
+  #  leadingMuonTrack = eventTree.trackMuScore[0]
+  #  for x in range(eventTree.nTracks):
+  #    if eventTree.trackMuScore[x] > leadingMuonTrack:
+  #      leadingMuonTrack = eventTree.trackMuScore[x]
+  #else:
+  #  leadingMuonTrack = 15
+  #ElScore = abs(leadingMuonTrack)
+  #addHist(cosmicTree, recoList, cosmicList, ElScore, 1)
 
 
 #LOOPS OVER - HISTOGRAM ORGANIZING TIME
@@ -301,7 +298,7 @@ cosmicCanvas, cosmicStack, cosmicLegend, cosmicInt = histStack("Cosmic Backgroun
 
 stackList = [purityStack1, purityStack2, purityStack3,cosmicStack]
 for stack in stackList:
-  stack.GetXaxis().SetTitle("Electron Score")
+  stack.GetXaxis().SetTitle("Shower-From-Charged Score")
 
 #Now all that's left to do is write the canvases to the file
 outFile = rt.TFile(args.outfile, "RECREATE")

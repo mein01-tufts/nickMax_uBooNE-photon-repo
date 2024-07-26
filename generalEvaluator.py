@@ -171,6 +171,7 @@ def purityStack(title, purityList, cosmicHist, POTSum, cosmicSum):
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt.kGreen+2, rt.kRed, rt.kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kGreen+4, rt.kOrange+1]
   POTTarget = 6.67e+20
+  histIntTotal = 0
   #Organize other histograms
   for x in range(len(purityList)):
     hist = purityList[x]
@@ -178,6 +179,7 @@ def purityStack(title, purityList, cosmicHist, POTSum, cosmicSum):
     hist.Scale(POTTarget/POTSum)
     hist.SetLineColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
+    histIntTotal += histInt
     legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
     stack.Add(hist)
 
@@ -187,7 +189,10 @@ def purityStack(title, purityList, cosmicHist, POTSum, cosmicSum):
   hist.Scale(POTTarget/cosmicSum)
   hist.SetLineColor(rt.kBlack)
   histInt = hist.Integral(1, int(bins))
+  histIntTotal += histInt
   legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
+  legend.SetHeader(str(legendHeaderString), "C")
   stack.Add(hist)
   #Finish working on the Canvas and return necessary components
   histCanvas = rt.TCanvas() 
@@ -226,7 +231,7 @@ uncutCosmics = 0
 untrackedCosmics = 0
 
 #Variables for program function
-fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":50}
+fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":20}
 
 
 #BEGINNING EVENT LOOP FOR DEFAULT PURITY
@@ -251,7 +256,7 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Cut events with suitably energetic protons or charged pions 
-  if recoPionProton(eventTree) == False:
+  if recoPion(eventTree) == False:
     continue
   
   #See if there are any photons in the event - if so, list them
@@ -346,9 +351,10 @@ for i in range(cosmicTree.GetEntries()):
     continue
   fiducialCosmics += 1
   #Cut events with suitably energetic protons or charged pions
-  if recoPionProton(cosmicTree) == False:
+  if recoPion(cosmicTree) == False:
     continue
   pionlessCosmics += 1
+
   #See if there are any photons in the event - if so, list them
   recoList = recoPhotonList(cosmicTree)
   if len(recoList) == 0:
@@ -365,7 +371,7 @@ for i in range(cosmicTree.GetEntries()):
   #Try cutting based on data for Shower from Neutral
   if recoCutLongTracks(cosmicTree) == False:
     continue
-  #untrackedCosmics += 1
+  untrackedCosmics += 1
 
   #graphing based on photon count
   #Calculating graphing values
@@ -414,9 +420,9 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Cut events with suitably energetic protons or charged pions
-  if recoProton(eventTree) == False:
-    addHist(eventTree, truePhotonIDs, effProtonHists, leadingPhoton, eventTree.xsecWeight)
-    continue
+  #if recoProton(eventTree) == False:
+  #  addHist(eventTree, truePhotonIDs, effProtonHists, leadingPhoton, eventTree.xsecWeight)
+  #  continue
 
   if recoPion(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effPionHists, leadingPhoton, eventTree.xsecWeight)
