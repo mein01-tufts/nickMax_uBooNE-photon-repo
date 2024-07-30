@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, CCSeeker, recoCutElectronScore, recoCutShowerFromChargeScore, recoCutLongTracks
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, recoCutElectronScore, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -105,8 +105,9 @@ effNoPhotons1 = rt.TH1F("effNoPhotons1", "No Photons Found",60,0,2)
 effSignal1 = rt.TH1F("effSignal 1", "Signal",60,0,2)
 effTwoPhotons1 = rt.TH1F("effTwoPhotons1", "Two Photons Found",60,0,2)
 effManyPhotons1 = rt.TH1F("effManyPhotons1", "Many Photons Found",60,0,2)
-effChargeParent1 = rt.TH1F("effChargeParent1", "Charged Parent Found",60,0,2)
 effShowerCharge1 = rt.TH1F("effShowerCharge1", "Shower from Charged Cut",60,0,2)
+#effElectronScore1 = rt.TH1F("effElectronScore1", "Electron Score Cut",60,0,2)
+effPrimary1 = rt.TH1F("effPrimary1", "Primary Score Cut",60,0,2)
 effLongTracks1 = rt.TH1F("effLongTracks1", "Tracks with length > 20 cm",60,0,2)
 
 effTotal2 = rt.TH1F("effTotal2", "Two Photons",60,0,2)
@@ -119,8 +120,9 @@ effNoPhotons2 =	rt.TH1F("effNoPhotons2", "No Photons Found",60,0,2)
 effSignal2 = rt.TH1F("effSignal2", "Signal",60,0,2)
 effOnePhoton2 = rt.TH1F("effOnePhoton2", "One Photon Found",60,0,2)
 effManyPhotons2 = rt.TH1F("effManyPhotons2", "Many Photons Found",60,0,2)
-effChargeParent2 = rt.TH1F("effChargeParent2", "Charged Parent Found",60,0,2)
 effShowerCharge2 = rt.TH1F("effShowerCharge2", "Shower from Charged Cut",60,0,2)
+#effElectronScore2 = rt.TH1F("effElectronScore2", "Electron Score Cut",60,0,2)
+effPrimary2 = rt.TH1F("effPrimary2", "Primary Score Cut",60,0,2)
 effLongTracks2 = rt.TH1F("effLongTracks2", "Tracks with length > 20 cm",60,0,2)
 
 effTotal3 = rt.TH1F("effTotal3", "3+ Photons",60,0,2)
@@ -133,8 +135,9 @@ effNoPhotons3 =	rt.TH1F("effNoPhotons3", "No Photons Found",60,0,2)
 effSignal3 = rt.TH1F("effSignal 3", "Signal",60,0,2)
 effOnePhoton3 = rt.TH1F("effManyPhotons3", "Many Photons Found",60,0,2)
 effTwoPhotons3 = rt.TH1F("effTwoPhotons3", "Two Photons Found",60,0,2)
-effChargeParent3 = rt.TH1F("effChargeParent3", "Charged Parent Found",60,0,2)
 effShowerCharge3 = rt.TH1F("effShowerCharge3", "Shower from Charged Cut",60,0,2)
+#effElectronScore3 = rt.TH1F("effElectronScore3", "Electron Score Cut",60,0,2)
+effPrimary3 = rt.TH1F("effPrimary3", "Primary Score Cut",60,0,2)
 effLongTracks3 = rt.TH1F("effLongTracks3", "Tracks with length > 20 cm",60,0,2)
 
 #Histogram Lists!
@@ -148,13 +151,14 @@ effNoPhotonHists = [effNoPhotons1, effNoPhotons2, effNoPhotons3]
 effOnePhotonHists = [effSignal1, effOnePhoton2, effOnePhoton3] 
 effTwoPhotonHists = [effTwoPhotons1, effSignal2, effTwoPhotons3]
 effManyPhotonHists = [effManyPhotons1, effManyPhotons2, effSignal3]
-effChargeParentHists = [effChargeParent1, effChargeParent2, effChargeParent3]
 effShowerChargeHists = [effShowerCharge1, effShowerCharge2, effShowerCharge3]
 effLongTrackHists = [effLongTracks1, effLongTracks2, effLongTracks3]
+effPrimaryHists = [effPrimary1, effPrimary2, effPrimary3]
+#effElectronScoreHists = [effElectronScore1, effElectronScore2, effElectronScore3]
 
-effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effChargeParent1, effShowerCharge1, effNoPhotons1, effTwoPhotons1, effManyPhotons1, effLongTracks1]
-effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effChargeParent2, effShowerCharge1, effNoPhotons2, effOnePhoton2, effManyPhotons2, effLongTracks2]
-effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effChargeParent3, effShowerCharge1, effNoPhotons3, effOnePhoton3, effTwoPhotons3, effLongTracks3]
+effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effShowerCharge1, effNoPhotons1, effTwoPhotons1, effManyPhotons1, effPrimary1, effLongTracks1]
+effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effShowerCharge1, effNoPhotons2, effOnePhoton2, effManyPhotons2, effPrimary2, effLongTracks2]
+effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effShowerCharge1, effNoPhotons3, effOnePhoton3, effTwoPhotons3, effPrimary3, effLongTracks3]
 
 #Built-in functions here
 def addHist(eventTree, photonList, histList, variable, weight):
@@ -260,18 +264,18 @@ for i in range(eventTree.GetEntries()):
     continue
   
   #See if there are any photons in the event - if so, list them
-  recoList = recoPhotonList(eventTree)
+  recoList = recoPhotonListFiducial(fiducialData, eventTree)
   if len(recoList) == 0:
-    continue
-  
-  #Cut events where the reco thinks the photon came from a charged parent
-  if CCSeeker(eventTree, recoList) == False:
     continue
 
   #Try cutting based on data for Shower from Charged
   if recoCutShowerFromChargeScore(eventTree, recoList) == False:
     continue
   
+  #Cut based on primary score
+  if recoCutPrimary(eventTree, recoList) == False:
+    continue
+
   #Cut based on the presence of tracks over 20 cm
   if recoCutLongTracks(eventTree) == False:
     continue
@@ -356,18 +360,20 @@ for i in range(cosmicTree.GetEntries()):
   pionlessCosmics += 1
 
   #See if there are any photons in the event - if so, list them
-  recoList = recoPhotonList(cosmicTree)
+  recoList = recoPhotonListFiducial(fiducialData, cosmicTree)
   if len(recoList) == 0:
     continue
   photonCosmics += 1
-  #Check for a confirmed charged parent
-  if CCSeeker(cosmicTree, recoList) == False:
-    continue
   
   #Try cutting based on data for Shower from Charged
   if recoCutShowerFromChargeScore(cosmicTree, recoList) == False:
     continue
+
+  #Cut based on primary score
+  if recoCutPrimary(cosmicTree, recoList) == False:
+    continue
   uncutCosmics += 1
+
   #Try cutting based on data for Shower from Neutral
   if recoCutLongTracks(cosmicTree) == False:
     continue
@@ -429,19 +435,19 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #See if there are any photons in the event - if so, list them
-  recoList = recoPhotonList(eventTree)
-
-  #Cut events where the reco thinks the photon came from a charged parent
-  if CCSeeker(eventTree, recoList) == False:
-    addHist(eventTree, truePhotonIDs, effChargeParentHists, leadingPhoton, eventTree.xsecWeight)
-    continue
+  recoList = recoPhotonListFiducial(fiducialData, eventTree)
 
   #Try cutting for Shower from Charged Score 
   if recoCutShowerFromChargeScore(eventTree, recoList) == False:
     addHist(eventTree, truePhotonIDs, effShowerChargeHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
-  #Try cutting based on data for Shower from Neutral
+  #Cut based on Electron Score
+  if recoCutPrimary(eventTree, recoList) == False:
+    addHist(eventTree, truePhotonIDs, effPrimaryHists, leadingPhoton, eventTree.xsecWeight)
+    continue
+
+  #Try cutting based on data for Track Lengths
   if recoCutLongTracks(eventTree) == False:
     addHist(eventTree, truePhotonIDs, effLongTrackHists, leadingPhoton, eventTree.xsecWeight)
     continue

@@ -21,12 +21,12 @@ def trueCutPionProton(ntuple):
   for x in range(len(ntuple.truePrimPartPDG)):
     if abs(ntuple.truePrimPartPDG[x]) == 211:
       pionEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2))
-      if pionEnergy > 0.03:
+      if pionEnergy > 0.05:
         pionPresent = True
         break
     elif ntuple.truePrimPartPDG[x] == 2212:
       protonEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2)+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2)
-      if protonEnergy > 0.06:
+      if protonEnergy > 0.1:
         protonPresent = True
         break
   if pionPresent == True or protonPresent == True:
@@ -415,7 +415,7 @@ def recoPion(ntuple):
   pionFound = False
   for x in range(ntuple.nTracks):
     if abs(ntuple.trackPID[x]) == 211:
-      if ntuple.trackRecoE[x] >= 30:
+      if ntuple.trackRecoE[x] >= 50:
         pionFound = True
         break
   if pionFound == True:
@@ -427,7 +427,7 @@ def recoNeutralCurrent(ntuple):
   chargeCurrent = False
   for x in range(ntuple.nTracks):
     if ntuple.trackClassified[x] == 1:
-      if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 20:
+      if ntuple.trackPID[x] == 13: # and ntuple.trackRecoE[x] > 20:
         chargeCurrent = True
         break
   for x in range(ntuple.nShowers):
@@ -461,13 +461,14 @@ def CCSeeker(ntuple, recoPhotons):
     return True
     
 def recoCutElectronScore(ntuple, recoPhotons):
-  if len(recoPhotons) == 1 and abs(ntuple.showerElScore[recoPhotons[0]]) < 4:
+  #Cuts single photon events with high enough electron scores. Setting the threshold to 4 eliminates most cosmics at the cost of a great deal of signal
+  if len(recoPhotons) == 1 and abs(ntuple.showerElScore[recoPhotons[0]]) < 2:
     return False
   else:
     return True
 
 def recoCutShowerFromChargeScore(ntuple, recoPhotons):
-  #Cuts any event that has a Shower-From-Charged Score between -5 and 0. Targets cosmics very efficiently
+  #Cuts any single-photon event that has a Shower-From-Charged Score between -5 and 0. Targets cosmics very efficiently
   if len(recoPhotons) == 1 and abs(ntuple.showerFromChargedScore[recoPhotons[0]]) < 5:
     return False
   else:
@@ -498,10 +499,32 @@ def recoCutLongTracks(ntuple):
     distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
     if distxyz > 20:
       acceptable = False
+    #Additionally, clear out any tracks with a high enough muon score
+    elif abs(ntuple.trackMuScore[x]) < 3:
+      acceptable = False
   if acceptable == False:
     return False
   else:
     return True 
+
+def recoPhotonListFiducial(fiducial, ntuple):
+  #Creates a list of photons based on the showers in the event
+  recoIDs = []
+  for x in range(ntuple.nShowers):
+    if ntuple.showerClassified[x] == 1:
+      if ntuple.showerPID[x] == 22:
+        #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
+        if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
+          recoIDs.append(x)
+  return recoIDs
+
+def recoCutPrimary(ntuple, recoPhotons):
+  if len(recoPhotons) == 1:
+    if abs(ntuple.showerPrimaryScore[recoPhotons[0]]) < 1.4: #or abs(ntuple.showerPrimaryScore[recoPhotons[0]]) > 9:
+      return False
+    else: return True
+  else:
+    return True
 
 #OTHER MISCELLANIOUS FUNCTIONS
 #def trickyPionProtonCuts(ntuple):

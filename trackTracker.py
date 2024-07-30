@@ -35,10 +35,10 @@ for i in range(potTree.GetEntries()):
   ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #HISTOGRAMS DEFINED AND PREPARED HERE
-foundHistMuon = rt.TH1F("foundHistMuon", "Muon Correctly Reconstructed",60,0,3)
-unclassifiedHistMuon = rt.TH1F("unclassifiedHistMuon", "Muon Track Unclassified",60,0,3)
-weirdHistMuon = rt.TH1F("weirdHistMuon", "Muon Reconstructed as Something Else",60,0,3)
-lostHistMuon = rt.TH1F("lostHistMuon", "Muon Track not Reconstructed",60,0,3)
+foundHistMuon = rt.TH1F("foundHistMuon", "Muon Correctly Reconstructed",60,-0.5,10)
+unclassifiedHistMuon = rt.TH1F("unclassifiedHistMuon", "Muon Track Unclassified",60,-0.5,10)
+weirdHistMuon = rt.TH1F("weirdHistMuon", "Muon Reconstructed as Something Else",60,-0.5,10)
+lostHistMuon = rt.TH1F("lostHistMuon", "Muon Track not Reconstructed",60,-0.5,10)
 
 muonHistList = [foundHistMuon, unclassifiedHistMuon, weirdHistMuon, lostHistMuon]
 
@@ -56,7 +56,7 @@ lostHistProton = rt.TH1F("lostHistProton", "Proton Track not Reconstructed",60,0
 
 protonHistList = [foundHistProton, unclassifiedHistProton, weirdHistProton, lostHistProton]
 
-effMuons = rt.TH1F("effMuons", "Muon Reconstruction Efficiency",60,0,3)
+effMuons = rt.TH1F("effMuons", "Muon Reconstruction Efficiency",60,-0.5,10)
 effPions = rt.TH1F("effPions", "Pion Reconstruction Efficiency",60,0,3)
 effProtons = rt.TH1F("effProtons", "Proton Reconstruction Efficiency",60,0,3)
 
@@ -133,20 +133,20 @@ for i in range(eventTree.GetEntries()):
         #distxyz = np.sqrt(abs(eventTree.trackStartPosX[x] - eventTree.trackEndPosX[x])**2 + (eventTree.trackStartPosY[x] - eventTree.trackEndPosY[x])**2 + (eventTree.trackStartPosZ[x] - eventTree.trackEndPosZ[x])**2)
         #muonScore = abs(eventTree.trackMuScore[x])
         if eventTree.trackPID[x] == 13:
-          foundHistMuon.Fill(particleEnergy/1000, eventTree.xsecWeight)
+          foundHistMuon.Fill(abs(eventTree.trackMuScore[x]), eventTree.xsecWeight)
           tracked += 1
           break
         elif eventTree.trackClassified[x] == 0:
-          unclassifiedHistMuon.Fill(particleEnergy/1000, eventTree.xsecWeight)
+          unclassifiedHistMuon.Fill(abs(eventTree.trackMuScore[x]), eventTree.xsecWeight)
           unclassified += 1
           break
         else:
-          weirdHistMuon.Fill(particleEnergy/1000, eventTree.xsecWeight)
+          weirdHistMuon.Fill(abs(eventTree.trackMuScore[x]), eventTree.xsecWeight)
           weird += 1
           break
     if trackFound == False:
       distxyz = -0.1
-      lostHistMuon.Fill(particleEnergy/1000, eventTree.xsecWeight)
+      lostHistMuon.Fill(distxyz, eventTree.xsecWeight)
       lost += 1
 
   for y in pionList:
@@ -227,6 +227,8 @@ for stack in stackList:
 for hist in effList:
   hist.GetXaxis().SetTitle("Particle True Kinetic Energy (GeV)")
   hist.GetYaxis().SetTitle("Efficiency")
+
+muonStack.GetXaxis().SetTitle("Muon Score")
 
 #Save to file
 outFile = rt.TFile(args.outfile, "RECREATE")
