@@ -6,7 +6,7 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gPurityPlots.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gPurityPlots7313.root", help="output root file name")
 args = parser.parse_args()
 
 # open input file and get event and POT trees
@@ -69,21 +69,24 @@ for i in range(eventTree.GetEntries()):
 # iterate through all tracks/showers in event,
 # look for non-secondary tracks identified as muons or electrons
 # and for non-secondary showers identified as electrons
-    recoPrimaryMuonFound = False
+    recoPrimaryMuonTrackFound = False
+    recoPrimaryMuonShowerFound = False
     recoPrimaryElectronTrackFound = False
     recoPrimaryElectronShowerFound = False
     for i in range(eventTree.nTracks):
         if eventTree.trackIsSecondary[i] == 0:
             if abs(eventTree.trackPID[i]) == 13:
-                recoPrimaryMuonFound = True
+                recoPrimaryMuonTrackFound = True
             if abs(eventTree.trackPID[i]) == 11:
                 recoPrimaryElectronTrackFound = True
     for i in range(eventTree.nShowers):
         if eventTree.showerIsSecondary[i] == 0:
             if abs(eventTree.showerPID[i]) == 11:
                 recoPrimaryElectronShowerFound == True
+            if abs(eventTree.showerPID[i]) == 13:
+                recoPrimaryMuonShowerFound == True
 # cut all events with primary electrons/muons
-    if recoPrimaryMuonFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:    
+    if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:    
         continue
 
 # reco pi+ cut: cut all events w/ pi+ of KE >= 30MeV
@@ -115,6 +118,19 @@ for i in range(eventTree.GetEntries()):
             recoPhotonIndexList.append(i)
 # cut events w/o two reco photons    
     if len(recoPhotonTIDList) != 2:
+        continue
+
+    unclassifiedShortTrack = False
+    for i in range(eventTree.nTracks):
+        if eventTree.trackClassified[i] == 0:
+            deltaX = eventTree.trackEndPosX[i] - eventTree.trackStartPosX[i]
+            deltaY = eventTree.trackEndPosY[i] - eventTree.trackStartPosY[i]
+            deltaZ = eventTree.trackEndPosZ[i] - eventTree.trackStartPosZ[i]
+            trackLength = np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ))
+            if trackLength <= 10 and trackLength >= 4:
+                unclassifiedShortTrack = True
+                break
+    if unclassifiedShortTrack == True:
         continue
 
 # find leading photon energy in reco:

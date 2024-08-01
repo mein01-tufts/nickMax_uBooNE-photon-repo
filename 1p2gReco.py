@@ -1,3 +1,4 @@
+# Efficiency
 import sys, argparse
 import numpy as np
 import ROOT as rt
@@ -6,7 +7,7 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID725.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID8013.root", help="output root file name")
 args = parser.parse_args()
 
 # open input file and get event and POT trees
@@ -39,6 +40,7 @@ onePhotonHist = rt.TH1F("One Photon", "One true photon was TID-matched in reco",
 recoSignalHist = rt.TH1F("Reco = True", "Both true photons TID-matched in reco",60,0,1500)
 photonReconstructedHist = rt.TH1F("reco reconstructed the photon", "Photon was TID-matched in Reco",60,0,1500)
 photonNotReconstructedHist = rt.TH1F("reco didn't reconstruct the photon", "Photon not TID-matched in Reco",60,0,1500)
+unclassifiedShortTrackHist = rt.TH1F("reco had unclassified short tracks", "Reco had unclassified tracks between 4-10cm",60,0,1500)
 
 # set detector min/max and fiducial width (cm)
 xMin, xMax = 0, 256
@@ -181,21 +183,24 @@ for i in range(eventTree.GetEntries()):
 #iterate through all tracks/showers in event,
 #look for non-secondary tracks identified as muons or electrons
 #and for non-secondary showers identified as electrons
-    recoPrimaryMuonFound = False
+    recoPrimaryMuonTrackFound = False
+    recoPrimaryMuonShowerFound = False
     recoPrimaryElectronTrackFound = False
     recoPrimaryElectronFound = False
     for i in range(eventTree.nTracks):
         if eventTree.trackIsSecondary[i] == 0:
             if abs(eventTree.trackPID[i]) == 13:
-                recoPrimaryMuonFound = True
+                recoPrimaryMuonTrackFound = True
             if abs(eventTree.trackPID[i]) == 11:
                 recoPrimaryElectronTrackFound = True
     for i in range(eventTree.nShowers):
         if eventTree.showerIsSecondary[i] == 0:
             if abs(eventTree.showerPID[i]) == 11:
                 recoPrimaryElectronFound == True
+            if abs(eventTree.showerPID[i]) == 13:
+                recoPrimaryMuonShowerFound == True
 #fill hist w/ events that have primary electrons/muons (charged-current)
-    if recoPrimaryMuonFound or recoPrimaryElectronTrackFound or recoPrimaryElectronFound:    
+    if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronFound:    
         chargedCurrentHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
@@ -257,7 +262,20 @@ for i in range(eventTree.GetEntries()):
         onePhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if photonsTIDMatched == 2:
-        recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+        unclassifiedShortTrack = False
+        for i in range(eventTree.nTracks):
+            if eventTree.trackClassified[i] == 0:
+                deltaX = eventTree.trackEndPosX[i] - eventTree.trackStartPosX[i]
+                deltaY = eventTree.trackEndPosY[i] - eventTree.trackStartPosY[i]
+                deltaZ = eventTree.trackEndPosZ[i] - eventTree.trackStartPosZ[i]
+                trackLength = np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ))
+                if trackLength <= 10 and trackLength >= 4:
+                    unclassifiedShortTrack = True
+                    break
+        if unclassifiedShortTrack == True:
+            unclassifiedShortTrackHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+        else: 
+            recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
 #----- end of event loop ---------------------------------------------#
 
 trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = \
@@ -265,7 +283,7 @@ trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = \
 
 histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, \
             piPlusHist, noProtonHist, pluralProtonHist, wrongProtonHist, \
-            noPhotonHist, onePhotonHist]
+            noPhotonHist, onePhotonHist, unclassifiedShortTrackHist]
 
 recoSignalHistCanvas, stack, legend, histInt = \
     histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, \
