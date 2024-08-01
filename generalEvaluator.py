@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, recoCutElectronScore, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy, recoPion, recoProton, recoCutElectronScore, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -106,9 +106,9 @@ effSignal1 = rt.TH1F("effSignal 1", "Signal",60,0,2)
 effTwoPhotons1 = rt.TH1F("effTwoPhotons1", "Two Photons Found",60,0,2)
 effManyPhotons1 = rt.TH1F("effManyPhotons1", "Many Photons Found",60,0,2)
 effShowerCharge1 = rt.TH1F("effShowerCharge1", "Shower from Charged Cut",60,0,2)
-#effElectronScore1 = rt.TH1F("effElectronScore1", "Electron Score Cut",60,0,2)
 effPrimary1 = rt.TH1F("effPrimary1", "Primary Score Cut",60,0,2)
 effLongTracks1 = rt.TH1F("effLongTracks1", "Tracks with length > 20 cm",60,0,2)
+effShortTrack1 = rt.TH1F("effShortTrack1", "Unclassified tracks with length < 10 cm",60,0,2)
 
 effTotal2 = rt.TH1F("effTotal2", "Two Photons",60,0,2)
 effNoVertex2 = rt.TH1F("effNoVertex2", "No Vertex Found",60,0,2)
@@ -121,9 +121,9 @@ effSignal2 = rt.TH1F("effSignal2", "Signal",60,0,2)
 effOnePhoton2 = rt.TH1F("effOnePhoton2", "One Photon Found",60,0,2)
 effManyPhotons2 = rt.TH1F("effManyPhotons2", "Many Photons Found",60,0,2)
 effShowerCharge2 = rt.TH1F("effShowerCharge2", "Shower from Charged Cut",60,0,2)
-#effElectronScore2 = rt.TH1F("effElectronScore2", "Electron Score Cut",60,0,2)
 effPrimary2 = rt.TH1F("effPrimary2", "Primary Score Cut",60,0,2)
 effLongTracks2 = rt.TH1F("effLongTracks2", "Tracks with length > 20 cm",60,0,2)
+effShortTrack2 = rt.TH1F("effShortTrack2", "Unclassified tracks with length < 10 cm",60,0,2)
 
 effTotal3 = rt.TH1F("effTotal3", "3+ Photons",60,0,2)
 effNoVertex3 = rt.TH1F("effNoVertex3", "No Vertex Found",60,0,2)
@@ -136,9 +136,9 @@ effSignal3 = rt.TH1F("effSignal 3", "Signal",60,0,2)
 effOnePhoton3 = rt.TH1F("effManyPhotons3", "Many Photons Found",60,0,2)
 effTwoPhotons3 = rt.TH1F("effTwoPhotons3", "Two Photons Found",60,0,2)
 effShowerCharge3 = rt.TH1F("effShowerCharge3", "Shower from Charged Cut",60,0,2)
-#effElectronScore3 = rt.TH1F("effElectronScore3", "Electron Score Cut",60,0,2)
 effPrimary3 = rt.TH1F("effPrimary3", "Primary Score Cut",60,0,2)
 effLongTracks3 = rt.TH1F("effLongTracks3", "Tracks with length > 20 cm",60,0,2)
+effShortTrack3 = rt.TH1F("effShortTrack3", "Unclassified tracks with length < 10 cm",60,0,2)
 
 #Histogram Lists!
 effTotalList = [effTotal1, effTotal2, effTotal3]
@@ -154,11 +154,11 @@ effManyPhotonHists = [effManyPhotons1, effManyPhotons2, effSignal3]
 effShowerChargeHists = [effShowerCharge1, effShowerCharge2, effShowerCharge3]
 effLongTrackHists = [effLongTracks1, effLongTracks2, effLongTracks3]
 effPrimaryHists = [effPrimary1, effPrimary2, effPrimary3]
-#effElectronScoreHists = [effElectronScore1, effElectronScore2, effElectronScore3]
+effShortTrackHists = [effShortTrack1, effShortTrack2, effShortTrack3]
 
-effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effShowerCharge1, effNoPhotons1, effTwoPhotons1, effManyPhotons1, effPrimary1, effLongTracks1]
-effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effShowerCharge1, effNoPhotons2, effOnePhoton2, effManyPhotons2, effPrimary2, effLongTracks2]
-effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effShowerCharge1, effNoPhotons3, effOnePhoton3, effTwoPhotons3, effPrimary3, effLongTracks3]
+effList1 = [effSignal1, effNoVertex1, effCC1, effPion1, effProton1, effShowerCharge1, effNoPhotons1, effTwoPhotons1, effManyPhotons1, effPrimary1, effLongTracks1, effShortTrack1]
+effList2 = [effSignal2, effNoVertex2, effCC2, effPion2, effProton2, effShowerCharge1, effNoPhotons2, effOnePhoton2, effManyPhotons2, effPrimary2, effLongTracks2, effShortTrack1]
+effList3 = [effSignal3, effNoVertex3, effCC3, effPion3, effProton3, effShowerCharge1, effNoPhotons3, effOnePhoton3, effTwoPhotons3, effPrimary3, effLongTracks3, effShortTrack1]
 
 #Built-in functions here
 def addHist(eventTree, photonList, histList, variable, weight):
@@ -235,7 +235,7 @@ uncutCosmics = 0
 untrackedCosmics = 0
 
 #Variables for program function
-fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":20}
+fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":30}
 
 
 #BEGINNING EVENT LOOP FOR DEFAULT PURITY
@@ -277,8 +277,13 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Cut based on the presence of tracks over 20 cm
-  if recoCutLongTracks(eventTree) == False:
+  if recoCutLongTracks(eventTree, fiducialData) == False:
     continue
+
+  #Cut unclassified tracks too short to be trusted
+  if recoCutShortTracks(eventTree) == False:
+    continue
+
 
   #PURITY - GRAPHING BASED ON TRUTH
   
@@ -374,9 +379,14 @@ for i in range(cosmicTree.GetEntries()):
     continue
   uncutCosmics += 1
 
-  #Try cutting based on data for Shower from Neutral
-  if recoCutLongTracks(cosmicTree) == False:
+  #Longtracks cut
+  if recoCutLongTracks(cosmicTree, fiducialData) == False:
     continue
+
+  #Cut unclassified tracks too short to be trusted
+  if recoCutShortTracks(eventTree) == False:
+    continue
+
   untrackedCosmics += 1
 
   #graphing based on photon count
@@ -448,8 +458,13 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Try cutting based on data for Track Lengths
-  if recoCutLongTracks(eventTree) == False:
+  if recoCutLongTracks(eventTree, fiducialData) == False:
     addHist(eventTree, truePhotonIDs, effLongTrackHists, leadingPhoton, eventTree.xsecWeight)
+    continue
+
+  #Cut unclassified tracks too short to be trusted
+  if recoCutShortTracks(eventTree) == False:
+    addHist(eventTree, truePhotonIDs, effShortTrackHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
   #Now we're pretty sure the event is legitimate, so we go ahead and graph based on the number of photons

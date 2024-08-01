@@ -9,7 +9,19 @@ from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
 def trueCutNC(ntuple):
 #Filter for neutral current using truth - False if CC, True if NC
-  if ntuple.trueNuCCNC != 1:
+  chargePartPresent = False
+  for x in range(ntuple.nTrueSimParts):
+    if ntuple.trueSimPartPDG[x] == 13:
+      particleEnergy = ntuple.trueSimPartE[x] - np.sqrt(abs(ntuple.trueSimPartE[x]**2 - (ntuple.trueSimPartPx[x]**2+ntuple.trueSimPartPy[x]**2+ntuple.trueSimPartPz[x]**2)))
+      if particleEnergy >= 100:
+        chargePartPresent = True
+        break
+    elif ntuple.trueSimPartPDG[x] == 11:
+      particleEnergy = ntuple.trueSimPartE[x] - np.sqrt(abs(ntuple.trueSimPartE[x]**2 - (ntuple.trueSimPartPx[x]**2+ntuple.trueSimPartPy[x]**2+ntuple.trueSimPartPz[x]**2)))
+      if particleEnergy >= 10:
+        chargePartPresent = True
+        break
+  if chargePartPresent == True:
     return False
   else:
     return True
@@ -33,7 +45,27 @@ def trueCutPionProton(ntuple):
     return False
   else:
     return True
-  
+
+
+def trueCutProtonInclusive(ntuple):
+  #Filter for pions and photons using truth - False if either (or both) are present, True otherwise
+  pionPresent = False
+  protonPresent = 0                                   
+  for x in range(len(ntuple.truePrimPartPDG)):
+    if abs(ntuple.truePrimPartPDG[x]) == 211:
+      pionEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2))
+      if pionEnergy > 0.05:
+        pionPresent = True
+        break
+    elif ntuple.truePrimPartPDG[x] == 2212:
+      protonEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2)+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2)
+      if protonEnergy > 0.1:
+        protonPresent += 1
+  if pionPresent == True or protonPresent > 1:
+    return False
+  else:
+    return True
+
 def trueCutFiducials(ntuple, fiducialData):
 #Filter by determining if the event vertex falls within the fiducial width using truth  - True if it's not within the radius, false if it is
   if ntuple.trueVtxX <= (fiducialData["xMin"] + fiducialData["width"]) or ntuple.trueVtxX >= (fiducialData["xMax"] - fiducialData["width"]) or ntuple.trueVtxY <= (fiducialData["yMin"] + fiducialData["width"]) or ntuple.trueVtxY >= (fiducialData["yMax"] - fiducialData["width"]) or ntuple.trueVtxZ <= (fiducialData["zMin"] + fiducialData["width"]) or ntuple.trueVtxZ >= (fiducialData["zMax"] - fiducialData["width"]):
@@ -133,7 +165,7 @@ def truePhotonList(ntuple, fiducial):
         secondaryList.append(x)
   for x in secondaryList:
     if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
-      list1.append(x)  
+      list1.append(x)
   return list1
 
 def trueBottomlessPhotonList(ntuple, fiducial):
@@ -152,11 +184,38 @@ def trueBottomlessPhotonList(ntuple, fiducial):
         secondaryList.append(x)
   for x in secondaryList:
     if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
-      list1.append(x)  
+      list1.append(x)
+  return list1
+
+def trueCutOverlapPhotonList(ntuple, fiducial):
+  list1 = []
+  secondaryList = []
+  primList = []
+  #Check directly to see if the photon is secondary (won't catch pi0 photons)
+  for x in range(len(ntuple.trueSimPartTID)):
+    if ntuple.trueSimPartTID[x] == ntuple.trueSimPartMID[x]:
+      primList.append(ntuple.trueSimPartTID[x])
+  #Check somewhat less directly
+  for x in range(ntuple.nTrueSimParts):
+    if ntuple.trueSimPartPDG[x] == 22:
+      if ntuple.trueSimPartMID[x] in primList:
+        secondaryList.append(x)
+      elif abs(ntuple.trueSimPartX[x] - ntuple.trueVtxX) <= 0.15 and abs(ntuple.trueSimPartY[x] - ntuple.trueVtxY) <= 0.15 and abs(ntuple.trueSimPartZ[x] - ntuple.trueVtxZ) <= 0.15:
+        secondaryList.append(x)
+  #Check for fiducial
+  for x in secondaryList:
+    if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
+      #Now check to see if this photon could have overlapped with another (for our purposes, if they fell within 13 degrees of each other)
+      goodPhoton = True
+      for y in list1:
+        dotProduct = ntuple.trackStartDirX[x]*ntuple.trackStartDirX[y] + ntuple.trackStartDirY[x]*ntuple.trackStartDirY[y] + ntuple.trackStartDirZ[x]*ntuple.trackStartDirZ[y]
+        #Since cos(theta) = (dot product)/(length1*length2), and both vectors have length 1, we check to see if the dot product is greater than cos(13)
+        if dotProduct < 0.9743700648:
+          list1.append(x)  
   return list1
 
 def trueCutMaxProtons(ntuple):
-#Filter for pions and photons using truth - False if either (or both) are present, True otherwise                      
+#Filter for pions and photons using truth - False if either (or both) are present, True otherwise
   pionPresent = False
   protonPresent = False
   for x in range(len(ntuple.truePrimPartPDG)):
@@ -177,6 +236,10 @@ def trueCutMaxProtons(ntuple):
 
 
 #HISTOGRAM FUNCTIONS
+#def massHistMake(histDict, bincount, lowx, highx):
+#  for key in histDisct.keys():
+
+
 def histStack(title, histList, POTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
@@ -427,7 +490,7 @@ def recoNeutralCurrent(ntuple):
   chargeCurrent = False
   for x in range(ntuple.nTracks):
     if ntuple.trackClassified[x] == 1:
-      if ntuple.trackPID[x] == 13: # and ntuple.trackRecoE[x] > 20:
+      if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 100:
         chargeCurrent = True
         break
   for x in range(ntuple.nShowers):
@@ -492,20 +555,39 @@ def recoCutMuScore(ntuple, recoPhotons):
   else:
     return True
 
-def recoCutLongTracks(ntuple):
+def recoCutLongTracks(ntuple, fiducial):
   #Cut any event that has any reconstructed track longer than 20 cm
   acceptable = True
   for x in range(ntuple.nTracks):
-    distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
-    if distxyz > 20:
-      acceptable = False
+    if ntuple.trackPID != 13:
+      distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
+      if distxyz > 50:
+        acceptable = False
+      elif ntuple.trackEndPosX[x] > (fiducial["xMax"] - 5) or ntuple.trackEndPosX[x] < (fiducial["xMin"] + 5) or ntuple.trackEndPosY[x] > (fiducial["yMax"] - 5) or ntuple.trackEndPosY[x] < (fiducial["yMin"] + 5) or ntuple.trackEndPosX[x] > (fiducial["zMax"] - 5) or ntuple.trackEndPosZ[x] < (fiducial["zMin"] + 5):
+         acceptable = False
     #Additionally, clear out any tracks with a high enough muon score
-    elif abs(ntuple.trackMuScore[x]) < 3:
-      acceptable = False
+#    elif abs(ntuple.trackMuScore[x]) < 3:
+#      acceptable = False
   if acceptable == False:
     return False
   else:
     return True 
+
+
+def recoCutShortTracks(ntuple):
+  #Cut any event that has any reconstructed track longer than 20 cm
+  acceptable = True
+  for x in range(ntuple.nTracks):
+    if ntuple.trackClassified[x] == 0:
+      distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
+      if distxyz < 10 and distxyz > 4:
+        acceptable = False
+  if acceptable == False:
+    return False
+  else:
+    return True
+
+
 
 def recoPhotonListFiducial(fiducial, ntuple):
   #Creates a list of photons based on the showers in the event
@@ -523,6 +605,23 @@ def recoCutPrimary(ntuple, recoPhotons):
     if abs(ntuple.showerPrimaryScore[recoPhotons[0]]) < 1.4: #or abs(ntuple.showerPrimaryScore[recoPhotons[0]]) > 9:
       return False
     else: return True
+  else:
+    return True
+  
+def recoCutTrackEnd(ntuple, recoPhotons):
+  #Cuts single-photon events where the shower appears closer to the end of a muon track than to the vertex
+  badEvent = False
+  if len(recoPhotons) == 1:
+    x = recoPhotons[0]
+    vertexDist = np.sqrt((ntuple.showerStartPosX[x] - ntuple.vtxX)**2 + (ntuple.showerStartPosY[x] - ntuple.vtxY)**2 +(ntuple.showerStartPosZ[x] - ntuple.vtxZ)**2)
+    for y in range(ntuple.nTracks):
+      if ntuple.trackPID[y] == 13:
+        trackDist = np.sqrt((ntuple.showerStartPosX[x] - ntuple.trackEndPosX[y])**2 + (ntuple.showerStartPosY[x] - ntuple.trackEndPosY[y])**2 +(ntuple.showerStartPosZ[x] - ntuple.trackEndPosZ[y])**2)
+        if vertexDist > trackDist:
+          badEvent = True
+          break
+  if badEvent == True:
+    return False
   else:
     return True
 
