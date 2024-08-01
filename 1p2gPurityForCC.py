@@ -32,6 +32,10 @@ allMuonTrackHist = rt.TH1F("allMuonTrackHist", "Primary Muon Track Length in Tru
 muonDetectorDistanceHist = rt.TH1F("muonDistHist", "Primary Muon End Distance to Detector Wall in True CC Events",60,0,120)
 allMuonDetectorDistanceHist = rt.TH1F("allMuonDistHist", "Primary Muon Track End Distance to Detector Wall in True CC Events",60,0,120)
 
+zPlotHist = rt.TH1F("zplothist", "Z-Coordinate of True CC, Reco NC event vertex",40,0,1040)
+beamAngleHist = rt.TH1F("beamhist", "beam angle of missed muons",60,-1,1)
+
+
 xMin, xMax = 0, 256
 yMin, yMax = -116.5, 116.5
 zMin, zMax = 0, 1036
@@ -45,8 +49,13 @@ recoProtonIsProton = 0
 recoProtonIsMuon = 0
 recoProtonIsOther = 0
 nonClassifiedTracks = 0
-nonClassifiedTrackIsMuon = 0
+nonClassifiedTrackIsMun = 0
 recoMuons = 0
+recoMissedMuons = 0 
+
+zCoordinates = []
+yCoordinates = []
+nonPrimMuons = 0
 # begin loop over events in ntuple file:
 # start with culling for reco-defined 1p2g signal, then reiterate using true to
 # determine what reco actually saw
@@ -143,13 +152,30 @@ for i in range(eventTree.GetEntries()):
     if eventTree.trueNuCCNC == 1:
         continue
     chargeCurrentEvents += 1
-
+    for i in range(eventTree.nTracks):
+        if eventTree.trackTruePID[i] == 13:
+            nonPrimMuons += 1
 # find track length of all primary muons
     for i in range(eventTree.nTrueSimParts):
         if eventTree.trueSimPartProcess[i] == 0 and eventTree.trueSimPartPDG[i] == 13:
+            recoMissedMuons += 1
             muonTrackLength, muonDetectorDistance = particleDistancesCalculator(eventTree, i)
             muonTrackLengthHist.Fill(muonTrackLength, eventTree.xsecWeight)
             muonDetectorDistanceHist.Fill(muonDetectorDistance, eventTree.xsecWeight)
+            zCoordinates.append(eventTree.trueVtxZ)
+            yCoordinates.append(eventTree.trueVtxY)
+            zPlotHist.Fill(eventTree.trueVtxZ, eventTree.xsecWeight)
+
+            vBeam = np.array([0, 0, 1])
+            vMuon = np.array([eventTree.trueSimPartPx[i], eventTree.trueSimPartPy[i], eventTree.trueSimPartPz[i]])
+            vMuonUnit = vMuon / np.linalg.norm(vMuon)
+            dot = np.dot(vBeam, vMuonUnit)
+
+            angle_radians = np.arccos(np.clip(dot, -1.0, 1.0))
+            angle_degrees = np.degrees(angle_radians)
+
+            beamAngleHist.Fill(vMuonUnit[0], eventTree.xsecWeight)
+
 
 #    for i in range(eventTree.nTruePrimParts):
 #        if abs(eventTree.truePrimPartPDG[i]) == 13:
@@ -211,6 +237,18 @@ def sStackFillS2(title, hist, kColor, canvasTitle, xAxis):
 
   return histCanvas, stack, legend, histInt
 
+n = recoMissedMuons
+
+x = np.zeros(n)
+y = np.zeros(n)
+
+for i in range(n):
+    x[i] = zCoordinates[i]
+    y[i] = yCoordinates[i]
+
+yzg = rt.TGraph(n,x,y)
+yzg.Draw("AP")
+
 
 #muonEnergyCanvas, muonEnergyStack, muonEnergyLegend, muonEnergyInt = sStackFillS("Muon Energy of Reco NC, True CC Events", muonEnergyHist, rt.kBlue, "muon energy")
 
@@ -229,14 +267,28 @@ muonDistCanvas, muonDistStack, muonDistLegend, muonDistkInt = sStackFillS2("Muon
 allMuonDistCanvas, allMuonDistStack, allMuonDistLegend, allMuonDistkInt = sStackFillS2("Muon-Detector Distance of True CC Events", allMuonDetectorDistanceHist, rt.kBlue, "all muon distance", "Muon-Detector Distance (cm)")
 
 
+muonZCanvas, muonZStack, muonZLegend, muonZInt = sStackFillS("Vertex Location of True CC, Reco NC Events", zPlotHist, rt.kBlue, "z coordinate", "Z Coordinate (cm)")
+
+beamCanvas, beamStack, beamLegend, beamInt = sStackFillS("Muon X-Component of Muon Momentum Vector", beamAngleHist, rt.kBlue, "beam angle", "x-direction component")
+
+
+yzCanvas = rt.TCanvas("YZ PLOT")
+
+
+
+
 outFile = rt.TFile(args.outfile, "RECREATE")
+yzg.Write("*")
+muonZCanvas.Write()
 muonTrackCanvas.Write()
 muonDistCanvas.Write()
 allMuonTrackCanvas.Write()
 allMuonDistCanvas.Write()
+beamCanvas.Write()
 
 
 print(str(muonsObservedEnergy) + "muons counted from trueprimparts")
 print(str(muonsObservedLength) + "muons counted from truesimparts")
 print(str(chargeCurrentEvents) + " total cc mis-ID events")
+print(str(nonPrimMuons))
 
