@@ -7,7 +7,7 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID8013.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gRecoTID805NoSTC.root", help="output root file name")
 args = parser.parse_args()
 
 # open input file and get event and POT trees
@@ -73,6 +73,19 @@ for i in range(eventTree.GetEntries()):
 # true charged-current cut
     if eventTree.trueNuCCNC != 1:
         continue
+
+#looser true charged-current cut
+#    energeticMuon = False
+#    for i in range(eventTree.nTrueSimParts):
+#        if eventTree.trueSimPartProcess[i] == 0 and abs(eventTree.trueSimPartPDG[i]) == 13:
+#            momentumVector = np.square(eventTree.trueSimPartPx[i]) + \
+#                    np.square(eventTree.trueSimPartPy[i]) + np.square(eventTree.trueSimPartPz[i])
+#            muonMeV = eventTree.trueSimPartE[i] - np.sqrt((np.square(eventTree.trueSimPartE[i])) - momentumVector)
+#            if muonMeV >= 100:
+#                energeticMuon = True
+#                break
+#    if energeticMuon:
+#        continue
 
 # true fiducial volume cut
     if eventTree.trueVtxX <= (xMin + fiducialWidth) or eventTree.trueVtxX >= (xMax - fiducialWidth) or \
@@ -179,7 +192,7 @@ for i in range(eventTree.GetEntries()):
 
 # don't need reco cosmic cut - it's the same as the true
 
-#reco charged-current cut:        
+#reco new charged-current cut: only 100MeV+ tracks        
 #iterate through all tracks/showers in event,
 #look for non-secondary tracks identified as muons or electrons
 #and for non-secondary showers identified as electrons
@@ -191,7 +204,7 @@ for i in range(eventTree.GetEntries()):
         if eventTree.trackIsSecondary[i] == 0:
             if abs(eventTree.trackPID[i]) == 13:
                 recoPrimaryMuonTrackFound = True
-            if abs(eventTree.trackPID[i]) == 11:
+            elif abs(eventTree.trackPID[i]) == 11:
                 recoPrimaryElectronTrackFound = True
     for i in range(eventTree.nShowers):
         if eventTree.showerIsSecondary[i] == 0:
@@ -262,20 +275,7 @@ for i in range(eventTree.GetEntries()):
         onePhotonHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if photonsTIDMatched == 2:
-        unclassifiedShortTrack = False
-        for i in range(eventTree.nTracks):
-            if eventTree.trackClassified[i] == 0:
-                deltaX = eventTree.trackEndPosX[i] - eventTree.trackStartPosX[i]
-                deltaY = eventTree.trackEndPosY[i] - eventTree.trackStartPosY[i]
-                deltaZ = eventTree.trackEndPosZ[i] - eventTree.trackStartPosZ[i]
-                trackLength = np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ))
-                if trackLength <= 10 and trackLength >= 4:
-                    unclassifiedShortTrack = True
-                    break
-        if unclassifiedShortTrack == True:
-            unclassifiedShortTrackHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
-        else: 
-            recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
+        recoSignalHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
 #----- end of event loop ---------------------------------------------#
 
 trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = \
@@ -283,7 +283,7 @@ trueSignalCanvas, trueSignalStack, trueSignalLegend, trueSignalInt = \
 
 histList = [recoSignalHist, noVtxFoundHist, outFiducialHist, chargedCurrentHist, \
             piPlusHist, noProtonHist, pluralProtonHist, wrongProtonHist, \
-            noPhotonHist, onePhotonHist, unclassifiedShortTrackHist]
+            noPhotonHist, onePhotonHist]
 
 recoSignalHistCanvas, stack, legend, histInt = \
     histStackFill("Reco IDs of True NC 1 Proton, 2 Gamma Events", histList, \

@@ -6,7 +6,7 @@ from cuts import histStackFill, kineticEnergyCalculator, sStackFillS
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gPurityPlots7313.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gPurity805NoSTC.root", help="output root file name")
 args = parser.parse_args()
 
 # open input file and get event and POT trees
@@ -77,7 +77,7 @@ for i in range(eventTree.GetEntries()):
         if eventTree.trackIsSecondary[i] == 0:
             if abs(eventTree.trackPID[i]) == 13:
                 recoPrimaryMuonTrackFound = True
-            if abs(eventTree.trackPID[i]) == 11:
+            elif abs(eventTree.trackPID[i]) == 11:
                 recoPrimaryElectronTrackFound = True
     for i in range(eventTree.nShowers):
         if eventTree.showerIsSecondary[i] == 0:
@@ -120,19 +120,6 @@ for i in range(eventTree.GetEntries()):
     if len(recoPhotonTIDList) != 2:
         continue
 
-    unclassifiedShortTrack = False
-    for i in range(eventTree.nTracks):
-        if eventTree.trackClassified[i] == 0:
-            deltaX = eventTree.trackEndPosX[i] - eventTree.trackStartPosX[i]
-            deltaY = eventTree.trackEndPosY[i] - eventTree.trackStartPosY[i]
-            deltaZ = eventTree.trackEndPosZ[i] - eventTree.trackStartPosZ[i]
-            trackLength = np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ))
-            if trackLength <= 10 and trackLength >= 4:
-                unclassifiedShortTrack = True
-                break
-    if unclassifiedShortTrack == True:
-        continue
-
 # find leading photon energy in reco:
     recoPhotonEnergyList = []
     for i in range(len(recoPhotonIndexList)):
@@ -146,7 +133,18 @@ for i in range(eventTree.GetEntries()):
     #------------- begin truth matching -------------#
 
 # true charged-current selection
-    if eventTree.trueNuCCNC != 1:
+#    energeticMuon = False
+#    for i in range(eventTree.nTrueSimParts):
+#        if eventTree.trueSimPartProcess[i] == 0 and abs(eventTree.trueSimPartPDG[i]) == 13:
+#            momentumVector = np.square(eventTree.trueSimPartPx[i]) + \
+#                    np.square(eventTree.trueSimPartPy[i]) + np.square(eventTree.trueSimPartPz[i])
+#            muonMeV = eventTree.trueSimPartE[i] - np.sqrt((np.square(eventTree.trueSimPartE[i])) - momentumVector)
+#            if muonMeV >= 100:
+#                energeticMuon = True
+#                break
+#    if energeticMuon:
+
+    if eventTree.trueNuCCNC == 0:
         trueChargedCurrentHist.Fill(leadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
