@@ -39,7 +39,7 @@ eventTree.GetEntry(args.eventNumber)
 
 #Initial announcment
 print("NOW READING: EVENT NUMBER", args.eventNumber)
-print("RUN NUMBER:", eventTree.run, "SUBRUN NUMBER:", eventTree.subrun, "EVENT:", eventTree.event)
+print("FileID:", eventTree.fileid, "RUN NUMBER:", eventTree.run, "SUBRUN NUMBER:", eventTree.subrun, "EVENT:", eventTree.event)
 #RECO EVALUATION
 #Check for photon, charge current
 photonFound = False

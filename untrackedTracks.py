@@ -35,24 +35,30 @@ for i in range(potTree.GetEntries()):
   ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #HISTOGRAMS DEFINED AND PREPARED HERE
-muonHist = rt.TH1F("muonHist", "Under-Threshold Muons",60,0,80)
-protonHist = rt.TH1F("protonHist", "Under-Threshold Protons",60,0,80)
-pionHist = rt.TH1F("pionHist", "Under-Threshold Pions",60,0,80)
-muonHistBackground = rt.TH1F("muonHistBackground", "Over-Threshold Muons",60,0,80)
-protonHistBackground = rt.TH1F("protonHistBackground", "Over-Threshold Protons",60,0,80)
-pionHistBackground = rt.TH1F("pionHistBackground", "Over-Threshold Pions",60,0,80)
-nothingHist = rt.TH1F("nothingHist", "Not a Real Track",60,0,80)
-otherHist = rt.TH1F("otherHist", "Something else",60,0,80)
+muonHist = rt.TH1F("muonHist", "Under-Threshold Muons",60,0,40)
+protonHist = rt.TH1F("protonHist", "Under-Threshold Protons",60,0,40)
+pionHist = rt.TH1F("pionHist", "Under-Threshold Pions",60,0,40)
+muonHistBackground = rt.TH1F("muonHistBackground", "Over-Threshold Muons",60,0,40)
+protonHistBackground = rt.TH1F("protonHistBackground", "Over-Threshold Protons",60,0,40)
+pionHistBackground = rt.TH1F("pionHistBackground", "Over-Threshold Pions",60,0,40)
+nothingHist = rt.TH1F("nothingHist", "Not a Real Track",60,0,40)
+photonHist = rt.TH1F("photonHist", "Photon somehow",60,0,40)
+antiMuonHist = rt.TH1F("antiMuonHist", "Anti-Muon",60,0,40)
+electronHist = rt.TH1F("electronHist", "Electron",60,0,40)
+positronHist = rt.TH1F("positronHist", "Positron",60,0,40)
+reallyWeirdHist = rt.TH1F("reallyWeirdHist", "Something Weird",60,0,40)
 
 muonHistList = [muonHist, muonHistBackground]
 protonHistList = [protonHist, protonHistBackground]
 pionHistList = [pionHist, pionHistBackground]
-otherHistList = [nothingHist, otherHist]
+otherHistList = [nothingHist, photonHist, electronHist, antiMuonHist, positronHist, reallyWeirdHist]
 
 #Functions for making histograms
 
 
 #Variables for program review
+reconstructedPhotons = 0
+correctPhotons = 0
 
 #Variables for program function
 recoPhotonIDs = []
@@ -100,9 +106,9 @@ for i in range(eventTree.GetEntries()):
               particleEnergy = eventTree.truePrimPartE[y] - np.sqrt(abs(eventTree.truePrimPartE[y]**2 - (eventTree.truePrimPartPx[y]**2+eventTree.truePrimPartPy[y]**2+eventTree.truePrimPartPz[y]**2)))
               particleEnergy = particleEnergy/1000
         if particleEnergy > 100:
-          muonHistBackground.Fill(distxyz, eventTree.xsecWeight)
+          muonHistBackground.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
         else:
-          muonHist.Fill(distxyz, eventTree.xsecWeight)
+          muonHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
 
       #See if the track is a pion
       elif abs(eventTree.trackTruePID[x]) == 211:
@@ -113,9 +119,9 @@ for i in range(eventTree.GetEntries()):
               particleEnergy = eventTree.truePrimPartE[y] - np.sqrt(abs(eventTree.truePrimPartE[y]**2 - (eventTree.truePrimPartPx[y]**2+eventTree.truePrimPartPy[y]**2+eventTree.truePrimPartPz[y]**2)))
               particleEnergy = particleEnergy/1000
         if particleEnergy > 50:
-          pionHistBackground.Fill(distxyz, eventTree.xsecWeight)
+          pionHistBackground.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
         else:
-          pionHist.Fill(distxyz, eventTree.xsecWeight)
+          pionHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
 
       #See if the track is a proton
       elif eventTree.trackTruePID[x] == 2212:
@@ -126,17 +132,28 @@ for i in range(eventTree.GetEntries()):
               particleEnergy = eventTree.truePrimPartE[y] - np.sqrt(abs(eventTree.truePrimPartE[y]**2 - (eventTree.truePrimPartPx[y]**2+eventTree.truePrimPartPy[y]**2+eventTree.truePrimPartPz[y]**2)))
               particleEnergy = particleEnergy/1000
         if particleEnergy > 100:
-          protonHistBackground.Fill(distxyz, eventTree.xsecWeight)
+          protonHistBackground.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
         else:
-          protonHist.Fill(distxyz, eventTree.xsecWeight)
+          protonHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
       
       #See if the track is just a figment of the reco's imagination
       elif eventTree.trackTruePID[x] == 0: 
-        nothingHist.Fill(distxyz, eventTree.xsecWeight)
+        nothingHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
 
       else:
         #Fill histogram for other particles
-        otherHist.Fill(distxyz, eventTree.xsecWeight)
+        print("True:", eventTree.trackTruePID[x], "Reco:", eventTree.trackPID[x])
+        if eventTree.trackTruePID[x] == 22:
+          photonHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
+        elif eventTree.trackTruePID[x] == 11:
+          electronHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
+        elif eventTree.trackTruePID[x] == -13:
+          antiMuonHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
+        elif eventTree.trackTruePID[x] == -11:
+          positronHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
+        else:
+          reallyWeirdHist.Fill(eventTree.trackDistToVtx[x], eventTree.xsecWeight)
+            
 
 #END OF LOOP - STACKING HISTOGRAMS
 muonList = [muonHist, muonHistBackground]
@@ -151,7 +168,7 @@ canvasList =[muonCanvas1, protonCanvas1, pionCanvas1, otherCanvas1]
 stackList = [muonStack1, protonStack1, pionStack1, otherStack1]
 
 for stack in stackList:
-  stack.GetXaxis().SetTitle("Track Length (cm)")
+  stack.GetXaxis().SetTitle("Track Muon Score")
   stack.GetYaxis().SetTitle("No. of Particles per 6.67e+20 POT")
 
 #Save to file

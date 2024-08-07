@@ -189,7 +189,7 @@ for i in range(eventTree.GetEntries()):
   for x in range(len(recoList)):
     if eventTree.showerRecoE[x] > eventTree.showerRecoE[leadingPhoton]:
       leadingPhoton = x
-  ElScore = abs(eventTree.showerFromNeutralScore[leadingPhoton])
+  ElScore = abs(eventTree.trueSimPartPixelSumUplane[leadingPhoton] + eventTree.trueSimPartPixelSumVplane[leadingPhoton] + eventTree.trueSimPartPixelSumYplane[leadingPhoton])
 
   #if eventTree.nTracks > 0:
   #  leadingMuonTrack = eventTree.trackMuScore[0]
@@ -278,7 +278,7 @@ for i in range(cosmicTree.GetEntries()):
   for x in range(len(recoList)):
     if cosmicTree.showerRecoE[x] > cosmicTree.showerRecoE[leadingPhoton]:
       leadingPhoton = x
-  ElScore = abs(cosmicTree.showerFromNeutralScore[leadingPhoton])
+  ElScore = abs(cosmicTree.trueSimPartPixelSumUplane[leadingPhoton] + cosmicTree.trueSimPartPixelSumVplane[leadingPhoton] + cosmicTree.trueSimPartPixelSumYplane[leadingPhoton])
   #if eventTree.nTracks > 0:
   #  leadingMuonTrack = eventTree.trackMuScore[0]
   #  for x in range(eventTree.nTracks):
@@ -287,7 +287,7 @@ for i in range(cosmicTree.GetEntries()):
   #else:
   #  leadingMuonTrack = 15
   #ElScore = abs(leadingMuonTrack)
-  #addHist(cosmicTree, recoList, cosmicList, ElScore, 1)
+  addHist(cosmicTree, recoList, cosmicList, ElScore, 1)
 
 
 #LOOPS OVER - HISTOGRAM ORGANIZING TIME

@@ -29,7 +29,7 @@ def trueCutNC(ntuple):
 def trueCutPionProton(ntuple):
 #Filter for pions and photons using truth - False if either (or both) are present, True otherwise
   pionPresent = False
-  protonPresent = False                                    
+  protonsPresent = 0                                    
   for x in range(len(ntuple.truePrimPartPDG)):
     if abs(ntuple.truePrimPartPDG[x]) == 211:
       pionEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2))
@@ -37,11 +37,11 @@ def trueCutPionProton(ntuple):
         pionPresent = True
         break
     elif ntuple.truePrimPartPDG[x] == 2212:
-      protonEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2)+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2)
+      protonEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - ((ntuple.truePrimPartPx[x]**2)+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2))
       if protonEnergy > 0.1:
-        protonPresent = True
+        protonsPresent += 1
         break
-  if pionPresent == True or protonPresent == True:
+  if pionPresent == True or protonsPresent > 1:
     return False
   else:
     return True
@@ -166,10 +166,11 @@ def truePhotonList(ntuple, fiducial):
   for x in secondaryList:
     if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
       #pixelSum = ntuple.trueSimPartPixelSumUplane[x] + ntuple.trueSimPartPixelSumVplane[x] + ntuple.trueSimPartPixelSumYplane[x]
-      #pixelEnergy = ntuple.trueSimPartPixelSumYplane[x]*0.0126
+      pixelList = [ntuple.trueSimPartPixelSumUplane[x], ntuple.trueSimPartPixelSumVplane[x], ntuple.trueSimPartPixelSumYplane[x]]
+      pixelEnergy = max(pixelList)*0.0126
       #if pixelSum > 5000:
-      #if pixelEnergy > 20:
-      list1.append(x)
+      if pixelEnergy > 20:
+        list1.append(x)
   return list1
 
 def trueBottomlessPhotonList(ntuple, fiducial):
@@ -248,7 +249,7 @@ def histStack(title, histList, POTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kMagenta, rt.kViolet, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen, rt. kOrange+1]
+  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt.kGreen, rt. kOrange+1]
   POTTarget = 6.67e+20
   histIntTotal = 0
   for x in range(len(histList)):
@@ -466,14 +467,19 @@ def recoPionProton(ntuple):
 
 
 def recoProton(ntuple):
-  protonFound = False
+  protonsFound = 0
+  #Go through tracks to see if we can find sufficiently energetic protons
   for x in range(ntuple.nTracks):
     if ntuple.trackPID[x] == 2212:
       distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
-      if distxyz > 18:  
-        protonFound = True
-        break
-  if protonFound == True:
+      #A very high percentage of photons reconstructed below threshold but with tracks longer than 7.5 cm are actually above threshold
+      if ntuple.trackRecoE[x] > 100 or distxyz > 7.5:
+        protonsFound += 1
+  #for x in range(ntuple.nShowers):
+  #  if ntuple.showerPID[x] == 2212:
+  #    if ntuple.showerRecoE[x] > 100:
+  #      protonsFound += 1
+  if protonsFound > 1:
     return False
   else:
     return True
@@ -580,14 +586,13 @@ def recoCutLongTracks(ntuple, fiducial):
   #Cut any event that has any reconstructed track longer than 20 cm
   acceptable = True
   for x in range(ntuple.nTracks):
-    distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
-    if distxyz > 50:
-      acceptable = False
-    elif ntuple.trackEndPosX[x] > (fiducial["xMax"] - 5) or ntuple.trackEndPosX[x] < (fiducial["xMin"] + 5) or ntuple.trackEndPosY[x] > (fiducial["yMax"] - 5) or ntuple.trackEndPosY[x] < (fiducial["yMin"] + 5) or ntuple.trackEndPosX[x] > (fiducial["zMax"] - 5) or ntuple.trackEndPosZ[x] < (fiducial["zMin"] + 5):
+    if ntuple.trackPID[x] != 2212:
+      distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
+      if distxyz > 30:
         acceptable = False
-    #Additionally, clear out any tracks with a high enough muon score
-#    elif abs(ntuple.trackMuScore[x]) < 3:
-#      acceptable = False
+      elif ntuple.trackEndPosX[x] > (fiducial["xMax"] - 5) or ntuple.trackEndPosX[x] < (fiducial["xMin"] + 5) or ntuple.trackEndPosY[x] > (fiducial["yMax"] - 5) or ntuple.trackEndPosY[x] < (fiducial["yMin"] + 5) or ntuple.trackEndPosX[x] > (fiducial["zMax"] - 5) or ntuple.trackEndPosZ[x] < (fiducial["zMin"] + 5):
+        acceptable = False
+
   if acceptable == False:
     return False
   else:
@@ -691,25 +696,6 @@ def recoCutOneProton(ntuple):
   return protonCount
 
 #OTHER MISCELLANIOUS FUNCTIONS
-#def trickyPionProtonCuts(ntuple):
-  #Filter for pions and photons using truth - False if either (or both) are present, True otherwise
-  #This is deliberately checking for photons and charged pions the WRONG WAY, in order to inspect the specific set of events with protons that fall between this threshold and the actual kinetic energy threshold. If you're looking for the right way to do it, trueCutPionProton is the way to go (or you might want trueCutMaxProton if you're looking for protons but not charged pions) 
-#  pionPresent = False
-#  protonPresent = False
-#  for x in range(len(ntuple.truePrimPartPDG)):
-#    if abs(ntuple.truePrimPartPDG[x]) == 211:
-#      if ntuple.truePrimPartE[x] > 0.03:
-#        pionPresent = True
-#        break
-#    elif ntuple.truePrimPartPDG[x] == 2212:
-#      if ntuple.truePrimPartE[x] > 0.06:
-#        protonPresent = True
-#        break
-#  if pionPresent == True or protonPresent == True:
-#    return True
-#  else:
-#    return False
-
   
 # This function uses a particle's momentum vector and total energy to calculate its kinetic energy, then returns its kinetic energy in GeV
 def kineticEnergyCalculator(ntuple, i):
