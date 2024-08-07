@@ -274,7 +274,8 @@ for i in range(eventTree.GetEntries()):
     continue
 
   #Cut events with far-travelling protons
-  if recoProton(eventTree) == False:
+  recoProtonCount = recoProton(eventTree)
+  if recoProtonCount > 1:
     continue
 
   #See if there are any photons in the event - if so, list them
@@ -328,7 +329,8 @@ for i in range(eventTree.GetEntries()):
   fiducialCount += 1
 
   #pions and protons!
-  if trueCutPionProton(eventTree) == False:
+  pionCount, protonCount = trueCutPionProton(eventTree)
+  if pionCount > 0 or protonCount > 1:
     addHist(eventTree, recoList, recoTrackList, pionProtonPHists, leadingPhoton, eventTree.xsecWeight)
     continue
   noPionCount += 1
@@ -383,7 +385,8 @@ for i in range(cosmicTree.GetEntries()):
     continue
   pionlessCosmics += 1
   #Cut events with far-travelling protons
-  if recoProton(cosmicTree) == False:
+  recoProtonCount = recoProton(cosmicTree)
+  if recoProtonCount > 1:
     continue
 
   #See if there are any photons in the event - if so, list them
@@ -434,7 +437,8 @@ for i in range(eventTree.GetEntries()):
   if trueCutCosmic(eventTree) == False:
     continue
     
-  if trueCutPionProton(eventTree) == False:
+  pionCount, protonCount = trueCutPionProton(eventTree)
+  if pionCount > 0 or protonCount > 1:
     continue
   
   truePhotonIDs = truePhotonList(eventTree, fiducialData)
@@ -461,11 +465,13 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, truePhotonIDs, emptyList, effFiducialHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
-  #Cut events with far-travelling protons
-  if recoProton(eventTree) == False:
+  #Cut events with too many protons
+  recoProtonCount = recoProton(eventTree)
+  if recoProtonCount > 1:
     addHist(eventTree, truePhotonIDs, emptyList, effProtonHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
+  #Cut events with pions present
   if recoPion(eventTree) == False:
     addHist(eventTree, truePhotonIDs, emptyList, effPionHists, leadingPhoton, eventTree.xsecWeight)
     continue
