@@ -830,7 +830,6 @@ def recoProtonSelection(eventTree):
       recoProtonTID = eventTree.trackTrueTID[i]
   return nRecoProtons, recoProtonTID
 
-
 # truth photon selection
 # 3 part function: First, find all secondary photons,
 # then only add those that edep in detector
@@ -916,7 +915,6 @@ def truePhotonSelectionOldNtuple(eventTree, fiducialWidth):
   trueLeadingPhotonEnergy = max(photonEnergyList)
 
   return truePhotonTIDList, trueLeadingPhotonEnergy
-
 
 def recoPhotonSelection(eventTree, fiducialWidth):
   reco = 0
