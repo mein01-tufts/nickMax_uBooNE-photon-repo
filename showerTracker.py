@@ -54,7 +54,10 @@ otherHistList = [nothingHist, positronHist, muonHist, protonHist, pionHist, real
 
 
 #Variables for program review
-
+protonCount = 0
+protonCorrect = 0
+notReal = 0
+notRealPhoton = 0
 
 #Variables for program function
 recoPhotonIDs = []
@@ -139,6 +142,12 @@ for i in range(eventTree.GetEntries()):
           muonHist.Fill(distxyz, eventTree.xsecWeight)
         else:
           reallyWeirdHist.Fill(distxyz, eventTree.xsecWeight)
+
+        for x in range(eventTree.nShowers):
+          if eventTree.showerTruePID[x] == -11:
+            protonCount += 1
+            if eventTree.showerPID[x] == 11:
+              protonCorrect += 1
         
             
 
@@ -159,3 +168,6 @@ for stack in stackList:
 outFile = rt.TFile(args.outfile, "RECREATE")
 for canvas in canvasList:
   canvas.Write()
+
+print("There were", protonCount, "protons in the classified showers, and reco identified", protonCorrect/protonCount*100, "percent of them as electrons")
+print("The reco identified", notReal, "showers which", protonCorrect/protonCount*100, "percent of the time")
