@@ -821,6 +821,7 @@ def trueProtonSelection(eventTree):
         trueProtonTID = eventTree.trueSimPartTID[i]
   return nTrueProtons, trueProtonTID
 
+# reco proton selection: returns tid as well for matching later
 def recoProtonSelection(eventTree):
   nRecoProtons = 0
   recoProtonTID = 0
@@ -830,9 +831,9 @@ def recoProtonSelection(eventTree):
       recoProtonTID = eventTree.trackTrueTID[i]
   return nRecoProtons, recoProtonTID
 
-# truth photon selection
-# 3 part function: First, find all secondary photons,
-# then only add those that edep in detector
+# true photon process
+# Find all secondary photons using Edep Sum
+# then only count those that edep in detector
 # then compute leading photon energy
 def truePhotonSelection(eventTree, fiducialWidth):
   photonInSecondary = False
@@ -877,6 +878,9 @@ def truePhotonSelection(eventTree, fiducialWidth):
 
   return truePhotonTIDList, trueLeadingPhotonEnergy
 
+# true photon process:
+# finds all, checks edep within fiducial, calcs leading photon energy, returns both
+# but no edep pixel sum
 def truePhotonSelectionOldNtuple(eventTree, fiducialWidth):
   photonInSecondary = False
   primList = []
@@ -916,6 +920,8 @@ def truePhotonSelectionOldNtuple(eventTree, fiducialWidth):
 
   return truePhotonTIDList, trueLeadingPhotonEnergy
 
+# reco photon process:
+# finds all, checks edep within fiducial, calcs leading photon energy, returns both 
 def recoPhotonSelection(eventTree, fiducialWidth):
   reco = 0
   recoPhotonTIDList = []
@@ -943,3 +949,39 @@ def recoPhotonSelection(eventTree, fiducialWidth):
   recoLeadingPhotonEnergy = max(recoPhotonEnergyList)
 
   return recoPhotonTIDList, recoLeadingPhotonEnergy
+
+# true CC cut but only 100mev+ primaries
+def trueCCCutLoose(eventTree):
+  primaryEMu = False
+  for i in range(eventTree.nTrueSimParts):
+    if eventTree.trueSimPartProcess[i] == 0: 
+      if abs(eventTree.trueSimPartPDG[i]) == 13 or abs(eventTree.trueSimPartPDG[i]) == 11:
+        momentumVector = np.square(eventTree.trueSimPartPx[i]) + np.square(eventTree.trueSimPartPy[i]) + np.square(eventTree.trueSimPartPz[i])
+        kineticMeV = eventTree.trueSimPartE[i] - np.sqrt((np.square(eventTree.trueSimPartE[i])) - momentumVector)
+        if kineticMeV >= 100:
+          primaryEMu = True
+          break
+  return primaryEMu
+
+# reco CC cut but only 100MeV+ primaries
+def recoCCCutLoose(eventTree):
+  recoPrimaryMuonTrackFound = False
+  recoPrimaryMuonShowerFound = False
+  recoPrimaryElectronTrackFound = False
+  recoPrimaryElectronShowerFound = False
+  for i in range(eventTree.nTracks):
+    if eventTree.trackIsSecondary[i] == 0:
+      if abs(eventTree.trackPID[i]) == 13 and eventTree.trackRecoE[i] >= 100:
+        recoPrimaryMuonTrackFound = True
+      elif abs(eventTree.trackPID[i]) == 11 and eventTree.trackRecoE[i] >= 100:
+        recoPrimaryElectronTrackFound = True
+  for i in range(eventTree.nShowers):
+    if eventTree.showerIsSecondary[i] == 0:
+      if abs(eventTree.showerPID[i]) == 11 and eventTree.showerRecoE[i] >= 100:
+        recoPrimaryElectronShowerFound == True
+      elif abs(eventTree.showerPID[i]) == 13 and eventTree.showerRecoE[i] >= 100:
+        recoPrimaryMuonShowerFound == True
+  if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:   
+    return True
+  else:
+    return False 
