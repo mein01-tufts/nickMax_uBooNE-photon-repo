@@ -837,21 +837,12 @@ def recoProtonSelection(eventTree):
 # then compute leading photon energy
 def truePhotonSelection(eventTree, fiducialWidth):
   photonInSecondary = False
-  primList = []
   photonIndexList = []
   truePhotonTIDList = []
   photonEDepOutsideFiducial = 0
-  for i in range(len(eventTree.trueSimPartTID)):
-    if eventTree.trueSimPartTID[i] == eventTree.trueSimPartMID[i]:
-      primList.append(eventTree.trueSimPartTID[i])
-  for i in range(len(eventTree.trueSimPartPDG)):
+  for i in range(eventTree.nTrueSimParts):
     if eventTree.trueSimPartPDG[i] == 22:
-      if eventTree.trueSimPartMID[i] in primList:
-        pixelEnergy = eventTree.trueSimPartPixelSumYplane[i]*0.0126
-        if pixelEnergy >= 20:
-          photonIndexList.append(i)
-          photonInSecondary = True
-      elif abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
+      if abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
         pixelEnergy = eventTree.trueSimPartPixelSumYplane[i]*0.0126
         if pixelEnergy >= 20:
           photonIndexList.append(i)
