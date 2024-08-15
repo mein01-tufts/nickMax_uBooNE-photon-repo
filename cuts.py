@@ -841,12 +841,13 @@ def truePhotonSelection(eventTree, fiducialWidth):
   truePhotonTIDList = []
   photonEDepOutsideFiducial = 0
   for i in range(eventTree.nTrueSimParts):
-    if eventTree.trueSimPartPDG[i] == 22:
-      if abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
-        pixelEnergy = eventTree.trueSimPartPixelSumYplane[i]*0.0126
-        if pixelEnergy >= 20:
-          photonIndexList.append(i)
-          photonInSecondary = True
+    if eventTree.trueSimPartPDG[i] == 22 and eventTree.trueSimPartProcess[i] == 1:
+      if eventTree.trueSimPartMID[i] not in eventTree.trueSimPartTID:
+        if abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
+          pixelEnergy = eventTree.trueSimPartPixelSumYplane[i]*0.0126
+          if pixelEnergy >= 20:
+            photonIndexList.append(i)
+            photonInSecondary = True
 
   xMin, xMax = 0, 256
   yMin, yMax = -116.5, 116.5
