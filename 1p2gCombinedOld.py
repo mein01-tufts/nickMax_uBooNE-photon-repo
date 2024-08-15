@@ -6,7 +6,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputOldNtuple.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputOldNtupleTID.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -86,6 +86,18 @@ for i in range(eventTree.GetEntries()):
     if eventTree.foundVertex == 0:
         recoNoVertexHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
+# reco photon selection
+    recophotonTIDList, recoLeadingPhotonEnergy = recoPhotonSelection(eventTree, fiducialWidth)
+    if len(recophotonTIDList) == 0:
+        recoNoPhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
+    if len(recophotonTIDList) == 1:
+        recoOnePhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
+    if len(recophotonTIDList) >= 3:
+        recoManyPhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
+
 # reco cc check
     if recoCCCut(eventTree):
         recoCCHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
@@ -110,17 +122,6 @@ for i in range(eventTree.GetEntries()):
 # uncomment below for tid-matching
     if recoProtonTID != trueProtonTID:
         recoWrongProtonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-
-    recophotonTIDList, recoLeadingPhotonEnergy = recoPhotonSelection(eventTree, fiducialWidth)
-    if len(recophotonTIDList) == 0:
-        recoNoPhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(recophotonTIDList) == 1:
-        recoOnePhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(recophotonTIDList) >= 3:
-        recoManyPhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
     recoSignalHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
@@ -154,6 +155,18 @@ for i in range(eventTree.GetEntries()):
     recoTotalHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
 #------------ TruthMatching ------------#
 
+# true photon selection
+    truePhotonTIDList, trueLeadingPhotonEnergy = truePhotonSelectionOldNtuple(eventTree, fiducialWidth)
+    if len(truePhotonTIDList) == 0:
+        trueNoPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
+    if len(truePhotonTIDList) == 1:
+        trueOnePhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
+    if len(truePhotonTIDList) >= 3:
+        trueManyPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
+
 # true cc check
     if trueCCCut(eventTree):
         trueCCHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
@@ -174,24 +187,10 @@ for i in range(eventTree.GetEntries()):
     if nTrueProtons >= 2:
         truePluralProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
-
 # uncomment below for tid-matching
     if trueProtonTID != trueProtonTID:
         trueWrongProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
-
-# true photon selection
-    truePhotonTIDList, trueLeadingPhotonEnergy = truePhotonSelectionOldNtuple(eventTree, fiducialWidth)
-    if len(truePhotonTIDList) == 0:
-        trueNoPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(truePhotonTIDList) == 1:
-        trueOnePhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(truePhotonTIDList) >= 3:
-        trueManyPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    
     trueSignalHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
  
 #------------------ End of Loops ------------------#
@@ -205,18 +204,17 @@ trueSignalHistInt = trueSignalHist.Integral(1, 60)
 print("Efficiency: " + str(recoSignalHistInt / trueTotalHistInt * 100) + "%")
 print("Purity: " + str(trueSignalHistInt / recoTotalHistInt * 100) + "%")
 
-efficiencyHistList = [recoSignalHist, recoNoVertexHist, recoCCHist, \
-                      recoOutFiducialHist, recoPiPlusHist, recoNoProtonHist, recoPluralProtonHist, recoWrongProtonHist, \
-                        recoNoPhotonHist, recoOnePhotonHist, recoManyPhotonHist]
-purityHistList = [trueSignalHist, trueCCHist, trueOutFiducialHist, truePiPlusHist, \
-                  trueNoProtonHist, truePluralProtonHist, trueWrongProtonHist, trueNoPhotonHist, trueOnePhotonHist, \
-                    trueManyPhotonHist]
+efficiencyHistList = [recoSignalHist, recoNoVertexHist, recoNoPhotonHist, recoOnePhotonHist, recoManyPhotonHist, recoCCHist, \
+                      recoOutFiducialHist, recoPiPlusHist, recoNoProtonHist, recoPluralProtonHist, recoWrongProtonHist]
+purityHistList = [trueSignalHist, trueNoPhotonHist, trueOnePhotonHist, \
+                    trueManyPhotonHist, trueCCHist, trueOutFiducialHist, truePiPlusHist, \
+                  trueNoProtonHist, truePluralProtonHist, trueWrongProtonHist]
 
 efficiencyCanvas, efficiencyStack, efficiencyLegend, efficiencyInt = \
-    histStackFill("Reconstruction of True NC 1p2g Events", efficiencyHistList, "Total Truth Signal: (", "True Leading Photon Energy (MeV)", "Events per 6.67e+20 POT")
+    histStackFill("Reconstruction of True NC 1p2g Events", efficiencyHistList, "Total Truth Signal: (", "True Leading Photon Energy (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
 
 purityCanvas, purityStack, purityLegend, purityInt = \
-    histStackFill("Truth-Matching of Reconstructed NC 1p2g Events", purityHistList, "Total Reconstruction Signal: (", "Leading Reconstructed Photon Energy (MeV)", "Events per 6.67e+20 POT")
+    histStackFill("Truth-Matching of Reconstructed NC 1p2g Events", purityHistList, "Total Reconstruction Signal: (", "Leading Reconstructed Photon Energy (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
 
 # Write Efficiency and Purity Canvases to Outfile
 outFile = rt.TFile(args.outfile, "RECREATE")
