@@ -365,7 +365,7 @@ def histStackTwoSignal(title, histList, POTSum):
 
   return histCanvas, stack, legend, histInt
 
-def histStackFill(title, histList, legendTitle, xTitle, yTitle):
+def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.35, 0.5, 0.9, 0.9)
@@ -374,16 +374,22 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle):
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
   targetPOT = 6.67e+20
   integralSum = 0
+  sum = 0
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
     hist.Scale(targetPOT/ntuplePOTSum)
+    histInt = hist.Integral(1, int(bins))
+    sum += histInt
+  for x in range(len(histList)):
+    hist = histList[x]
+    bins = hist.GetNbinsX()
     hist.SetFillColor(colors[x%7])
     hist.SetMarkerStyle(21)
     hist.SetMarkerColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
     integralSum += histInt
-    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 2))+" events per 6.67e+20 POT", "f")
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round((histInt/sum*100), 2))+" percent of events", "f")
     stack.Add(hist)
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
   histCanvas = rt.TCanvas(str(title)) 
@@ -881,6 +887,8 @@ def recoCCCut(eventTree):
       elif abs(eventTree.showerPID[i]) == 13:
         recoPrimaryMuonShowerFound == True
   if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:   
+    return True
+  elif eventTree.nTracks >= 4:
     return True
   else:
     return False 
