@@ -10,15 +10,15 @@ from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 def trueCutNC(ntuple):
 #Filter for neutral current using truth - False if CC, True if NC
   chargePartPresent = False
-  for x in range(ntuple.nTrueSimParts):
-    if ntuple.trueSimPartPDG[x] == 13:
-      particleEnergy = ntuple.trueSimPartE[x] - np.sqrt(abs(ntuple.trueSimPartE[x]**2 - (ntuple.trueSimPartPx[x]**2+ntuple.trueSimPartPy[x]**2+ntuple.trueSimPartPz[x]**2)))
-      if particleEnergy >= 100:
+  for x in range(ntuple.nTruePrimParts):
+    if ntuple.truePrimPartPDG[x] == 13:
+      particleEnergy = ntuple.truePrimPartE[x] - np.sqrt(abs(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2)))
+      if particleEnergy >= 0.1:
         chargePartPresent = True
         break
-    elif ntuple.trueSimPartPDG[x] == 11:
-      particleEnergy = ntuple.trueSimPartE[x] - np.sqrt(abs(ntuple.trueSimPartE[x]**2 - (ntuple.trueSimPartPx[x]**2+ntuple.trueSimPartPy[x]**2+ntuple.trueSimPartPz[x]**2)))
-      if particleEnergy >= 10:
+    elif ntuple.truePrimPartPDG[x] == 11:
+      particleEnergy = ntuple.truePrimPartE[x] - np.sqrt(abs(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2)))
+      if particleEnergy >= 0.01:
         chargePartPresent = True
         break
   if chargePartPresent == True:
@@ -26,25 +26,49 @@ def trueCutNC(ntuple):
   else:
     return True
 
+def trueCutMuons(ntuple):
+  #Cut events with over-threshold muons
+  muonPresent = False
+  for x in range(ntuple.nTruePrimParts):
+    if ntuple.truePrimPartPDG[x] == 13:
+      particleEnergy = ntuple.truePrimPartE[x] - np.sqrt(abs(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2)))
+      if particleEnergy >= 0.1:
+        muonPresent = True
+        break
+  if muonPresent == True:
+    return False
+  else:
+    return True
+
+def trueCutElectrons(ntuple):
+  #Cut events with over-threshold electrons
+  electronPresent = False
+  for x in range(ntuple.nTruePrimParts):
+    if ntuple.truePrimPartPDG[x] == 11:
+      particleEnergy = ntuple.truePrimPartE[x] - np.sqrt(abs(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2)))
+      if particleEnergy >= 0.01:
+        electronPresent = True
+        break
+  if electronPresent == True:
+    return False
+  else:
+    return True
+
+
 def trueCutPionProton(ntuple):
 #Filter for pions and photons using truth - False if either (or both) are present, True otherwise
-  pionPresent = False
+  pionsPresent = False
   protonsPresent = 0                                    
   for x in range(len(ntuple.truePrimPartPDG)):
     if abs(ntuple.truePrimPartPDG[x]) == 211:
       pionEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - (ntuple.truePrimPartPx[x]**2+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2))
       if pionEnergy > 0.05:
-        pionPresent = True
-        break
+        pionsPresent += 1
     elif ntuple.truePrimPartPDG[x] == 2212:
       protonEnergy = ntuple.truePrimPartE[x] - np.sqrt(ntuple.truePrimPartE[x]**2 - ((ntuple.truePrimPartPx[x]**2)+ntuple.truePrimPartPy[x]**2+ntuple.truePrimPartPz[x]**2))
       if protonEnergy > 0.1:
         protonsPresent += 1
-        break
-  if pionPresent == True or protonsPresent > 1:
-    return False
-  else:
-    return True
+  return pionsPresent, protonsPresent
 
 
 def trueCutProtonInclusive(ntuple):
@@ -249,18 +273,35 @@ def histStack(title, histList, POTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt.kGreen, rt. kOrange+1]
+  colors = [rt. kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt. kOrange+1]
   POTTarget = 6.67e+20
   histIntTotal = 0
+  #Adds the histograms to the stack
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
     hist.Scale(POTTarget/POTSum)
-    hist.SetLineColor(colors[x%7])
+    #Make sure signal is the only one with green, for easy identification
+    if x == 0:
+      hist.SetLineColor(rt.kGreen)
+      
+    #The rest get random colors
+    else:
+      hist.SetLineColor(colors[x%7])
+    #Now we add to the stack
+    stack.Add(hist)
+  #Making the legend entry for the signal first, so it goes on top
+  hist = histList[0]
+  histInt = hist.Integral(1, int(bins))
+  histIntTotal += histInt
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  #Adding the rest of the legend entries (has to be backwards here, or the legend order will be reversed on the graph)
+  listLength = (len(histList) - 1)
+  for x in range(listLength, 0, -1):
+    hist = histList[x]
     histInt = hist.Integral(1, int(bins))
     histIntTotal += histInt
     legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
-    stack.Add(hist)
   legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
   legend.SetHeader(str(legendHeaderString), "C")
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
@@ -272,6 +313,60 @@ def histStack(title, histList, POTSum):
   histCanvas.Update()
 
   return histCanvas, stack, legend, histInt
+
+
+def histStackTwoSignal(title, histList, POTSum):
+  #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
+  colors = [rt. kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt. kOrange+1]
+  POTTarget = 6.67e+20
+  histIntTotal = 0
+  #Adds the histograms to the stack
+  for x in range(len(histList)):
+    hist = histList[x]
+    bins = hist.GetNbinsX()
+    hist.Scale(POTTarget/POTSum)
+    #Make sure the signals are the only ones with green, for easy identification
+    if x == 0:
+      hist.SetLineColor(rt.kGreen)
+    elif x == 1:
+      hist.SetLineColor(rt.kGreen + 4)
+    #The rest get random colors
+    else:
+      hist.SetLineColor(colors[x%7])
+    #Now we add to the stack
+    stack.Add(hist)
+  #Making the legend entry for the signal first, so it goes on top
+  hist = histList[0]
+  histInt = hist.Integral(1, int(bins))
+  histIntTotal += histInt
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  #Do it again for the second signal
+  hist = histList[1]
+  histInt = hist.Integral(1, int(bins))
+  histIntTotal += histInt
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  #Adding the rest of the legend entries (has to be backwards here, or the legend order will be reversed on the graph)
+  listLength = (len(histList) - 1)
+  for x in range(listLength, 1, -1):
+    hist = histList[x]
+    histInt = hist.Integral(1, int(bins))
+    histIntTotal += histInt
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
+  legend.SetHeader(str(legendHeaderString), "C")
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas() 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle("Photon Energy (GeV)")
+  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
+  legend.Draw()
+  histCanvas.Update()
+
+  return histCanvas, stack, legend, histInt
+
+
 
 def histStackFill(title, histList, legendTitle, xTitle, yTitle):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
@@ -479,10 +574,7 @@ def recoProton(ntuple):
   #  if ntuple.showerPID[x] == 2212:
   #    if ntuple.showerRecoE[x] > 100:
   #      protonsFound += 1
-  if protonsFound > 1:
-    return False
-  else:
-    return True
+  return protonsFound
 
 def recoPion(ntuple):
   pionFound = False
@@ -504,15 +596,15 @@ def recoNeutralCurrent(ntuple):
   #Checks for signs of a neutral current event; returns True if it thinks the event is NC, False if CC
   chargeCurrent = False
   for x in range(ntuple.nTracks):
-    if ntuple.trackClassified[x] == 1:
+    if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
       if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 100:
         chargeCurrent = True
         break
-      elif ntuple.trackPID[x] == 11 and ntuple.trackRecoE[x] > 10:
+      if ntuple.trackPID[x] == 11 and ntuple.trackRecoE[x] > 10:
         chargeCurrent = True
         break
   for x in range(ntuple.nShowers):
-    if ntuple.showerClassified[x] == 1:
+    if ntuple.showerClassified[x] == 1 and ntuple.showerProcess[x] == 0:
       if ntuple.showerPID[x] == 11 and ntuple.showerRecoE[x] > 10:
         chargeCurrent = True
         break
@@ -520,6 +612,40 @@ def recoNeutralCurrent(ntuple):
         chargeCurrent = True
         break
   if chargeCurrent == True:
+    return False
+  else:
+    return True
+
+def recoCutMuons(ntuple):
+  muonPresent = False
+  for x in range(ntuple.nTracks):
+    if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
+      if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 100:
+        muonPresent = True
+        break
+  for x in range(ntuple.nShowers):
+    if ntuple.showerClassified[x] == 1 and ntuple.showerProcess[x] == 0:
+      if ntuple.showerPID[x] == 13 and ntuple.showerRecoE[x] > 100:
+        muonPresent = True
+        break
+  if muonPresent == True:
+    return False
+  else:
+    return True
+
+def recoCutElectrons(ntuple):
+  electronPresent = False
+  for x in range(ntuple.nTracks):
+    if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
+      if ntuple.trackPID[x] == 11 and ntuple.trackRecoE[x] > 10:
+        electronPresent = True
+        break
+  for x in range(ntuple.nShowers):
+    if ntuple.showerClassified[x] == 1 and ntuple.showerProcess[x] == 0:
+      if ntuple.showerPID[x] == 11 and ntuple.showerRecoE[x] > 10:
+        electronPresent = True
+        break
+  if electronPresent == True:
     return False
   else:
     return True
@@ -588,11 +714,10 @@ def recoCutLongTracks(ntuple, fiducial):
   for x in range(ntuple.nTracks):
     if ntuple.trackPID[x] != 2212:
       distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
-      if distxyz > 30:
+      if distxyz > 25:
         acceptable = False
       elif ntuple.trackEndPosX[x] > (fiducial["xMax"] - 5) or ntuple.trackEndPosX[x] < (fiducial["xMin"] + 5) or ntuple.trackEndPosY[x] > (fiducial["yMax"] - 5) or ntuple.trackEndPosY[x] < (fiducial["yMin"] + 5) or ntuple.trackEndPosX[x] > (fiducial["zMax"] - 5) or ntuple.trackEndPosZ[x] < (fiducial["zMin"] + 5):
         acceptable = False
-
   if acceptable == False:
     return False
   else:
