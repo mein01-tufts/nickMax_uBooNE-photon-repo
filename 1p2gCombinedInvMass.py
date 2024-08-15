@@ -6,7 +6,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputInvariant.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputInvariant3.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -25,18 +25,19 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 # Define histograms to be filled through loop
-trueTotalHist = rt.TH1F("trueTotalHist", "All True Signal Events", 60, 0, 2500)
-recoNoVertexHist = rt.TH1F("NoVertexFound", "Vertex not reconstructed", 60, 0, 2500)
-recoOutFiducialHist = rt.TH1F("outsideFiducial", "Vertex reconstructed outside fiducial volume", 60, 0, 2500)
-recoCCHist = rt.TH1F("recoCC", "Event reconstructed as charged-current", 60, 0, 2500)
-recoPiPlusHist = rt.TH1F("recoPiPlus", "Charged pion reconstructed", 60, 0, 2500)
-recoNoProtonHist = rt.TH1F("recoNoProton", "No proton reconstructed", 60, 0, 2500)
-recoPluralProtonHist = rt.TH1F("recoPluralProton", "2+ protons reconstructed", 60, 0, 2500)
-recoWrongProtonHist = rt.TH1F("recoWrongProton", "Reconstructed proton failed TID-matching", 60, 0, 2500)
-recoNoPhotonHist = rt.TH1F("recoNoPhoton", "No photon reconstructed", 60, 0, 2500)
-recoOnePhotonHist = rt.TH1F("recoOnePhoton", "One photon reconstructed", 60, 0, 2500)
-recoManyPhotonHist = rt.TH1F("recoManyPhoton", "3+ photons reconstructed", 60, 0, 2500)
-recoSignalHist = rt.TH1F("recoSignal", "1p2g successfully reconstructed", 60, 0, 2500)
+efficiencyXmax = 2500
+trueTotalHist = rt.TH1F("trueTotalHist", "All True Signal Events", 60, 0, efficiencyXmax)
+recoNoVertexHist = rt.TH1F("NoVertexFound", "Vertex not reconstructed", 60, 0, efficiencyXmax)
+recoOutFiducialHist = rt.TH1F("outsideFiducial", "Vertex reconstructed outside fiducial volume", 60, 0, efficiencyXmax)
+recoCCHist = rt.TH1F("recoCC", "Event reconstructed as charged-current", 60, 0, efficiencyXmax)
+recoPiPlusHist = rt.TH1F("recoPiPlus", "Charged pion reconstructed", 60, 0, efficiencyXmax)
+recoNoProtonHist = rt.TH1F("recoNoProton", "No proton reconstructed", 60, 0, efficiencyXmax)
+recoPluralProtonHist = rt.TH1F("recoPluralProton", "2+ protons reconstructed", 60, 0, efficiencyXmax)
+recoWrongProtonHist = rt.TH1F("recoWrongProton", "Reconstructed proton failed TID-matching", 60, 0, efficiencyXmax)
+recoNoPhotonHist = rt.TH1F("recoNoPhoton", "No photon reconstructed", 60, 0, efficiencyXmax)
+recoOnePhotonHist = rt.TH1F("recoOnePhoton", "One photon reconstructed", 60, 0, efficiencyXmax)
+recoManyPhotonHist = rt.TH1F("recoManyPhoton", "3+ photons reconstructed", 60, 0, efficiencyXmax)
+recoSignalHist = rt.TH1F("recoSignal", "1p2g successfully reconstructed", 60, 0, efficiencyXmax)
 
 recoTotalHist = rt.TH1F("recoTotalHist", "All Reco Signal Events", 60, 0, 1500)
 trueOutFiducialHist = rt.TH1F("trueOutsideFiducial", "True vertex outside fiducial volume", 60, 0, 1500)
@@ -105,10 +106,11 @@ for i in range(eventTree.GetEntries()):
 
     a = truePhotonIndices[0]
     b = truePhotonIndices[1]
-    lengthA = np.sqrt(eventTree.trueSimPartPx[a]**2 + eventTree.trueSimPartPy[a]**2 + eventTree.trueSimPartPz[a]**2)
+    lengthA = np.sqrt(np.square(eventTree.trueSimPartPx[a]) + np.square(eventTree.trueSimPartPy[a]) + np.square(eventTree.trueSimPartPz[a]))
     lengthB = np.sqrt(eventTree.trueSimPartPx[b]**2 + eventTree.trueSimPartPy[b]**2 + eventTree.trueSimPartPz[b]**2)
     aDotB = eventTree.trueSimPartPx[a]*eventTree.trueSimPartPx[b] + eventTree.trueSimPartPy[a]*eventTree.trueSimPartPy[b] + eventTree.trueSimPartPz[a]*eventTree.trueSimPartPz[b]
-    invariantMass = np.sqrt((scaledEnergy[0]*scaledEnergy[1]) - (scaledEnergy[0]*scaledEnergy[1]*(aDotB)/(lengthA*lengthB)))
+    invariantMass = np.sqrt((scaledEnergy[0]*scaledEnergy[1]) - (scaledEnergy[0]*scaledEnergy[1])*((aDotB)/(lengthA*lengthB)))
+    invariantMass = np.sqrt((2*lengthA*lengthB) - (2*aDotB))
 
     trueTotalHist.Fill(invariantMass, eventTree.xsecWeight)
 #------------ Reco Matching ------------#
