@@ -890,13 +890,13 @@ def recoCCCut(eventTree):
         recoPrimaryElectronShowerFound == True
       elif abs(eventTree.showerPID[i]) == 13:
         recoPrimaryMuonShowerFound == True
-#  if eventTree.nTracks != 0:
-#    if unclassifiedTracks/eventTree.nTracks >= 0.55:
-#      cc = True
+  if eventTree.nTracks != 0:
+    if unclassifiedTracks/eventTree.nTracks >= 0.55:
+      cc = True
   if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:   
     cc = True
-#  elif eventTree.nTracks >= 4:
-#    cc = True
+  if eventTree.nTracks >= 4:
+    cc = True
 
   if cc == True:
     return True
