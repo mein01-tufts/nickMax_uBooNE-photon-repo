@@ -2,11 +2,11 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiPlusCut, recoPiPlusCut, trueProtonSelection, recoProtonSelection, truePhotonSelection, recoPhotonSelection, histStackFill, trueCCCutLoose, recoCCCutLoose
+from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiPlusCut, recoPiPlusCut, trueProtonSelection, recoProtonSelection, truePhotonSelection, recoPhotonSelection, trueCCCutLoose, recoCCCutLoose
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gTracksPercent.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gTracksTest.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -25,8 +25,8 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 # Define hists to be filled:
-trueNCTrackHist = rt.TH1F("nctracks", "nc tracks per event",50,0,105)
-trueCCTrackHist = rt.TH1F("cctracks", "cc tracks per event",50,0,105)
+trueNCTrackHist = rt.TH1F("nctracks", "True NC Events",20,0,10)
+trueCCTrackHist = rt.TH1F("cctracks", "True CC Events",20,0,10)
 # Define fiducial width
 fiducialWidth = 10
 
@@ -86,7 +86,7 @@ for i in range(eventTree.GetEntries()):
         percentUnclassified = tracksUnclassified / eventTree.nTracks * 100
         if tracksUnclassified == eventTree.nTracks:
             print("hundo p unclassified")
-        trueNCTrackHist.Fill(percentUnclassified, eventTree.xsecWeight)
+        trueNCTrackHist.Fill(eventTree.nTracks, eventTree.xsecWeight)
         if eventTree.nTracks == 0:
             zeroTrackNC += 1
         continue
@@ -107,13 +107,51 @@ for i in range(eventTree.GetEntries()):
     if eventTree.nTracks == 0:
         zeroTrackCC += 1
     percentUnclassified = tracksUnclassified / eventTree.nTracks * 100
-    trueCCTrackHist.Fill(percentUnclassified, eventTree.xsecWeight)
+    trueCCTrackHist.Fill(eventTree.nTracks, eventTree.xsecWeight)
         
     trueCCtotalTracks += eventTree.nTracks
         
 
+def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
+  #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.35, 0.6, 0.9, 0.9)
+  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kOrange]
+  targetPOT = 3.2974607516739725e+20
+  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
+  targetPOT = 6.67e+20
+  integralSum = 0
+  sum = 0
+  for x in range(len(histList)):
+    hist = histList[x]
+    bins = hist.GetNbinsX()
+    hist.Scale(targetPOT/ntuplePOTSum)
+    histInt = hist.Integral(1, int(bins))
+    sum += histInt
+  for x in range(len(histList)):
+    hist = histList[x]
+    bins = hist.GetNbinsX()
+    hist.SetFillColor(colors[x%7])
+    hist.SetMarkerStyle(21)
+    hist.SetMarkerColor(colors[x%7])
+    histInt = hist.Integral(1, int(bins))
+    integralSum += histInt
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round((histInt/sum*100), 2))+" percent of reconstructed signal events", "f")
+    stack.Add(hist)
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas(str(title)) 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle(str(xTitle))
+  stack.GetYaxis().SetTitle(str(yTitle))
+  legendHeaderString = str(str(legendTitle) + str(round((integralSum),1)) + " Events per 6.67e+20 POT)") 
+  legend.SetHeader(str(legendHeaderString), "C")
+  legend.Draw()
+  histCanvas.Update()
 
-trackCanvas, trackStack, trackLegend, trackInt = histStackFill("num of tracks per event", [trueNCTrackHist, trueCCTrackHist], "number of tracks: (", "num of tracks", "tracks per 6.67e+20POT", ntuplePOTsum)
+  return histCanvas, stack, legend, histInt
+
+
+trackCanvas, trackStack, trackLegend, trackInt = histStackFill("Number of Tracks in Reconstructed Signal Events", [trueNCTrackHist, trueCCTrackHist], "Reconstructed Signal: (", "Number of Tracks per Event", "events per 6.67e+20POT", ntuplePOTsum)
 
 
 print("of " + str(recoNCtrueCC) + " total reco nc true CC events, " + str(trueCCunclassified/trueCCtotalTracks*100) + " percent of tracks are unclassified" + str(trueCCtotalTracks) + " total tracks")
@@ -122,4 +160,4 @@ print(str(zeroTrackNC))
 print(str(zeroTrackCC))
 
 outFile = rt.TFile(args.outfile, "RECREATE")
-trackCanvas.Write("Num of Tracks Hist")
+trackCanvas.Write("Num Tracks Hist")
