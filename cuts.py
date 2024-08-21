@@ -874,7 +874,11 @@ def recoCCCut(eventTree):
   recoPrimaryMuonShowerFound = False
   recoPrimaryElectronTrackFound = False
   recoPrimaryElectronShowerFound = False
+  cc = False
+  unclassifiedTracks = 0
   for i in range(eventTree.nTracks):
+    if eventTree.trackClassified[i] == 0:
+      unclassifiedTracks += 1
     if eventTree.trackIsSecondary[i] == 0:
       if abs(eventTree.trackPID[i]) == 13:
         recoPrimaryMuonTrackFound = True
@@ -886,9 +890,15 @@ def recoCCCut(eventTree):
         recoPrimaryElectronShowerFound == True
       elif abs(eventTree.showerPID[i]) == 13:
         recoPrimaryMuonShowerFound == True
+#  if eventTree.nTracks != 0:
+#    if unclassifiedTracks/eventTree.nTracks >= 0.55:
+#      cc = True
   if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:   
-    return True
-  elif eventTree.nTracks >= 4:
+    cc = True
+#  elif eventTree.nTracks >= 4:
+#    cc = True
+
+  if cc == True:
     return True
   else:
     return False 
