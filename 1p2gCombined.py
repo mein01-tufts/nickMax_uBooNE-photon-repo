@@ -6,7 +6,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutput.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputNewNumXPercent.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
