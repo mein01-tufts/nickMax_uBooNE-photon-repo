@@ -6,7 +6,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gTracks.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gTracksPercent.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -25,8 +25,8 @@ for i in range(potTree.GetEntries()):
     ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 # Define hists to be filled:
-trueNCTrackHist = rt.TH1F("nctracks", "nc tracks per event",10,0,10)
-trueCCTrackHist = rt.TH1F("cctracks", "cc tracks per event",10,0,10)
+trueNCTrackHist = rt.TH1F("nctracks", "nc tracks per event",50,0,105)
+trueCCTrackHist = rt.TH1F("cctracks", "cc tracks per event",50,0,105)
 # Define fiducial width
 fiducialWidth = 10
 
@@ -38,6 +38,9 @@ trueNCCclassified = 0
 trueCCclassified = 0
 trueNCtotalTracks = 0
 trueCCtotalTracks = 0
+
+zeroTrackNC = 0
+zeroTrackCC = 0
 
 ## Event loop: Select reco signal, then of those events which are CC, 
 ## Plot each non-proton track in terms of its energy and length(stop length at det edge)
@@ -71,31 +74,40 @@ for i in range(eventTree.GetEntries()):
     if trueCCCut(eventTree) == False:
         recoNCtrueNC += 1
         eventTracks = 0
+        tracksUnclassified = 0
         for i in range(eventTree.nTracks):
             eventTracks += 1
             if eventTree.trackClassified[i] == 0:
                 trueNCunclassified += 1
+                tracksUnclassified += 1
             elif eventTree.trackClassified[i] == 1:
                 trueNCCclassified += 1
         trueNCtotalTracks += eventTree.nTracks
-        trueNCTrackHist.Fill(eventTracks, eventTree.xsecWeight)
+        percentUnclassified = tracksUnclassified / eventTree.nTracks * 100
+        if tracksUnclassified == eventTree.nTracks:
+            print("hundo p unclassified")
+        trueNCTrackHist.Fill(percentUnclassified, eventTree.xsecWeight)
+        if eventTree.nTracks == 0:
+            zeroTrackNC += 1
         continue
 
     recoNCtrueCC += 1
 
 # Calculate track lengths, store track energies for all 
     eventTracks = 0
+    tracksUnclassified = 0
     for i in range(eventTree.nTracks):
-        eventTracks += 1
-        unclassifiedInEvent = 0
-        if eventTree.trackPID[i] != 2212 and eventTree.trackClassified[i] == 1:
-            x=2
         if eventTree.trackClassified[i] == 0:
             trueCCunclassified += 1
-            unclassifiedInEvent += 1
+            tracksUnclassified += 1
         if eventTree.trackClassified[i] == 1:
             trueCCclassified += 1
-    trueCCTrackHist.Fill(eventTracks, eventTree.xsecWeight)
+    if tracksUnclassified == eventTree.nTracks:
+        print("hundo p unclassified")
+    if eventTree.nTracks == 0:
+        zeroTrackCC += 1
+    percentUnclassified = tracksUnclassified / eventTree.nTracks * 100
+    trueCCTrackHist.Fill(percentUnclassified, eventTree.xsecWeight)
         
     trueCCtotalTracks += eventTree.nTracks
         
@@ -106,6 +118,8 @@ trackCanvas, trackStack, trackLegend, trackInt = histStackFill("num of tracks pe
 
 print("of " + str(recoNCtrueCC) + " total reco nc true CC events, " + str(trueCCunclassified/trueCCtotalTracks*100) + " percent of tracks are unclassified" + str(trueCCtotalTracks) + " total tracks")
 print("of " + str(recoNCtrueNC) + " total reco nc true NC events, " + str(trueNCunclassified/trueNCtotalTracks*100) + " percent of tracks are unclassified" + str(trueNCtotalTracks) + " total tracks")
+print(str(zeroTrackNC))
+print(str(zeroTrackCC))
 
 outFile = rt.TFile(args.outfile, "RECREATE")
 trackCanvas.Write("Num of Tracks Hist")
