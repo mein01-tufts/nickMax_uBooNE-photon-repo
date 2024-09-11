@@ -3,6 +3,7 @@
 import sys, argparse
 import numpy as np
 import ROOT as rt
+import math
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -381,6 +382,7 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
     hist.Scale(targetPOT/ntuplePOTSum)
     histInt = hist.Integral(1, int(bins))
     sum += histInt
+  print(sum)
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
@@ -993,6 +995,41 @@ def truePhotonSelection(eventTree, fiducialWidth):
   yMin, yMax = -116.5, 116.5
   zMin, zMax = 0, 1036
   if photonInSecondary == True:
+    for i,idx in enumerate(photonIndexList):
+      if eventTree.trueSimPartEDepX[photonIndexList[i]] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[photonIndexList[i]] >= (xMax - fiducialWidth)\
+        or eventTree.trueSimPartEDepY[photonIndexList[i]] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[photonIndexList[i]] >= (yMax - fiducialWidth)\
+        or eventTree.trueSimPartEDepZ[photonIndexList[i]] <= (zMin + fiducialWidth) or eventTree.trueSimPartEDepZ[photonIndexList[i]] >= (zMax - fiducialWidth):
+          photonEDepOutsideFiducial += 1
+      else:
+        truePhotonTIDList.append(eventTree.trueSimPartTID[idx])
+
+  photonEnergyList = [0]
+  trueLeadingPhotonEnergy = 0.
+  for i in range(len(photonIndexList)):
+    photonEnergyMeV = eventTree.trueSimPartE[photonIndexList[i]] 
+    photonEnergyList.append(photonEnergyMeV)
+  trueLeadingPhotonEnergy = max(photonEnergyList)
+
+  return truePhotonTIDList, trueLeadingPhotonEnergy
+
+def truePhotonSelectionPiZero(eventTree, fiducialWidth):
+  photonInSecondary = False
+  photonIndexList = []
+  truePhotonTIDList = []
+  photonEDepOutsideFiducial = 0
+  for i in range(eventTree.nTrueSimParts):
+    if eventTree.trueSimPartPDG[i] == 22 and eventTree.trueSimPartProcess[i] == 1:
+      if eventTree.trueSimPartMID[i] not in eventTree.trueSimPartTID:
+        if abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
+          pixelEnergy = eventTree.trueSimPartPixelSumYplane[i]*0.0126
+          if pixelEnergy >= 20:
+            photonIndexList.append(i)
+            photonInSecondary = True
+
+  xMin, xMax = 0, 256
+  yMin, yMax = -116.5, 116.5
+  zMin, zMax = 0, 1036
+  if photonInSecondary == True:
     for i in range(len(photonIndexList)):
       if eventTree.trueSimPartEDepX[photonIndexList[i]] <= (xMin + fiducialWidth) or eventTree.trueSimPartEDepX[photonIndexList[i]] >= (xMax - fiducialWidth)\
         or eventTree.trueSimPartEDepY[photonIndexList[i]] <= (yMin + fiducialWidth) or eventTree.trueSimPartEDepY[photonIndexList[i]] >= (yMax - fiducialWidth)\
@@ -1009,6 +1046,7 @@ def truePhotonSelection(eventTree, fiducialWidth):
   trueLeadingPhotonEnergy = max(photonEnergyList)
 
   return truePhotonTIDList, trueLeadingPhotonEnergy
+
 
 # true photon process:
 # finds all, checks edep within fiducial, calcs leading photon energy, returns both
@@ -1081,6 +1119,38 @@ def recoPhotonSelection(eventTree, fiducialWidth):
   recoLeadingPhotonEnergy = max(recoPhotonEnergyList)
 
   return recoPhotonTIDList, recoLeadingPhotonEnergy
+
+def recoPhotonSelectionInvMass(eventTree, fiducialWidth):
+  reco = 0
+  recoPhotonTIDList = []
+  recoPhotonIndexList = []
+  for i in range(eventTree.nShowers):
+    if eventTree.showerPID[i] == 22:
+      recoPhotonIndexList.append(i)
+  
+  xMin, xMax = 0, 256
+  yMin, yMax = -116.5, 116.5
+  zMin, zMax = 0, 1036
+  for i in range(len(recoPhotonIndexList)):
+    if eventTree.showerStartPosX[i] <= (xMin + fiducialWidth) or eventTree.showerStartPosX[i] >= (xMax - fiducialWidth) or \
+    eventTree.showerStartPosY[i] <= (yMin + fiducialWidth) or eventTree.showerStartPosY[i] >= (yMax - fiducialWidth) or \
+      eventTree.showerStartPosZ[i] <= (zMin + fiducialWidth) or eventTree.showerStartPosZ[i] >= (zMax - fiducialWidth):
+          reco += 1
+    else:
+      recoPhotonTIDList.append(eventTree.showerTrueTID[i])
+
+  recoInvMass = 0
+  if len(recoPhotonTIDList) == 2:
+    for i in range(eventTree.nShowers):
+      if recoPhotonTIDList[0] == eventTree.showerTrueTID[i]:
+        a = i
+      if recoPhotonTIDList[1] == eventTree.showerTrueTID[i]:
+        b = i
+    print("e1: " + str(eventTree.showerRecoE[a]) + ", e2: " + str(eventTree.showerRecoE[b]) + ", pdg1: " + str(eventTree.showerTruePID[a]) + ", pdg2: " + str(eventTree.showerTruePID[b]))
+    aDotB = eventTree.showerStartDirX[a]*eventTree.showerStartDirX[b] + eventTree.showerStartDirY[a]*eventTree.showerStartDirY[b] + eventTree.showerStartDirZ[a]*eventTree.showerStartDirZ[b]
+    recoInvMass = np.sqrt((2*(eventTree.showerRecoE[a])*(eventTree.showerRecoE[b]))*(1-aDotB))
+
+  return recoPhotonTIDList, recoInvMass
 
 # true CC cut but only 100mev+ primaries
 def trueCCCutLoose(eventTree):
