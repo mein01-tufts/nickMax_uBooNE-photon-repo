@@ -6,7 +6,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputWithCuts.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputCCFirstWithCuts.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -92,6 +92,11 @@ for i in range(eventTree.GetEntries()):
         recoNoVertexHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
+# reco cc check
+    if recoCCCut(eventTree):
+        recoCCHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
+
 # reco photon selection up top
     recophotonTIDList, recoLeadingPhotonEnergy = recoPhotonSelection(eventTree, fiducialWidth)
     if len(recophotonTIDList) == 0:
@@ -104,10 +109,6 @@ for i in range(eventTree.GetEntries()):
         recoManyPhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
-# reco cc check
-    if recoCCCut(eventTree):
-        recoCCHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
 # reco loose cc check
 #    if recoCCCutLoose(eventTree):
 #        recoCCHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
@@ -172,6 +173,10 @@ for i in range(eventTree.GetEntries()):
     recoTotalHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
 
 #------------ TruthMatching ------------#
+# true cc check
+    if trueCCCut(eventTree):
+        trueCCHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        continue
 
 # true photon selection up top
     truePhotonTIDList, trueLeadingPhotonEnergy = truePhotonSelection(eventTree, fiducialWidth)
@@ -183,10 +188,6 @@ for i in range(eventTree.GetEntries()):
         continue
     if len(truePhotonTIDList) >= 3:
         trueManyPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-# true cc check
-    if trueCCCut(eventTree):
-        trueCCHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 # true loose cc check
 #    if trueCCCutLoose(eventTree):
@@ -225,10 +226,10 @@ trueSignalHistInt = trueSignalHist.Integral(1, 60)
 print("Efficiency: " + str(recoSignalHistInt / trueTotalHistInt * 100) + "%")
 print("Purity: " + str(trueSignalHistInt / recoTotalHistInt * 100) + "%")
 
-efficiencyHistList = [recoSignalHist, recoNoVertexHist, recoNoPhotonHist, recoOnePhotonHist, recoManyPhotonHist, recoCCHist, \
+efficiencyHistList = [recoSignalHist, recoNoVertexHist, recoCCHist, recoNoPhotonHist, recoOnePhotonHist, recoManyPhotonHist, \
                       recoOutFiducialHist, recoPiPlusHist, recoNoProtonHist, recoPluralProtonHist]
-purityHistList = [trueSignalHist, trueNoPhotonHist, trueOnePhotonHist, \
-                    trueManyPhotonHist, trueCCHist, trueOutFiducialHist, truePiPlusHist, \
+purityHistList = [trueSignalHist, trueCCHist, trueNoPhotonHist, trueOnePhotonHist, \
+                    trueManyPhotonHist, trueOutFiducialHist, truePiPlusHist, \
                   trueNoProtonHist, truePluralProtonHist]
 
 efficiencyCanvas, efficiencyStack, efficiencyLegend, efficiencyInt = \
