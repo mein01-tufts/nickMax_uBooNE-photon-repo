@@ -7,7 +7,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="4SepTrueAndRecoInvMassDelta.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="20SepInvMassDeltaTIDRecoPTrueG.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -27,31 +27,33 @@ for i in range(potTree.GetEntries()):
 
 # Define histograms to be filled through loop
 efficiencyXmax = 2000
-trueTotalHist = rt.TH1F("trueTotalHist", "All True Signal Events", 60, 0, efficiencyXmax)
-recoNoVertexHist = rt.TH1F("NoVertexFound", "Vertex not reconstructed", 60, 0, efficiencyXmax)
-recoOutFiducialHist = rt.TH1F("outsideFiducial", "Vertex reconstructed outside fiducial volume", 60, 0, efficiencyXmax)
-recoCCHist = rt.TH1F("recoCC", "Event reconstructed as charged-current", 60, 0, efficiencyXmax)
-recoPiPlusHist = rt.TH1F("recoPiPlus", "Charged pion reconstructed", 60, 0, efficiencyXmax)
-recoNoProtonHist = rt.TH1F("recoNoProton", "No proton reconstructed", 60, 0, efficiencyXmax)
-recoPluralProtonHist = rt.TH1F("recoPluralProton", "2+ protons reconstructed", 60, 0, efficiencyXmax)
-recoWrongProtonHist = rt.TH1F("recoWrongProton", "Reconstructed proton failed TID-matching", 60, 0, efficiencyXmax)
-recoNoPhotonHist = rt.TH1F("recoNoPhoton", "No photon reconstructed", 60, 0, efficiencyXmax)
-recoOnePhotonHist = rt.TH1F("recoOnePhoton", "One photon reconstructed", 60, 0, efficiencyXmax)
-recoManyPhotonHist = rt.TH1F("recoManyPhoton", "3+ photons reconstructed", 60, 0, efficiencyXmax)
-recoSignalHist = rt.TH1F("recoSignal", "1p2g successfully reconstructed", 60, 0, efficiencyXmax)
+efficiencyXmin = 1000
+trueTotalHist = rt.TH1F("trueTotalHist", "All True Signal Events", 60, efficiencyXmin, efficiencyXmax)
+recoNoVertexHist = rt.TH1F("NoVertexFound", "Vertex not reconstructed", 60, efficiencyXmin, efficiencyXmax)
+recoOutFiducialHist = rt.TH1F("outsideFiducial", "Vertex reconstructed outside fiducial volume", 60, efficiencyXmin, efficiencyXmax)
+recoCCHist = rt.TH1F("recoCC", "Event reconstructed as charged-current", 60, efficiencyXmin, efficiencyXmax)
+recoPiPlusHist = rt.TH1F("recoPiPlus", "Charged pion reconstructed", 60, efficiencyXmin, efficiencyXmax)
+recoNoProtonHist = rt.TH1F("recoNoProton", "No proton reconstructed", 60, efficiencyXmin, efficiencyXmax)
+recoPluralProtonHist = rt.TH1F("recoPluralProton", "2+ protons reconstructed", 60, efficiencyXmin, efficiencyXmax)
+recoWrongProtonHist = rt.TH1F("recoWrongProton", "Reconstructed proton failed TID-matching", 60, efficiencyXmin, efficiencyXmax)
+recoNoPhotonHist = rt.TH1F("recoNoPhoton", "No photon reconstructed", 60, efficiencyXmin, efficiencyXmax)
+recoOnePhotonHist = rt.TH1F("recoOnePhoton", "One photon reconstructed", 60, efficiencyXmin, efficiencyXmax)
+recoManyPhotonHist = rt.TH1F("recoManyPhoton", "3+ photons reconstructed", 60, efficiencyXmin, efficiencyXmax)
+recoSignalHist = rt.TH1F("recoSignal", "1p2g successfully reconstructed", 60, efficiencyXmin, efficiencyXmax)
 
 purityXmax = 2000
-recoTotalHist = rt.TH1F("recoTotalHist", "All Reco Signal Events", 60, 0, purityXmax)
-trueOutFiducialHist = rt.TH1F("trueOutsideFiducial", "True vertex outside fiducial volume", 60, 0, purityXmax)
-trueCCHist = rt.TH1F("trueCC", "True event charged-current", 60, 0, purityXmax)
-truePiPlusHist = rt.TH1F("truePiPlus", "True charged pion", 60, 0, purityXmax)
-trueNoProtonHist = rt.TH1F("trueNoProton", "No true proton", 60, 0, purityXmax)
-truePluralProtonHist = rt.TH1F("truePluralProton", "2+ true protons", 60, 0, purityXmax)
-trueWrongProtonHist = rt.TH1F("trueWrongProton", "Reconstructed proton failed TID-matching", 60, 0, purityXmax)
-trueNoPhotonHist = rt.TH1F("trueNoPhoton", "No true photon", 60, 0, purityXmax)
-trueOnePhotonHist = rt.TH1F("trueOnePhoton", "One true photon", 60, 0, purityXmax)
-trueManyPhotonHist = rt.TH1F("trueManyPhoton", "3+ true photons", 60, 0, purityXmax)
-trueSignalHist = rt.TH1F("trueSignal", "1p2g successfully reconstructed", 60, 0, purityXmax)
+recoBins = 75
+recoTotalHist = rt.TH1F("recoTotalHist", "Total Reconstructed Signal", recoBins, 0, purityXmax)
+trueOutFiducialHist = rt.TH1F("trueOutsideFiducial", "True vertex outside fiducial volume", recoBins, 0, purityXmax)
+trueCCHist = rt.TH1F("trueCC", "True event charged-current", recoBins, 0, purityXmax)
+truePiPlusHist = rt.TH1F("truePiPlus", "True charged pion", recoBins, 0, purityXmax)
+trueNoProtonHist = rt.TH1F("trueNoProton", "No true proton", recoBins, 0, purityXmax)
+truePluralProtonHist = rt.TH1F("truePluralProton", "2+ true protons", recoBins, 0, purityXmax)
+trueWrongProtonHist = rt.TH1F("trueWrongProton", "Reconstructed proton failed TID-matching", recoBins, 0, purityXmax)
+trueNoPhotonHist = rt.TH1F("trueNoPhoton", "No true photon", recoBins, 0, purityXmax)
+trueOnePhotonHist = rt.TH1F("trueOnePhoton", "One true photon", recoBins, 0, purityXmax)
+trueManyPhotonHist = rt.TH1F("trueManyPhoton", "3+ true photons", recoBins, 0, purityXmax)
+trueSignalHist = rt.TH1F("trueSignal", "Truth-Matched and TID-Verified Reconstructed Signal", recoBins, 0, purityXmax)
 
 
 eventSpace = 0
@@ -93,9 +95,9 @@ for i in range(eventTree.GetEntries()):
     for i in range(eventTree.nTrueSimParts):
         if eventTree.trueSimPartTID[i] == truePhotonTIDList[0]:
             photonSimNumA = i
-        elif eventTree.trueSimPartTID[i] == truePhotonTIDList[1]:
+        if eventTree.trueSimPartTID[i] == truePhotonTIDList[1]:
             photonSimNumB = i
-        elif eventTree.trueSimPartTID[i] == trueProtonTID: 
+        if eventTree.trueSimPartTID[i] == trueProtonTID: 
             protonSimNum = i
     energy1 = eventTree.trueSimPartE[photonSimNumA]
     energy2 = eventTree.trueSimPartE[photonSimNumB]
@@ -203,6 +205,10 @@ for i in range(eventTree.GetEntries()):
     energy1 = eventTree.showerRecoE[photonRecoNumA]
     energy2 = eventTree.showerRecoE[photonRecoNumB]
     energyP = eventTree.trackRecoE[protonRecoNum]
+
+    if energy1 < 0 or energy2 < 0:
+        print("negative photon KE")
+    
     x1, y1, z1 = energy1*eventTree.showerStartDirX[photonRecoNumA], energy1*eventTree.showerStartDirY[photonRecoNumA], energy1*eventTree.showerStartDirZ[photonRecoNumA]
     x2, y2, z2 = energy2*eventTree.showerStartDirX[photonRecoNumB], energy2*eventTree.showerStartDirY[photonRecoNumB], energy2*eventTree.showerStartDirZ[photonRecoNumB]
     mp = 938.272
@@ -217,7 +223,6 @@ for i in range(eventTree.GetEntries()):
     #for mass of pi0
     #x, y, z = (x1+x2), (y1+y2), (z1+z2)
     #recoInvMass = np.sqrt(np.square(energy1 + energy2 ) - (((np.square(x))+(np.square(y))+np.square(z))))
-
 
     recoTotalHist.Fill(recoInvMass, eventTree.xsecWeight)
 
@@ -245,9 +250,9 @@ for i in range(eventTree.GetEntries()):
         continue
 
 # uncomment below for tid-matching
-#    if trueProtonTID != trueProtonTID:
-#        trueWrongProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-#        continue
+    if recoProtonTID != trueProtonTID:
+        trueWrongProtonHist.Fill(recoInvMass, eventTree.xsecWeight)
+        continue
 
 # true photon selection
     truePhotonTIDList, trueLeadingPhotonEnergy = truePhotonSelection(eventTree, fiducialWidth)
@@ -260,8 +265,39 @@ for i in range(eventTree.GetEntries()):
     if len(truePhotonTIDList) >= 3:
         trueManyPhotonHist.Fill(recoInvMass, eventTree.xsecWeight)
         continue
-    
-    trueSignalHist.Fill(recoInvMass, eventTree.xsecWeight)
+
+
+    if recoPhotonTIDList[0] in truePhotonTIDList and recoPhotonTIDList[1] in truePhotonTIDList and recoPhotonTIDList[0] != recoPhotonTIDList[1]:
+
+        for i in range(eventTree.nTrueSimParts):
+            if eventTree.trueSimPartTID[i] == truePhotonTIDList[0]:
+                photonSimNumA = i
+            if eventTree.trueSimPartTID[i] == truePhotonTIDList[1]:
+                photonSimNumB = i
+        for i in range(eventTree.nTracks):
+            if eventTree.trackTrueTID[i] == trueProtonTID:
+                protonRecoNum = i
+
+        energy1 = eventTree.trueSimPartE[photonSimNumA]
+        energy2 = eventTree.trueSimPartE[photonSimNumB]
+        energyP = eventTree.trackRecoE[protonRecoNum]
+
+        mp = 938.272
+        p = np.sqrt(np.square(energyP + mp) - np.square(mp))
+
+        xp, yp, zp = p*eventTree.trackStartDirX[protonRecoNum], p*eventTree.trackStartDirY[protonRecoNum], p*eventTree.trackStartDirZ[protonRecoNum]
+        px1, py1, pz1 = eventTree.trueSimPartPx[photonSimNumA], eventTree.trueSimPartPy[photonSimNumA], eventTree.trueSimPartPz[photonSimNumA]
+        px2, py2, pz2 = eventTree.trueSimPartPx[photonSimNumB], eventTree.trueSimPartPy[photonSimNumB], eventTree.trueSimPartPz[photonSimNumB]
+
+    #for mass with delta
+        px, py, pz = (px1+px2+xp), (py1+py2+yp), (pz1+pz2+zp)
+        invMass = np.sqrt(np.square(energy1 + energy2 + energyP) - (((np.square(px))+(np.square(py))+np.square(pz))))
+        trueSignalHist.Fill(invMass, eventTree.xsecWeight)
+
+    #for mass of pi0
+#    px, py, pz = (px1+px2), (py1+py2), (pz1+pz2)
+#    invMass = np.sqrt(np.square(energy1 + energy2) - (((np.square(px))+(np.square(py))+np.square(pz))))
+#    trueSignalHist.Fill(invMass, eventTree.xsecWeight)
  
 #------------------ End of Loops ------------------#
 
@@ -277,7 +313,6 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.35, 0.5, 0.9, 0.9)
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kOrange]
-  targetPOT = 3.2974607516739725e+20
   colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
   targetPOT = 6.67e+20
   integralSum = 0
@@ -307,21 +342,28 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
 
 trueTotalHistList = [trueTotalHist]
 recoTotalHistList = [recoTotalHist]
+trueRecoMatchedList = [recoSignalHist]
+recoTruthMatchedList = [trueSignalHist]
 
 #efficiencyCanvas, efficiencyStack, efficiencyLegend, efficiencyInt = \
 #    histStackFill("Reconstruction of True NC 1p2g Events", efficiencyHistList, "Total Truth Signal: (", "True 2G1P Invariant Mass (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
 
 TrueCanvas, TrueStack, TrueLegend, TrueInt = \
-    histStackFill("True NC 1p2g Events", trueTotalHistList, "Total Truth Signal: (", "True 2-photon Invariant Mass (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
+    histStackFill("True 1p+2g Invariant Mass in True NC 1p2g Events", trueTotalHistList, "Total Truth Signal: (", "True Invariant Mass (MeV/c^2)", "Events per 6.67e+20 POT", ntuplePOTsum)
 #purityCanvas, purityStack, purityLegend, purityInt = \
 #    histStackFill("Truth-Matching of Reconstructed NC 1p2g Events", purityHistList, "Total Reconstruction Signal: (", "Reconstructed 2-Photon Invariant Mass (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
 
 RecoCanvas, RecoStack, RecoLegend, RecoInt = \
-    histStackFill("Reco NC 1p2g Events", recoTotalHistList, "Total Reconstruction Signal: (", "Reconstructed 2-photn Invariant Mass (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
+    histStackFill("Delta Invariant Mass in Reconstructed 1p2g Events", recoTotalHistList, "Total Reconstruction Signal: (", "Invariant Mass (MeV/c^2)", "Events per 6.67e+20 POT", ntuplePOTsum)
+
+RecoTMCanvas, RecoTMStack, RecoTMLegend, RecoTMInt = \
+    histStackFill("Delta Invariant Mass in Truth-Matched, TID-Verified Reconstructed 1p2g Events", recoTruthMatchedList, "Total Reconstruction Signal: (", "Invariant Mass (MeV/c^2)", "Events per 6.67e+20 POT", ntuplePOTsum)
+
 # Write Efficiency and Purity Canvases to Outfile
 outFile = rt.TFile(args.outfile, "RECREATE")
 #efficiencyCanvas.Write("EfficiencyHist")
 TrueCanvas.Write("TrueHist")
-RecoCanvas.Write("RecoHist")
+RecoCanvas.Write("Reco Tot Hist")
+RecoTMCanvas.Write("Reco TM Hist")
 #purityCanvas.Write("PurityHist")
 #trueTotalHist.Write("TrueTotal")
