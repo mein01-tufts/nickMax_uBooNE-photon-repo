@@ -954,6 +954,7 @@ def recoPiPlusCut(eventTree):
 def trueProtonSelection(eventTree):
   nTrueProtons = 0
   trueProtonTID = 0
+  trueProtonIndex = 0
   for i in range(eventTree.nTrueSimParts):
     if eventTree.trueSimPartProcess[i] == 0 and eventTree.trueSimPartPDG[i] == 2212:
       momentumVector = np.square(eventTree.trueSimPartPx[i]) + np.square(eventTree.trueSimPartPy[i]) + np.square(eventTree.trueSimPartPz[i])
@@ -961,17 +962,20 @@ def trueProtonSelection(eventTree):
       if kineticMeV >= 60:
         nTrueProtons += 1
         trueProtonTID = eventTree.trueSimPartTID[i]
-  return nTrueProtons, trueProtonTID
+        trueProtonIndex = i
+  return nTrueProtons, trueProtonTID, trueProtonIndex
 
 # reco proton selection: returns tid as well for matching later
 def recoProtonSelection(eventTree):
   nRecoProtons = 0
   recoProtonTID = 0
+  recoProtonIndex = 0
   for i in range(eventTree.nTracks):
     if eventTree.trackPID[i] == 2212 and eventTree.trackRecoE[i] >= 60:
       nRecoProtons += 1
       recoProtonTID = eventTree.trackTrueTID[i]
-  return nRecoProtons, recoProtonTID
+      recoProtonIndex = i
+  return nRecoProtons, recoProtonTID, recoProtonIndex
 
 # true photon process
 # Find all secondary photons using Edep Sum
@@ -984,12 +988,11 @@ def truePhotonSelection(eventTree, fiducialWidth):
   photonEDepOutsideFiducial = 0
   for i in range(eventTree.nTrueSimParts):
     if eventTree.trueSimPartPDG[i] == 22 and eventTree.trueSimPartProcess[i] == 1:
-      if eventTree.trueSimPartMID[i] not in eventTree.trueSimPartTID:
-        if abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
-          pixelEnergy = eventTree.trueSimPartPixelSumYplane[i]*0.0126
-          if pixelEnergy >= 20:
-            photonIndexList.append(i)
-            photonInSecondary = True
+      if abs(eventTree.trueSimPartX[i] - eventTree.trueVtxX) <= 0.15 and abs(eventTree.trueSimPartY[i] - eventTree.trueVtxY) <= 0.15 and abs(eventTree.trueSimPartZ[i] -eventTree.trueVtxZ) <= 0.15:
+        pixelEnergy = eventTree.trueSimPartPixelSumYplane[i]*0.0126
+        if pixelEnergy >= 20:
+          photonIndexList.append(i)
+          photonInSecondary = True
 
   xMin, xMax = 0, 256
   yMin, yMax = -116.5, 116.5
@@ -1118,7 +1121,7 @@ def recoPhotonSelection(eventTree, fiducialWidth):
     recoPhotonEnergyList.append(recoPhotonEnergyMeV)
   recoLeadingPhotonEnergy = max(recoPhotonEnergyList)
 
-  return recoPhotonTIDList, recoLeadingPhotonEnergy
+  return recoPhotonTIDList, recoLeadingPhotonEnergy, photonIndex1, photonIndex2
 
 def recoPhotonSelectionInvMass(eventTree, fiducialWidth):
   reco = 0
