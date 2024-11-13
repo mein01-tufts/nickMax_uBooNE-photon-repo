@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutElectronScore, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons, recoCutManyTracks, recoCutCompleteness
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -110,6 +110,8 @@ effManyPhotons1 = rt.TH1F("effManyPhotons1", "Many Photons Found",60,0,2)
 effShowerCharge1 = rt.TH1F("effShowerCharge1", "Shower from Charged Cut",60,0,2)
 effPrimary1 = rt.TH1F("effPrimary1", "Primary Score Cut",60,0,2)
 effLongTracks1 = rt.TH1F("effLongTracks1", "Tracks with length > 20 cm",60,0,2)
+effCompleteness1 = rt.TH1F("effCompleteness1", "Showers with completeness below 0.3",60,0,2)
+#effManyTracks1 = rt.TH1F("effManyTracks1", "More than 4 tracks",60,0,2)
 #effShortTrack1 = rt.TH1F("effShortTrack1", "Unclassified tracks with length < 10 cm",60,0,2)
 #effLongShowers1 = rt.TH1F("effLongShowers1", "Non-Photon showers > 80 cm from vertex",60,0,2)
 
@@ -128,6 +130,8 @@ effManyPhotons2 = rt.TH1F("effManyPhotons2", "Many Photons Found",60,0,2)
 effShowerCharge2 = rt.TH1F("effShowerCharge2", "Shower from Charged Cut",60,0,2)
 effPrimary2 = rt.TH1F("effPrimary2", "Primary Score Cut",60,0,2)
 effLongTracks2 = rt.TH1F("effLongTracks2", "Tracks with length > 20 cm",60,0,2)
+effCompleteness2 = rt.TH1F("effCompleteness2", "Showers with completeness below 0.3",60,0,2)
+#effManyTracks2 = rt.TH1F("effManyTracks2", "More than 4 tracks",60,0,2)
 #effShortTrack2 = rt.TH1F("effShortTrack2", "Unclassified tracks with length < 10 cm",60,0,2)
 #effLongShowers2 = rt.TH1F("effLongShowers2", "Non-Photon showers > 80 cm from vertex",60,0,2)
 
@@ -146,6 +150,8 @@ effTwoPhotons3 = rt.TH1F("effTwoPhotons3", "Two Photons Found",60,0,2)
 effShowerCharge3 = rt.TH1F("effShowerCharge3", "Shower from Charged Cut",60,0,2)
 effPrimary3 = rt.TH1F("effPrimary3", "Primary Score Cut",60,0,2)
 effLongTracks3 = rt.TH1F("effLongTracks3", "Tracks with length > 20 cm",60,0,2)
+effCompleteness3 = rt.TH1F("effCompleteness3", "Showers with completeness below 0.3",60,0,2)
+#effManyTracks3 = rt.TH1F("effManyTracks3", "More than 4 tracks",60,0,2)
 #effShortTrack3 = rt.TH1F("effShortTrack3", "Unclassified tracks with length < 10 cm",60,0,2)
 #effLongShowers3 = rt.TH1F("effLongShowers3", "Non-Photon showers > 80 cm from vertex",60,0,2)
 
@@ -164,13 +170,17 @@ effTwoPhotonHists = [effTwoPhotons1, effSignal2, effTwoPhotons3]
 effManyPhotonHists = [effManyPhotons1, effManyPhotons2, effSignal3]
 effShowerChargeHists = [effShowerCharge1, effShowerCharge2, effShowerCharge3]
 effLongTrackHists = [effLongTracks1, effLongTracks2, effLongTracks3]
+#effManyTrackHists = [effManyTracks1, effManyTracks2, effManyTracks3]
 effPrimaryHists = [effPrimary1, effPrimary2, effPrimary3]
+effCompletenessHists = [effCompleteness1, effCompleteness2, effCompleteness3]
 #effShortTrackHists = [effShortTrack1, effShortTrack2, effShortTrack3]
 #effFarShowers = [effLongShowers1, effLongShowers2, effLongShowers3]
 
-effList1 = [effSignal1, effNoVertex1, effMuon1, effElectron1, effPion1, effProton1, effShowerCharge1, effNoPhotons1, effTwoPhotons1, effManyPhotons1, effPrimary1, effLongTracks1]
-effList2 = [effSignal2, effNoVertex2, effMuon2, effElectron2, effPion2, effProton2, effShowerCharge2, effNoPhotons2, effOnePhoton2, effManyPhotons2, effPrimary2, effLongTracks2]
-effList3 = [effSignal3, effNoVertex3, effMuon3, effElectron3, effPion3, effProton3, effShowerCharge3, effNoPhotons3, effOnePhoton3, effTwoPhotons3, effPrimary3, effLongTracks3]
+#Lists of histograms for stacking. Place with signal first, then put the others in backwards in order of application (so the last one to apply would immediately follow the signal, then the second to last, all the way down to the first)
+effList1 = [effSignal1, effCompleteness1, effLongTracks1, effPrimary1, effManyPhotons1, effTwoPhotons1, effNoPhotons1, effShowerCharge1, effProton1, effPion1, effElectron1, effMuon1, effNoVertex1]
+effList2 = [effSignal2, effCompleteness2, effLongTracks2, effPrimary2, effManyPhotons2, effOnePhoton2, effNoPhotons2, effShowerCharge2, effProton2, effPion2, effElectron2, effMuon2, effNoVertex2]
+effList3 = [effSignal3, effCompleteness3, effLongTracks3, effPrimary3, effTwoPhotons3, effOnePhoton3, effNoPhotons3, effShowerCharge3, effProton3, effPion3, effElectron3, effMuon3, effNoVertex3]
+
 
 #Built-in functions here
 def addHist(eventTree, photonList, photonList2, histList, variable, weight):
@@ -181,63 +191,6 @@ def addHist(eventTree, photonList, photonList2, histList, variable, weight):
   else:
     histList[2].Fill(variable, weight)
 
-def purityStack(title, purityList, cosmicHist, POTSum, cosmicSum):
-  #Create Component Variables
-  stack = rt.THStack("PhotonStack", str(title))
-  legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt. kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt. kOrange+1]
-  POTTarget = 6.67e+20
-  histIntTotal = 0
-  #Organize other histograms
-  for x in range(len(purityList)):
-    hist = purityList[x]
-    bins = hist.GetNbinsX()
-    hist.Scale(POTTarget/POTSum)
-    #Make sure signal is the only one with green, for easy identification
-    if x == 0:
-      hist.SetLineColor(rt.kGreen)
-    #The rest get random colors
-    else:
-      hist.SetLineColor(colors[x%7])
-    #Now we add to the stack
-    stack.Add(hist)
-
-  #Format and add the cosmic histogram
-  bins = cosmicHist.GetNbinsX()
-  hist.Scale(POTTarget/cosmicSum)
-  hist.SetLineColor(rt.kBlack)
-  cosmicHistInt = hist.Integral(1, int(bins))
-  histIntTotal += cosmicHistInt
-  legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
-  legend.SetHeader(str(legendHeaderString), "C")
-  stack.Add(hist)
-  
-  #Filling in the legend
-  #Add signal label first
-  hist = purityList[0]
-  histInt = hist.Integral(1, int(bins))
-  histIntTotal += histInt
-  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
-  #Then add the cosmic entry
-  legend.AddEntry(cosmicHist, str(cosmicHist.GetTitle())+": "+str(round(cosmicHistInt, 1)), "l")
-
-  #Now add the rest, in order
-  listLength = (len(purityList) - 1)
-  for x in range(listLength, 0, -1):
-    hist = purityList[x]
-    histInt = hist.Integral(1, int(bins))
-    histIntTotal += histInt
-    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
-    stack.Add(hist)
-
-  #Finish working on the Canvas and return necessary components
-  histCanvas = rt.TCanvas() 
-  stack.Draw("HIST")
-  stack.GetXaxis().SetTitle("Photon Energy (GeV)")
-  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
-  legend.Draw()
-  histCanvas.Update()
-  return histCanvas, stack, legend, histInt
 
 def histScale(hist, POTSum):
   POTTarget = 6.67e+20
@@ -282,6 +235,7 @@ emptyList = []
 
 #Variables for program function
 fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":30}
+classificationThreshold = 7
 
 #BEGINNING EVENT LOOP FOR DEFAULT PURITY
 for i in range(eventTree.GetEntries()):
@@ -337,8 +291,8 @@ for i in range(eventTree.GetEntries()):
   if recoCutLongTracks(eventTree, fiducialData) == False:
     continue
 
-  #Cut unclassified tracks too short to be trusted
-  #if recoCutShortTracks(eventTree) == False:
+  #Cut based on completeness to remove cosmics
+  #if recoCutCompleteness(eventTree, recoList, recoTrackList) == False:
   #  continue
 
 
@@ -426,7 +380,7 @@ for i in range(cosmicTree.GetEntries()):
   if recoPion(cosmicTree) == False:
     continue
   pionlessCosmics += 1
-  #Cut events with far-travelling protons
+  #Cut events with too many protons
   recoProtonCount = recoProton(cosmicTree)
   if recoProtonCount > 1:
     continue
@@ -435,7 +389,7 @@ for i in range(cosmicTree.GetEntries()):
   recoList = recoPhotonListFiducial(fiducialData, cosmicTree)
 
   #List all photons classified as tracks
-  recoTrackList = recoPhotonListTracks(fiducialData, eventTree)
+  recoTrackList = recoPhotonListTracks(fiducialData, cosmicTree)
   
   if len(recoList) + len(recoTrackList) == 0:
     continue
@@ -453,6 +407,14 @@ for i in range(cosmicTree.GetEntries()):
   #Longtracks cut
   if recoCutLongTracks(cosmicTree, fiducialData) == False:
     continue
+
+  #Completeness cut
+  #(cosmicTree, recoList, recoTrackList) ==  False:
+  #  continue
+
+  #Cut based on number of tracks
+  #if recoCutManyTracks(cosmicTree) == False:
+  #  continue
 
   #Cut unclassified tracks too short to be trusted
   #if recoCutShortTracks(eventTree) == False:
@@ -553,11 +515,6 @@ for i in range(eventTree.GetEntries()):
 
   survivesCuts += 1
 
-  #Cut unclassified tracks too short to be trusted
-  #if recoCutShortTracks(eventTree) == False:
-  #  addHist(eventTree, truePhotonIDs, emptyList, effShortTrackHists, leadingPhoton, eventTree.xsecWeight)
-  #  continue
-
   #Now we're pretty sure the event is legitimate, so we go ahead and graph based on the number of photons
   if len(recoList) + len(recoTrackList) == 0:
     addHist(eventTree, truePhotonIDs, emptyList, effNoPhotonHists, leadingPhoton, eventTree.xsecWeight)
@@ -571,6 +528,7 @@ for i in range(eventTree.GetEntries()):
   else:
     addHist(eventTree, truePhotonIDs, emptyList, effManyPhotonHists, leadingPhoton, eventTree.xsecWeight)
     manyEffPhotons += 1
+
 #LOOPS OVER - HISTOGRAM ORGANIZING TIME
 
 #Making our threshold histogram for the cosmics
