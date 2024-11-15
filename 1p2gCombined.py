@@ -2,11 +2,11 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiPlusCut, recoPiPlusCut, trueProtonSelection, recoProtonSelection, truePhotonSelection, recoPhotonSelection, histStackFill, trueCCCutLoose, recoCCCutLoose
+from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiPlusCut, recoPiPlusCut, trueProtonSelection, recoProtonSelection, truePhotonSelection, recoPhotonSelection, histStackFill, trueCCCutLoose, recoCCCutLoose, recoInvariantMassCalculations
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="1p2gCombinedOutputCCFirstWithCuts.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="13Nov1p2gCombinedEFOutput_Invariant.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -39,18 +39,19 @@ recoManyPhotonHist = rt.TH1F("recoManyPhoton", "3+ photons reconstructed", 60, 0
 recoSignalHist = rt.TH1F("recoSignal", "1p2g successfully reconstructed", 60, 0, 1500)
 
 
-purityxMax = 1500
-recoTotalHist = rt.TH1F("recoTotalHist", "All Reco Signal Events", 60, 0, purityxMax)
-trueOutFiducialHist = rt.TH1F("trueOutsideFiducial", "True vertex outside fiducial volume", 60, 0, purityxMax)
-trueCCHist = rt.TH1F("trueCC", "True event charged-current", 60, 0, purityxMax)
-truePiPlusHist = rt.TH1F("truePiPlus", "True charged pion", 60, 0, purityxMax)
-trueNoProtonHist = rt.TH1F("trueNoProton", "No true proton", 60, 0, purityxMax)
-truePluralProtonHist = rt.TH1F("truePluralProton", "2+ true protons", 60, 0, purityxMax)
-trueWrongProtonHist = rt.TH1F("trueWrongProton", "Reconstructed proton failed TID-matching", 60, 0, purityxMax)
-trueNoPhotonHist = rt.TH1F("trueNoPhoton", "No true photon", 60, 0, purityxMax)
-trueOnePhotonHist = rt.TH1F("trueOnePhoton", "One true photon", 60, 0, purityxMax)
-trueManyPhotonHist = rt.TH1F("trueManyPhoton", "3+ true photons", 60, 0, purityxMax)
-trueSignalHist = rt.TH1F("trueSignal", "1p2g successfully reconstructed", 60, 0, purityxMax)
+purityxMax = 1900
+purityBins = 100
+recoTotalHist = rt.TH1F("recoTotalHist", "All Reco Signal Events", purityBins, 0, purityxMax)
+trueOutFiducialHist = rt.TH1F("trueOutsideFiducial", "True vertex outside fiducial volume", purityBins, 0, purityxMax)
+trueCCHist = rt.TH1F("trueCC", "True event charged-current", purityBins, 0, purityxMax)
+truePiPlusHist = rt.TH1F("truePiPlus", "True charged pion", purityBins, 0, purityxMax)
+trueNoProtonHist = rt.TH1F("trueNoProton", "No true proton", purityBins, 0, purityxMax)
+truePluralProtonHist = rt.TH1F("truePluralProton", "2+ true protons", purityBins, 0, purityxMax)
+trueWrongProtonHist = rt.TH1F("trueWrongProton", "Reconstructed proton failed TID-matching", purityBins, 0, purityxMax)
+trueNoPhotonHist = rt.TH1F("trueNoPhoton", "No true photon", purityBins, 0, purityxMax)
+trueOnePhotonHist = rt.TH1F("trueOnePhoton", "One true photon", purityBins, 0, purityxMax)
+trueManyPhotonHist = rt.TH1F("trueManyPhoton", "3+ true photons", purityBins, 0, purityxMax)
+trueSignalHist = rt.TH1F("trueSignal", "1p2g successfully truth-matched", purityBins, 0, purityxMax)
 
 # Define min, max, fiducial and data function
 fiducialWidth = 10
@@ -76,11 +77,11 @@ for i in range(eventTree.GetEntries()):
     if truePiPlusCut(eventTree):
         continue
 # True proton selection
-    nTrueProtons, trueProtonTID = trueProtonSelection(eventTree)
+    nTrueProtons, trueProtonTID, trueProtonIndex = trueProtonSelection(eventTree)
     if nTrueProtons != 1:
         continue
 # True photon selection
-    truePhotonTIDList, trueLeadingPhotonEnergy = truePhotonSelection(eventTree, fiducialWidth)
+    truePhotonTIDList, trueLeadingPhotonEnergy, photonIndexList = truePhotonSelection(eventTree, fiducialWidth)
     if len(truePhotonTIDList) != 2:
         continue
 
@@ -98,7 +99,7 @@ for i in range(eventTree.GetEntries()):
         continue
 
 # reco photon selection up top
-    recophotonTIDList, recoLeadingPhotonEnergy = recoPhotonSelection(eventTree, fiducialWidth)
+    recophotonTIDList, recoLeadingPhotonEnergy, recoPhotonIndexList = recoPhotonSelection(eventTree, fiducialWidth)
     if len(recophotonTIDList) == 0:
         recoNoPhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
@@ -108,7 +109,6 @@ for i in range(eventTree.GetEntries()):
     if len(recophotonTIDList) >= 3:
         recoManyPhotonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
-
 # reco loose cc check
 #    if recoCCCutLoose(eventTree):
 #        recoCCHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
@@ -122,7 +122,7 @@ for i in range(eventTree.GetEntries()):
         recoPiPlusHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 # reco proton selection and filling
-    nRecoProtons, recoProtonTID = recoProtonSelection(eventTree)
+    nRecoProtons, recoProtonTID, recoProtonIndex = recoProtonSelection(eventTree)
     if nRecoProtons == 0:
         recoNoProtonHist.Fill(trueLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
@@ -156,21 +156,18 @@ for i in range(eventTree.GetEntries()):
     if recoPiPlusCut(eventTree):
         continue
 # Reco proton selection
-    nRecoProtons, recoProtonTID = recoProtonSelection(eventTree)
+    nRecoProtons, recoProtonTID, recoProtonIndex = recoProtonSelection(eventTree)
     if nRecoProtons != 1:
         continue
 # Reco photon selection
-    recoPhotonTIDList, recoLeadingPhotonEnergy = recoPhotonSelection(eventTree, fiducialWidth) 
+    recoPhotonTIDList, recoLeadingPhotonEnergy, recoPhotonIndexList = recoPhotonSelection(eventTree, fiducialWidth) 
     if len(recoPhotonTIDList) != 2:
         continue
     
-#    deltaX = abs(eventTree.trueVtxX - eventTree.vtxX)
-#    deltaY = abs(eventTree.trueVtxY - eventTree.vtxY)
-#    deltaZ = abs(eventTree.trueVtxZ - eventTree.vtxZ)
+# Reco invariant mass calc
+    recoProtonInv, recoPiZeroInv, recoDeltaInv = recoInvariantMassCalculations(eventTree, recoProtonIndex, recoPhotonIndexList)
 
-#    vtxDistance = np.sqrt(np.square(deltaX) + np.square(deltaY) + np.square(deltaZ))
-
-    recoTotalHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+    recoTotalHist.Fill(recoDeltaInv, eventTree.xsecWeight)
 
 #------------ TruthMatching ------------#
 # true cc check
@@ -178,65 +175,63 @@ for i in range(eventTree.GetEntries()):
         trueCCHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
-# true photon selection up top
-    truePhotonTIDList, trueLeadingPhotonEnergy = truePhotonSelection(eventTree, fiducialWidth)
-    if len(truePhotonTIDList) == 0:
-        trueNoPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(truePhotonTIDList) == 1:
-        trueOnePhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
-    if len(truePhotonTIDList) >= 3:
-        trueManyPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
-        continue
 # true loose cc check
 #    if trueCCCutLoose(eventTree):
 #        trueCCHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
 #        continue
 #true fiducial check
     if trueFiducialCut(eventTree, fiducialWidth):
-        trueOutFiducialHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        trueOutFiducialHist.Fill(recoDeltaInv, eventTree.xsecWeight)
         continue
 # true pi+ check
     if truePiPlusCut(eventTree):
-        truePiPlusHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        truePiPlusHist.Fill(recoDeltaInv, eventTree.xsecWeight)
         continue
 # true proton selection
-    nTrueProtons, trueProtonTID = trueProtonSelection(eventTree)
+    nTrueProtons, trueProtonTID, trueProtonIndex = trueProtonSelection(eventTree)
     if nTrueProtons == 0:
-        trueNoProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        trueNoProtonHist.Fill(recoDeltaInv, eventTree.xsecWeight)
         continue
     if nTrueProtons >= 2:
-        truePluralProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+        truePluralProtonHist.Fill(recoDeltaInv, eventTree.xsecWeight)
         continue
 # uncomment below for proton tid-matching
 #    if trueProtonTID != trueProtonTID:
 #        trueWrongProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
 #        continue    
-    trueSignalHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
+# true photon selection up top
+    truePhotonTIDList, trueLeadingPhotonEnergy, truePhotonIndexList = truePhotonSelection(eventTree, fiducialWidth)
+    if len(truePhotonTIDList) == 0:
+        trueNoPhotonHist.Fill(recoDeltaInv, eventTree.xsecWeight)
+        continue
+    if len(truePhotonTIDList) == 1:
+        trueOnePhotonHist.Fill(recoDeltaInv, eventTree.xsecWeight)
+        continue
+    if len(truePhotonTIDList) >= 3:
+        trueManyPhotonHist.Fill(recoDeltaInv, eventTree.xsecWeight)
+        continue
+
+    trueSignalHist.Fill(recoDeltaInv, eventTree.xsecWeight)
  
 #------------------ End of Loops ------------------#
 
 trueTotalHistInt = trueTotalHist.Integral(1, 60)
-recoTotalHistInt = recoTotalHist.Integral(1, 60)
+recoTotalHistInt = recoTotalHist.Integral(1, purityBins)
 
 recoSignalHistInt = recoSignalHist.Integral(1, 60)
-trueSignalHistInt = trueSignalHist.Integral(1, 60)
+trueSignalHistInt = trueSignalHist.Integral(1, purityBins)
 
 print("Efficiency: " + str(recoSignalHistInt / trueTotalHistInt * 100) + "%")
 print("Purity: " + str(trueSignalHistInt / recoTotalHistInt * 100) + "%")
 
-efficiencyHistList = [recoSignalHist, recoNoVertexHist, recoCCHist, recoNoPhotonHist, recoOnePhotonHist, recoManyPhotonHist, \
-                      recoOutFiducialHist, recoPiPlusHist, recoNoProtonHist, recoPluralProtonHist]
-purityHistList = [trueSignalHist, trueCCHist, trueNoPhotonHist, trueOnePhotonHist, \
-                    trueManyPhotonHist, trueOutFiducialHist, truePiPlusHist, \
-                  trueNoProtonHist, truePluralProtonHist]
+efficiencyHistList = [recoSignalHist, recoNoVertexHist, recoCCHist, recoNoPhotonHist, recoOnePhotonHist, recoManyPhotonHist, recoOutFiducialHist, recoPiPlusHist, recoNoProtonHist, recoPluralProtonHist]
+purityHistList = [trueSignalHist, trueCCHist, trueOutFiducialHist, truePiPlusHist, trueNoProtonHist, truePluralProtonHist, trueNoPhotonHist, trueOnePhotonHist, trueManyPhotonHist,]
 
 efficiencyCanvas, efficiencyStack, efficiencyLegend, efficiencyInt = \
     histStackFill("Reconstruction of True NC 1p2g Events", efficiencyHistList, "Total Truth Signal: (", "True Leading Photon Energy (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
 
 purityCanvas, purityStack, purityLegend, purityInt = \
-    histStackFill("Truth-Matching of Reconstructed NC 1p2g Events", purityHistList, "Total Reconstruction Signal: (", "Reconstructed Leading Photon Energy (MeV)", "Events per 6.67e+20 POT", ntuplePOTsum)
+    histStackFill("Truth-Matching of Reconstructed NC 1p2g Events", purityHistList, "All Reconstructed Events: (", "Reconstructed 1p+2g Invariant Mass (MeV/c^2)", "Events per 6.67e+20 POT", ntuplePOTsum)
 
 # Write Efficiency and Purity Canvases to Outfile
 outFile = rt.TFile(args.outfile, "RECREATE")
