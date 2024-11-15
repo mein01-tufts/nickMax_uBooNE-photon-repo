@@ -319,60 +319,6 @@ def histStackTwoSignal(title, histList, POTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt. kBlue,  rt. kOrange+1, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+1, rt.kBlack, rt.kViolet]
-  POTTarget = 6.67e+20
-  histIntTotal = 0
-  #Adds the histograms to the stack
-  for x in range(len(histList)):
-    hist = histList[x]
-    bins = hist.GetNbinsX()
-    hist.Scale(POTTarget/POTSum)
-    #Make sure signal is the only one with green, for easy identification
-    if x == 0:
-      hist.SetLineColor(rt.kGreen+2)
-    elif x == 1:
-      hist.SetLineColor(rt.kGreen)
-    #The rest get random colors
-    else:
-      hist.SetLineColor(colors[x%len(colors)])
-    #Now we add to the stack
-    stack.Add(hist)
-  #Making the legend entry for the signal first, so it goes on top
-  hist = histList[0]
-  histInt = hist.Integral(1, int(bins))
-  histIntTotal += histInt
-  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
-
-  hist = histList[1]
-  histInt = hist.Integral(1, int(bins))
-  histIntTotal += histInt
-  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
-  #Adding the rest of the legend entries (has to be backwards here, or the legend order will be reversed on the graph)
-  listLength = (len(histList) - 2)
-  for x in range(listLength, 0, -1):
-    hist = histList[x]
-    histInt = hist.Integral(1, int(bins))
-    histIntTotal += histInt
-    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
-  legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
-  legend.SetHeader(str(legendHeaderString), "C")
-  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
-  histCanvas = rt.TCanvas() 
-  stack.Draw("HIST")
-  stack.GetXaxis().SetTitle("Photon Energy (GeV)")
-  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
-  legend.Draw()
-  histCanvas.Update()
-
-  return histCanvas, stack, legend, histInt
-
-
-
-
-def histStackTwoSignal(title, histList, POTSum):
-  #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
-  stack = rt.THStack("PhotonStack", str(title))
-  legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt. kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt. kOrange+1]
   POTTarget = 6.67e+20
   histIntTotal = 0
@@ -599,7 +545,7 @@ def recoPhotonList(ntuple, threshold = 0):
       if ntuple.showerClassified[x] == 1:
        if ntuple.showerPID[x] == 22:
         recoIDs.append(x) 
-    elif ntuple.showerSize[x] > threshold:
+    elif ntuple.showerSize[x] > 7:
       if ntuple.showerPID[x] == 22:
         recoIDs.append(x)
   return recoIDs
@@ -623,49 +569,30 @@ def recoPionProton(ntuple):
     return True
 
 
-def recoProton(ntuple, threshold = 0):
+def recoProton(ntuple):
   protonsFound = 0
   #Go through tracks to see if we can find sufficiently energetic protons
   for x in range(ntuple.nTracks):
-    if threshold == 0:
-      if ntuple.trackClassified[x] == 1 and ntuple.trackPID[x] == 2212:
-        distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
-        #A very high percentage of protons reconstructed below threshold but with tracks longer than 7.5 cm are actually above threshold
-        if ntuple.trackRecoE[x] > 100 or distxyz > 7.5:
-          protonsFound += 1
-    
-    elif ntuple.trackSize[x] > threshold and ntuple.trackPID[x] == 2212:
+    if ntuple.trackPID[x] == 2212:
       distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
-      #A very high percentage of protons reconstructed below threshold but with tracks longer than 7.5 cm are actually above threshold
+      #A very high percentage of photons reconstructed below threshold but with tracks longer than 7.5 cm are actually above threshold
       if ntuple.trackRecoE[x] > 100 or distxyz > 7.5:
         protonsFound += 1
-
-  #Technically we can also look in showers for protons, but those are very rarely actually above threshold
-  for x in range(ntuple.nShowers):
-    if ntuple.showerPID[x] == 2212:
-      if ntuple.showerRecoE[x] > 100:
-        protonsFound += 1
+  #for x in range(ntuple.nShowers):
+  #  if ntuple.showerPID[x] == 2212:
+  #    if ntuple.showerRecoE[x] > 100:
+  #      protonsFound += 1
   return protonsFound
 
-def recoPion(ntuple, threshold = 0):
+def recoPion(ntuple):
   pionFound = False
   for x in range(ntuple.nTracks):
-    if threshold == 0:
-      if abs(ntuple.trackPID[x]) == 211:
-        if ntuple.trackRecoE[x] >= 50:
-          pionFound = True
-          break
-    elif ntuple.trackSize[x] > threshold and ntuple.trackPID[x] == 211:
+    if abs(ntuple.trackPID[x]) == 211:
       if ntuple.trackRecoE[x] >= 50:
         pionFound = True
         break
   for x in range(ntuple.nShowers):
-    if threshold == 0:
-      if abs(ntuple.showerPID[x]) == 211:
-        if ntuple.showerRecoE[x] >= 50:
-          pionFound = True
-          break
-    elif ntuple.showerSize[x] > threshold and abs(ntuple.showerPID[x]) == 211:
+    if abs(ntuple.showerPID[x]) == 211:
       if ntuple.showerRecoE[x] >= 50:
         pionFound = True
         break
@@ -714,9 +641,8 @@ def recoCutMuons(ntuple, threshold = 0):
     if threshold == 0:
       #If not, look at all classified tracks that have the right predicted origin point
       if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
-        if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 100:
-          muonPresent = True
-          break
+        muonPresent = True
+        break
     #If so, loko at any tracks exceeding the threshold that have the right predicted origin point
     elif ntuple.trackSize[x] > threshold and ntuple.trackProcess[x] == 0:
       if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 100:
@@ -742,22 +668,15 @@ def recoCutElectrons(ntuple, threshold = 0):
   #Cut any events containing primary electrons 
   electronPresent = False
   for x in range(ntuple.nTracks):
-    if threshold == 0:
-      if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
-        if ntuple.trackPID[x] == 11 and ntuple.trackRecoE[x] > 10:
-          electronPresent = True
-          break
-    elif ntuple.trackSize[x] > 7 and ntuple.trackProcess[x] == 0:
+
+    #if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
+    if ntuple.trackSize[x] > 7 and ntuple.trackProcess[x] == 0:
       if ntuple.trackPID[x] == 11 and ntuple.trackRecoE[x] > 10:
         electronPresent = True
         break
   for x in range(ntuple.nShowers):
-    if threshold == 0:
-      if ntuple.showerClassified[x] == 1 and ntuple.showerProcess[x] == 0:
-        if ntuple.showerPID[x] == 11 and ntuple.showerRecoE[x] > 10:
-          electronPresent = True
-          break
-    elif ntuple.showerSize[x] > 7 and ntuple.showerProcess[x] == 0:
+    #if ntuple.showerClassified[x] == 1 and ntuple.showerProcess[x] == 0:
+    if ntuple.showerSize[x] > 7 and ntuple.showerProcess[x] == 0:
       if ntuple.showerPID[x] == 11 and ntuple.showerRecoE[x] > 10:
         electronPresent = True
         break
@@ -863,7 +782,7 @@ def recoCutShortTracks(ntuple):
   acceptable = True
   for x in range(ntuple.nTracks):
     #if ntuple.trackClassified[x] == 0:
-    #if ntuple.trackSize[x] < 7:
+    if ntuple.trackSize[x] < 7:
       distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
       if distxyz < 10 and distxyz > 4:
         acceptable = False
@@ -879,8 +798,8 @@ def recoCutManyTracks(ntuple):
   for track in range(ntuple.nTracks):
     noTracks += 1
     #if ntuple.trackClassified[track] == 0:
-    #if ntuple.trackSize[x] < 7:
-      #noUnclassified += 1
+    if ntuple.trackSize[x] < 7:
+      noUnclassified += 1
   if noTracks > 4:
     return False
   elif noTracks > 0:
@@ -892,33 +811,24 @@ def recoCutManyTracks(ntuple):
     return True
 
 
-def recoPhotonListFiducial(fiducial, ntuple, threshold = 0):
+def recoPhotonListFiducial(fiducial, ntuple):
   #Creates a list of photons based on the showers in the event
   recoIDs = []
   for x in range(ntuple.nShowers):
-    if threshold == 0:
-      if ntuple.showerClassified[x] == 1 and ntuple.showerPID[x] == 22:
-        #Fiducial check
-        if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
-          recoIDs.append(x)
-
-    elif ntuple.showerSize[x] > threshold:
+    #if ntuple.showerClassified[x] == 1:
+    if ntuple.showerSize[x] > 7:
       if ntuple.showerPID[x] == 22:
         #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
         if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
           recoIDs.append(x)
   return recoIDs
 
-def recoPhotonListTracks(fiducial, ntuple, threshold = 0):
+def recoPhotonListTracks(fiducial, ntuple):
   #Creates a list of photons based on the tracks in the event
   recoIDs = []
   for x in range(ntuple.nTracks):
-    if threshold == 0:
-      if ntuple.trackClassified[x] == 1 and ntuple.trackPID[x] == 22:
-        #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
-        if ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
-          recoIDs.append(x)
-    elif ntuple.trackSize[x] > threshold:
+    #if ntuple.trackClassified[x] == 1:
+    if ntuple.trackSize[x] > 7:
       if ntuple.trackPID[x] == 22:
         #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
         if ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
@@ -984,14 +894,6 @@ def recoCutOneProton(ntuple):
       protonCount += 1
   return protonCount
 
-#Cut based on the completeness of identified muons
-def recoCutMuonCompleteness(ntuple):
-  badMuon = False
-  for x in range(ntuple.nTracks):
-    if ntuple.trackPID[x] == 13 and ntuple.trackComp[x] < 0.5:
-      badMuon = True
-  if badMuon == True:
-    return False
 
 #OTHER MISCELLANIOUS FUNCTIONS
   
@@ -1353,9 +1255,6 @@ def recoCCCutLoose(eventTree):
   if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:   
     return True
   else:
-<<<<<<< HEAD
-    return False
-=======
     return False 
 
 # function takes the ntuple, true proton index, and list of photon indices, and returns invariant mass calculations
@@ -1399,4 +1298,3 @@ def recoInvariantMassCalculations(eventTree, recoProtonIndex, recoPhotonIndexLis
   recoDeltaInv = np.sqrt( np.square(pEtot + gE1 + gE2) - ( np.square(pPx + gPx1 + gPx2) + np.square(pPy + gPy1 + gPy2) + np.square(pPz + gPz1 + gPz2)))
 
   return recoProtonInv, recoPiZeroInv, recoDeltaInv
->>>>>>> 976121fabce43a2104d70dd0722adfe23daedfea

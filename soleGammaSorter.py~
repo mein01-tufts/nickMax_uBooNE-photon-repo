@@ -58,6 +58,7 @@ zMin, zMax = 0, 1036
 fiducialWidth = 10
 
 #Set variables for program review
+problemCount = 0
 
 #begin loop over events in ntuple file
 
@@ -125,7 +126,7 @@ for i in range(eventTree.GetEntries()):
   
   #HERE IS WHERE WE WILL DIVIDE THE EVENTS INTO BINS  
   if len(photonList) == 0:
-    print("There's a problem!")
+    problemCount += 1
   elif len(photonList) == 1:
     onePhotonHist.Fill(eventTree.trueNuE, eventTree.xsecWeight)
   elif len(photonList) == 2:
@@ -173,3 +174,7 @@ rt.gPad.Update()
 #create output root file and write histograms to file
 outFile = rt.TFile(args.outfile, "RECREATE")
 histCanvas.Write()
+
+print("There were", problemCount, "events with 0 photons")
+if problemCount > 0:
+  print("AOAAOAOUUUUUUGHAGGGGGGGGGAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")

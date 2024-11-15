@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons, recoCutManyTracks, recoCutCompleteness, recoCutMuonCompleteness
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons, recoCutManyTracks, recoCutCompleteness
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -110,7 +110,6 @@ effManyPhotons1 = rt.TH1F("effManyPhotons1", "Many Photons Found",60,0,2)
 effShowerCharge1 = rt.TH1F("effShowerCharge1", "Shower from Charged Cut",60,0,2)
 effPrimary1 = rt.TH1F("effPrimary1", "Primary Score Cut",60,0,2)
 effLongTracks1 = rt.TH1F("effLongTracks1", "Tracks with length > 20 cm",60,0,2)
-effMuonComp1 = rt.TH1F("effMuonComp1", "Muons with too-low Efficiency",60,0,2)
 
 effTotal2 = rt.TH1F("effTotal2", "Two Photons",60,0,2)
 effNoVertex2 = rt.TH1F("effNoVertex2", "No Vertex Found",60,0,2)
@@ -127,7 +126,7 @@ effManyPhotons2 = rt.TH1F("effManyPhotons2", "Many Photons Found",60,0,2)
 effShowerCharge2 = rt.TH1F("effShowerCharge2", "Shower from Charged Cut",60,0,2)
 effPrimary2 = rt.TH1F("effPrimary2", "Primary Score Cut",60,0,2)
 effLongTracks2 = rt.TH1F("effLongTracks2", "Tracks with length > 20 cm",60,0,2)
-effMuonComp2 = rt.TH1F("effMuonComp2", "Muons with too-low Efficiency",60,0,2)
+effCompleteness2 = rt.TH1F("effCompleteness2", "Showers with completeness below 0.3",60,0,2)
 
 
 effTotal3 = rt.TH1F("effTotal3", "3+ Photons",60,0,2)
@@ -146,7 +145,6 @@ effShowerCharge3 = rt.TH1F("effShowerCharge3", "Shower from Charged Cut",60,0,2)
 effPrimary3 = rt.TH1F("effPrimary3", "Primary Score Cut",60,0,2)
 effLongTracks3 = rt.TH1F("effLongTracks3", "Tracks with length > 20 cm",60,0,2)
 effCompleteness3 = rt.TH1F("effCompleteness3", "Showers with completeness below 0.3",60,0,2)
-effMuonComp3 = rt.TH1F("effMuonComp3", "Muons with too-low Efficiency",60,0,2)
 
 #Histogram Lists!
 effTotalList = [effTotal1, effTotal2, effTotal3]
@@ -164,16 +162,15 @@ effManyPhotonHists = [effManyPhotons1, effManyPhotons2, effSignal3]
 effShowerChargeHists = [effShowerCharge1, effShowerCharge2, effShowerCharge3]
 effLongTrackHists = [effLongTracks1, effLongTracks2, effLongTracks3]
 effPrimaryHists = [effPrimary1, effPrimary2, effPrimary3]
-effMuonCompHists = [effMuonComp1, effMuonComp2, effMuonComp3]
 
 #Lists of histograms for stacking. Place with signal first, then put the others in backwards in order of application (so the last one to apply would immediately follow the signal, then the second to last, all the way down to the first)
-effList1 = [effSignal1, effMuonComp1, effLongTracks1, effPrimary1, effManyPhotons1, effTwoPhotons1, effNoPhotons1, effShowerCharge1, effProton1, effPion1, effElectron1, effMuon1, effNoVertex1]
-effList2 = [effSignal2, effMuonComp2, effLongTracks2, effPrimary2, effManyPhotons2, effOnePhoton2, effNoPhotons2, effShowerCharge2, effProton2, effPion2, effElectron2, effMuon2, effNoVertex2]
-effList3 = [effSignal3, effMuonComp3, effLongTracks3, effPrimary3, effTwoPhotons3, effOnePhoton3, effNoPhotons3, effShowerCharge3, effProton3, effPion3, effElectron3, effMuon3, effNoVertex3]
+effList1 = [effSignal1, effLongTracks1, effPrimary1, effManyPhotons1, effTwoPhotons1, effNoPhotons1, effShowerCharge1, effProton1, effPion1, effElectron1, effMuon1, effNoVertex1]
+effList2 = [effSignal2, effLongTracks2, effPrimary2, effManyPhotons2, effOnePhoton2, effNoPhotons2, effShowerCharge2, effProton2, effPion2, effElectron2, effMuon2, effNoVertex2]
+effList3 = [effSignal3, effLongTracks3, effPrimary3, effTwoPhotons3, effOnePhoton3, effNoPhotons3, effShowerCharge3, effProton3, effPion3, effElectron3, effMuon3, effNoVertex3]
 
 
 #Built-in functions here
-def addHist(ntuple, photonList, photonList2, histList, variable, weight):
+def addHist(eventTree, photonList, photonList2, histList, variable, weight):
   if len(photonList) + len(photonList2) == 1:
     histList[0].Fill(variable, weight)
   elif len(photonList) + len(photonList2) == 2:
@@ -281,9 +278,10 @@ for i in range(eventTree.GetEntries()):
   if recoCutLongTracks(eventTree, fiducialData) == False:
     continue
 
-  #Cut based on the completeness of known Muons
-  if recoCutMuonCompleteness(eventTree) == False:
-    continue
+  #Cut based on completeness to remove cosmics
+  #if recoCutCompleteness(eventTree, recoList, recoTrackList) == False:
+  #  continue
+
 
   #PURITY - GRAPHING BASED ON TRUTH
   
@@ -338,7 +336,7 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, recoList, recoTrackList, manyPhotonPHists, leadingPhoton, eventTree.xsecWeight)
     threePhotons += 1
 
-#BEGINNING EVENT LOOP FOR COSMICS 
+#BEGINNING EVENT LOOP FOR COSMICS
 for i in range(cosmicTree.GetEntries()):
   cosmicTree.GetEntry(i)
 
@@ -397,9 +395,17 @@ for i in range(cosmicTree.GetEntries()):
   if recoCutLongTracks(cosmicTree, fiducialData) == False:
     continue
 
-  #Cut based on the completeness of known Muons
-  if recoCutMuonCompleteness(eventTree) == False:
-    continue
+  #Completeness cut
+  #(cosmicTree, recoList, recoTrackList) ==  False:
+  #  continue
+
+  #Cut based on number of tracks
+  #if recoCutManyTracks(cosmicTree) == False:
+  #  continue
+
+  #Cut unclassified tracks too short to be trusted
+  #if recoCutShortTracks(eventTree) == False:
+  #  continue
 
   untrackedCosmics += 1
 
@@ -494,11 +500,6 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, truePhotonIDs, emptyList, effLongTrackHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
-  #Cut based on the completeness of known Muons
-  if recoCutMuonCompleteness(eventTree) == False:
-    addHist(eventTree, truePhotonIDs, emptyList, effMuonCompHists, leadingPhoton, eventTree.xsecWeight)
-    continue
-
   survivesCuts += 1
 
   #Now we're pretty sure the event is legitimate, so we go ahead and graph based on the number of photons
@@ -529,10 +530,10 @@ for hist in cosmicList:
 
 
 #Stacking histograms
-purityCanvas1, purityStack1, purityLegend1, purityInt1 = histStack("1 Gamma + 0 and 1 Gamma + 1P Sample", pList1, ntuplePOTsum)
+purityCanvas1, purityStack1, purityLegend1, purityInt1 = histStack("1 Gamma + 0 Sample", pList1, ntuplePOTsum)
 purityCanvas2, purityStack2, purityLegend2, purityInt2 = histStack("2 Gamma + 0 Sample", pList2, ntuplePOTsum)
 purityCanvas3, purityStack3, purityLegend3, purityInt3 = histStack("3+ Gamma + 0 Sample", pList3, ntuplePOTsum)
-effCanvas1, effStack1, effLegend1, effInt1 = histStack("True 1 Gamma + 0 and 1 Gamma + 1P Outcomes", effList1, ntuplePOTsum)
+effCanvas1, effStack1, effLegend1, effInt1 = histStack("True 1 Gamma + 0  Outcomes", effList1, ntuplePOTsum)
 effCanvas2, effStack2, effLegend2, effInt2 = histStack("True 2 Gamma + 0  Outcomes", effList2, ntuplePOTsum)
 effCanvas3, effStack3, effLegend3, effInt3 = histStack("True 3+ Gamma + 0  Outcomes", effList3, ntuplePOTsum)
 

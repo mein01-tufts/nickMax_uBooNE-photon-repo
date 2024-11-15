@@ -5,7 +5,7 @@ rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 rt.gStyle.SetOptStat(0)
 
-from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoCutLowEnergy
+from cuts import trueCutNC, trueCutFiducials, trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -28,7 +28,7 @@ targetPOTstring = "6.67e+20"
 
 #calculate POT represented by full ntuple file after applying cross section weights
 ntuplePOTSum = 3.2974607516739725e+20
-cosmicTotal = 0
+
 #HISTOGRAMS DEFINED AND PREPARED HERE
 #noVertexHist = rt.TH1F("NoVertex", "No Vertex Detected" ,60,0,10)
 #chargeCurrentHist = rt.TH1F("ChargeCurrent", "Charge Current Detected" ,60,0,10)
@@ -54,12 +54,7 @@ for hist in passList:
   hist = configureHist(hist)
 
 #Variables for program review
-initialCount = 0
-vertexCount = 0
-NCCount = 0
-fiducialCount = 0
-noPionCount = 0
-recoCount = 0
+cosmicHits = 0
 
 #Variables for program function
 fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
@@ -67,40 +62,41 @@ fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zM
 #Event loop begins
 for i in range(eventTree.GetEntries()):
   eventTree.GetEntry(i)
-  initialCount += 1
+
   #RECO CUTS
   if recoNoVertex(eventTree) == False:
     continue
-  vertexCount += 1
+
   #See if the event is neutral current
   if recoNeutralCurrent(eventTree) == False:
     continue
-  NCCount += 1
+
   #Make sure the event is within the fiducial volume
   if recoFiducials(eventTree, fiducialData) == False:
     continue
-  fiducialCount += 1
+
   #Cut events with suitably energetic protons or charged pions
   if recoPionProton(eventTree) == False:
     continue
-  noPionCount += 1
+
   #See if there are actually any photons. If so, list them; if not, cut them
   recoList = recoPhotonList(eventTree)
 
   if len(recoList) == 0:
     continue
-  recoCount += 1
+
   leadingPhoton, invariantMass = scaleRecoEnergy(eventTree, recoList)
   
   #See if we can put the cosmic cut to use
   if trueCutCosmic(eventTree) == False:
     cosmicHist.Fill(leadingPhoton, 1)
+    cosmicHits += 1
     continue
 
   #See if this can't git rid of a reasonable number here
-#  if recoCutLowEnergy(recoList, eventTree) == False:
-#    continue
-  cosmicTotal += 1
+  if recoCutLowEnergy(recoList, eventTree) == False:
+    continue
+  
   #If the event makes it through, we store it here
   if len(recoList) == 1:
     singlePhotonHist.Fill(leadingPhoton, 1)
@@ -119,9 +115,4 @@ outFile = rt.TFile(args.outfile, "RECREATE")
 passCanvas1.Write()
 cosmicHist.Write()
 
-print("Total Cosmics:", initialCount)
-print("Total with vertex:", vertexCount)
-print("Total with NC:", NCCount)
-print("Total with fiducial:", fiducialCount)
-print("Total without pions or protons:", noPionCount)
-print("Total cosmic events reconstructed:", recoCount)
+print("The cosmic cut got", cosmicHits, "events.")

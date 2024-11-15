@@ -36,6 +36,9 @@ for i in range(potTree.GetEntries()):
 
 cosmicPOTsum = 3.2974607516739725e+20
 
+#needed for proper scaling of error bars:
+rt.TH1.SetDefaultSumw2(rt.kTRUE)
+
 #Hists created and organized here
 
 #Signal Histograms (purity)

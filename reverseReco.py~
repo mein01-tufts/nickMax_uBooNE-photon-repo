@@ -48,7 +48,7 @@ tooManyHist = rt.TH1F("tooMany1", "Excess Photons detected",60,0,2)
 tooFewHist = rt.TH1F("tooFew1", "Too few photons detected",60,0,2)
 successHist = rt.TH1F("success1", "Signal",60,0,2)
 
-histList = [noVertexHist, NCHist, fiducialHist, pionProtonHist, noPhotonHist, tooManyHist, tooFewHist, successHist]
+histList = [tooManyHist, pionProtonHist, fiducialHist, NCHist, noVertexHist, noPhotonHist, tooFewHist, successHist]
 
 noVertexHist2 = rt.TH1F("noVertex2", "No vertex",60,0,2)
 NCHist2 = rt.TH1F("NC1", "Charged current detected",60,0,2)
@@ -59,7 +59,7 @@ tooManyHist2 = rt.TH1F("tooMany2", "Excess Photons detected",60,0,2)
 tooFewHist2 = rt.TH1F("tooFew2", "Too few photons detected",60,0,2)
 successHist2 = rt.TH1F("success2", "Signal",60,0,2)
 
-histList2 = [noVertexHist2, NCHist2, fiducialHist2, pionProtonHist2, noPhotonHist2, tooManyHist2, tooFewHist2, successHist2]
+histList2 = [tooManyHist2, pionProtonHist2, fiducialHist2, NCHist2, noVertexHist2, noPhotonHist2, tooFewHist2, successHist2]
 
 noVertexHist3 = rt.TH1F("noVertex3", "No vertex",60,0,2)
 NCHist3 = rt.TH1F("NC1", "Charged current detected",60,0,2)
@@ -70,7 +70,7 @@ tooManyHist3 = rt.TH1F("tooMany3", "Excess Photons detected",60,0,2)
 tooFewHist3 = rt.TH1F("tooFew3", "Too few photons detected",60,0,2)
 successHist3 = rt.TH1F("success3", "Signal",60,0,2)
 
-histList3 = [noVertexHist3, NCHist3, fiducialHist3, pionProtonHist3, noPhotonHist3, tooManyHist3, tooFewHist3, successHist3]
+histList3 = [tooManyHist3, pionProtonHist3, fiducialHist3, NCHist3, noVertexHist3, noPhotonHist3, tooFewHist3, successHist3]
 
 
 #Variables for program review
@@ -112,7 +112,7 @@ for i in range(eventTree.GetEntries()):
   else:
     pionProtonSuccess += 1
   
-  truePhotonIDs = truePhotonList(eventTree, fiducialData)
+  truePhotonIDs = truePhotonList(eventTree, truePhotonIDs, fiducialData)
   if len(truePhotonIDs) > 0:
     trueSuccess += 1
   else:
@@ -138,74 +138,11 @@ for i in range(eventTree.GetEntries()):
     totalHist2.Fill(leadingPhoton, eventTree.xsecWeight)
 
   else:
-    totalHist3.Fill(leadingPhoton, eventTree.xsecWeight)
-    
-  #Fill graph for events with no vertex
-  if recoNoVertex(eventTree) == False:
-    if len(truePhotonIDs) == 1:
-      noVertexHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
-
-    elif len(truePhotonIDs) == 2:
-      noVertexHist2.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    else:
-      noVertexHist3.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    continue
-
-  #Fill for events with charged current
-  if recoNeutralCurrent(eventTree) == False:
-    if len(truePhotonIDs) == 1:
-      NCHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
-
-    elif len(truePhotonIDs) == 2:
-      NCHist2.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    else:
-      NCHist3.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    continue
-  
-  #Fill for events outside the fiducial
-  if recoFiducials(eventTree, fiducialData) == False:
-    if len(truePhotonIDs) == 1:
-      fiducialHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
-
-    elif len(truePhotonIDs) == 2:
-      fiducialHist2.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    else:
-      fiducialHist3.Fill(leadingPhoton, eventTree.xsecWeight)
-    continue
-
-  #Fill for events with suitably energetic pions or protons
-  if recoPionProton(eventTree) == False:
-    if len(truePhotonIDs) == 1:
-      pionProtonHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
-
-    elif len(truePhotonIDs) == 2:
-      pionProtonHist2.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    else:
-      pionProtonHist3.Fill(leadingPhoton, eventTree.xsecWeight)
-    continue
+    totalHist3.Fill(leadingPhoton, eventTree.xsecWeight)    
   
   #Checking the number of photons the reco finds
   recoList = recoPhotonList(eventTree)
 
-  #Filling for no photons
-  if len(recoList) == 0:
-    if len(truePhotonIDs) == 1:
-      noPhotonHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
-
-    elif len(truePhotonIDs) == 2:
-      noPhotonHist2.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    else:
-      noPhotonHist3.Fill(leadingPhoton, eventTree.xsecWeight)
-
-    continue
-  
   #Too many photons
   if len(recoList) > len(truePhotonIDs):
     if len(truePhotonIDs) == 1:
@@ -218,7 +155,70 @@ for i in range(eventTree.GetEntries()):
       tooManyHist3.Fill(leadingPhoton, eventTree.xsecWeight)
     continue
 
-  #Too few photons
+  #Fill for events with suitably energetic pions or protons                                                                                    
+  if recoPionProton(eventTree) == False:
+    if len(truePhotonIDs) == 1:
+      pionProtonHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonIDs) == 2:
+      pionProtonHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      pionProtonHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+    continue
+
+  #Fill for events outside the fiducial                                                                                                        
+  if recoFiducials(eventTree, fiducialData) == False:
+    if len(truePhotonIDs) == 1:
+      fiducialHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonIDs) == 2:
+      fiducialHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      fiducialHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+    continue
+  
+  #Fill for events with charged current                                                                                                       
+  if recoNeutralCurrent(eventTree) == False:
+    if len(truePhotonIDs) == 1:
+      NCHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonIDs) == 2:
+      NCHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      NCHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    continue
+  
+  #Fill graph for events with no vertex                                                                                                        
+  if recoNoVertex(eventTree) == False:
+    if len(truePhotonIDs) == 1:
+      noVertexHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonIDs) == 2:
+      noVertexHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      noVertexHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    continue
+
+  #Filling for no photons                                                                                                                       
+  if len(recoList) == 0:
+    if len(truePhotonIDs) == 1:
+      noPhotonHist.Fill(scaledEnergy[0], eventTree.xsecWeight)
+
+    elif len(truePhotonIDs) == 2:
+      noPhotonHist2.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    else:
+      noPhotonHist3.Fill(leadingPhoton, eventTree.xsecWeight)
+
+    continue
+
+  #Too few photons                                                                                                                              
   if len(recoList) < len(truePhotonIDs):
     if len(truePhotonIDs) == 1:
       tooFewHist.Fill(scaledEnergy[0], eventTree.xsecWeight)

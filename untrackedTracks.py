@@ -63,7 +63,7 @@ correctPhotons = 0
 #Variables for program function
 recoPhotonIDs = []
 truePhotonIDs = []
-fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":30}
+fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
 
 #Event loop begins
 for i in range(eventTree.GetEntries()):

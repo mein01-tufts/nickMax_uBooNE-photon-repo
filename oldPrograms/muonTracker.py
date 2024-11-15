@@ -35,34 +35,34 @@ for i in range(potTree.GetEntries()):
   ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
 #HISTOGRAMS DEFINED AND PREPARED HERE
-effHistE1 = rt.TH1F("EnergyEfficiency1", "Vertex < 1 cm from true (energy)",60,0,1.6)
-effHistE2 = rt.TH1F("EnergyEfficiency2", "Vertex 1-3 cm from true (energy)",60,0,1.6)
-effHistE3 = rt.TH1F("EnergyEfficiency3", "Vertex 3-5 cm from true (energy)",60,0,1.6)
-effHistE4 = rt.TH1F("EnergyEfficiency4", "Vertex 5+ cm from true (energy)",60,0,1.6)
+effHistE1 = rt.TH1F("EnergyEfficiency1", "Vertex < 1 cm from true (energy)",30,0,6)
+effHistE2 = rt.TH1F("EnergyEfficiency2", "Vertex 1-3 cm from true (energy)",30,0,6)
+effHistE3 = rt.TH1F("EnergyEfficiency3", "Vertex 3-5 cm from true (energy)",30,0,6)
+effHistE4 = rt.TH1F("EnergyEfficiency4", "Vertex 5+ cm from true (energy)",30,0,6)
 
 effListE = [effHistE1, effHistE2, effHistE3, effHistE4]
 
-effTotalE = rt.TH1F("TotalEfficiencyE", "Total Efficiency",30,0,1.6)
+effTotalE = rt.TH1F("TotalEfficiencyE", "Total Efficiency",30,0,6)
 
-foundPhotonE1 = rt.TH1F("FoundE1", "Found Muon",60,0,1.6)
-lostPhotonE1 = rt.TH1F("LostE1", "Track not found",60,0,1.6)
-weirdE1 = rt.TH1F("WeirdE1", "Misclassified track",60,0,1.6)
-unclassifiedE1 = rt.TH1F("UnclassifiedE1", "Unclassified track",60,0,1.6)
+foundPhotonE1 = rt.TH1F("FoundE1", "Found Muon",30,0,6)
+lostPhotonE1 = rt.TH1F("LostE1", "Track not found",30,0,6)
+weirdE1 = rt.TH1F("WeirdE1", "Misclassified track",30,0,6)
+unclassifiedE1 = rt.TH1F("UnclassifiedE1", "Unclassified track",30,0,6)
 
-foundPhotonE2 = rt.TH1F("FoundE2", "Found Muon",60,0,1.6)
-lostPhotonE2 = rt.TH1F("LostE2", "Track not found",60,0,1.6)
-weirdE2 = rt.TH1F("WeirdE2", "Misclassified track",60,0,1.6)
-unclassifiedE2 = rt.TH1F("UnclassifiedE2", "Unclassified track",60,0,1.6)
+foundPhotonE2 = rt.TH1F("FoundE2", "Found Muon",30,0,6)
+lostPhotonE2 = rt.TH1F("LostE2", "Track not found",30,0,6)
+weirdE2 = rt.TH1F("WeirdE2", "Misclassified track",30,0,6)
+unclassifiedE2 = rt.TH1F("UnclassifiedE2", "Unclassified track",30,0,6)
 
-foundPhotonE3 = rt.TH1F("FoundE3", "Found Muon",60,0,1.6)
-lostPhotonE3 = rt.TH1F("LostE3", "Track not found",60,0,1.6)
-weirdE3 = rt.TH1F("WeirdE3", "Misclassified track",60,0,1.6)
-unclassifiedE3 = rt.TH1F("UnclassifiedE3", "Unclassified track",60,0,1.6)
+foundPhotonE3 = rt.TH1F("FoundE3", "Found Muon",30,0,6)
+lostPhotonE3 = rt.TH1F("LostE3", "Track not found",30,0,6)
+weirdE3 = rt.TH1F("WeirdE3", "Misclassified track",30,0,6)
+unclassifiedE3 = rt.TH1F("UnclassifiedE3", "Unclassified track",30,0,6)
 
-foundPhotonE4 = rt.TH1F("FoundE4", "Found Photons",60,0,1.6)
-lostPhotonE4 = rt.TH1F("LostE4", "Track not found",60,0,1.6)
-weirdE4 = rt.TH1F("WeirdE4", "Misclassified track",60,0,1.6)
-unclassifiedE4 = rt.TH1F("UnclassifiedE4", "Unclassified track",60,0,1.6)
+foundPhotonE4 = rt.TH1F("FoundE4", "Found Photons",30,0,6)
+lostPhotonE4 = rt.TH1F("LostE4", "Track not found",30,0,6)
+weirdE4 = rt.TH1F("WeirdE4", "Misclassified track",30,0,6)
+unclassifiedE4 = rt.TH1F("UnclassifiedE4", "Unclassified track",30,0,6)
 
 energyList1 = [lostPhotonE1, weirdE1, unclassifiedE1, foundPhotonE1]
 energyList2 = [lostPhotonE2, weirdE2, unclassifiedE2, foundPhotonE2]
@@ -84,7 +84,7 @@ def addHist(ntuple, energy, HistList1, weight):
     HistList1[1].Fill(energy, weight)
   elif ntuple.vtxDistToTrue <= 5:
     HistList1[2].Fill(energy, weight)
-  elif ntuple.vtxDistToTrue > 5:
+  else:
     HistList1[3].Fill(energy, weight)
 
 def addEffHist(effHist, histList):
@@ -153,8 +153,8 @@ for i in range(eventTree.GetEntries()):
   matches = 0
   distVtx = eventTree.vtxDistToTrue
   for x in muonList:
+    recoMatch = False
     #Quick setup
-    trueNo = x
     for y in range(eventTree.nTracks):
       #Match the true event to a reco event, if we can
       if eventTree.trackTrueTID[y] == eventTree.trueSimPartTID[x]:
@@ -167,7 +167,6 @@ for i in range(eventTree.GetEntries()):
         #If the track wasn't classified, we store it here
         elif eventTree.trackClassified[y] == 0:
           addHist(eventTree, eventTree.trueSimPartE[x]/1000, unclassifiedListE, eventTree.xsecWeight)
-          noMatch += 1
         #If it somehow got identified, but not as an electron or a photon, we should mark that down too
         else:
           addHist(eventTree, eventTree.trueSimPartE[x]/1000, weirdListE, eventTree.xsecWeight)
@@ -176,15 +175,15 @@ for i in range(eventTree.GetEntries()):
       matches += 1
     #If we didn't find any track at all, we store it here
     else:
-      addHist(distVtx, eventTree.trueSimPartE[x]/1000, lostListE, eventTree.xsecWeight)
-
+      addHist(eventTree, eventTree.trueSimPartE[x]/1000, lostListE, eventTree.xsecWeight)
+      noMatch += 1
 
 #Fill efficiency histograms
 for x in range(len(effListE)):
   addEffHist(effListE[x], energyListList[x])
 
 #Fill histograms for total efficiency
-  #Repeat total efficiency calculation for energy histograms
+for x in range(1, 31):
   totalFound = foundPhotonE1.GetBinContent(x) + foundPhotonE2.GetBinContent(x) + foundPhotonE3.GetBinContent(x) + foundPhotonE4.GetBinContent(x)
   totalLost = lostPhotonE1.GetBinContent(x) + lostPhotonE2.GetBinContent(x) + lostPhotonE3.GetBinContent(x) + lostPhotonE4.GetBinContent(x)
   totalOther = weirdE1.GetBinContent(x) + weirdE2.GetBinContent(x) + weirdE3.GetBinContent(x) + weirdE4.GetBinContent(x) + unclassifiedE1.GetBinContent(x) + unclassifiedE2.GetBinContent(x) + unclassifiedE3.GetBinContent(x) +unclassifiedE4.GetBinContent(x)
@@ -237,8 +236,8 @@ for hist in effListE:
 
 stackListE = [stackE1, stackE2, stackE3, stackE4]
 for stack in stackListE:
-  stack.GetXaxis().SetTitle("True Photon Energy (GeV)")
-  stack.GetYaxis().SetTitle("Number of Photons")
+  stack.GetXaxis().SetTitle("True Muon Energy (GeV)")
+  stack.GetYaxis().SetTitle("Number of Muons (Scaled to 6.67e+20)")
 
 #Save to file
 outFile = rt.TFile(args.outfile, "RECREATE")
@@ -250,4 +249,4 @@ print("Total with true muons:", muonCount)
 print("Total with reconstructed muons:", recoCount)
 print("Total where true muon matched with any track", matchCount)
 print("Total where the reco correctly reconstructed the muon", recoRight)
-print("Total where the track was unclassified", noMatch)
+print("Total where the reco missed the track completely", noMatch)
