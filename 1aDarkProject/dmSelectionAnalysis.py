@@ -5,39 +5,46 @@ import ROOT as rt
 from darkCuts import cut
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
-parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="MonthDayDarkMatter.root", help="output root file name")
+parser.add_argument("-d", "--darkFile", type=str, required=True, help="darkNu input ntuple filepath")
+parser.add_argument("-s", "--stdFile", type=str, required=True, help="standard model input ntuple filepath")
+parser.add_argument("-c", "--cosmicFile", type=str, required=True, help="cosmic data input ntuple filepath")
+parser.add_argument("-o", "--outFile", type=str, default="MonthDayDarkMatter.root", help="output root file name")
 args = parser.parse_args()
 
-# Grab ntuple file, eventTree, and potTree for reference
-ntuple_file = rt.TFile(args.infile)
-eventTree = ntuple_file.Get("EventTree")
-potTree = ntuple_file.Get("potTree")
+# Create root TFile classes for darkNu, standard, and cosmic files
+dark_file = rt.TFile(args.darkFile)
+std_file = rt.TFile(args.stdFile)
+cosmic_file = rt.TFile(args.cosmicFile)
 
 
-# Event Loop: We want to use this to sort events by final states
-# IE: Tallying final state particles?
-eventsTotal = 0
-noElec = 0
-oneElec = 0
-twoElec = 0
-threeElec = 0
+# Grab eventTrees and potTrees for each input for reference
+darkTree = dark_file.Get("EventTree")
+darkPotTree = dark_file.Get("potTree")
 
-#---------------- Begin Tally Loop ----------------#
-for i in range(eventTree.GetEntries()):
-    eventTree.GetEntry(i)
-    electrons = 0
+stdTree = std_file.Get("EventTree")
+stdPotTree = std_file.Get("potTree")
 
-    if electrons == 0:
-        noElec += 1
-    elif electrons == 1:
-        oneElec += 1
-    elif electrons == 2:
-        twoElec += 1
-    else:
-        threeElec += 1
-    print("Hello World")
+cosmicTree = cosmic_file.Get("EventTree")
+
+# State target POT for scaling, create POT sums for each input file
+targetPOT = 6.67e+20
+targetPOTstring = "6.67e+20"
+darkPOTsum, stdPOTsum = 0, 0
+cosmicPOTsum = 3.2974607516739725e+20
+
+# Find darkNu POT sum
+for i in range(darkPotTree.GetEntries()):
+    darkPotTree.GetEntry(i)
+    darkPOTsum = darkPOTsum + darkPotTree.totGoodPOT
+
+# Find standard POT sum
+for i in range(stdPotTree.GetEntries()):
+    stdPotTree.GetEntry(i)
+    stdPOTsum = stdPOTsum + stdPotTree.totGoodPOT
+
+potSumList = [darkPOTsum, stdPOTsum, cosmicPOTsum]
+print(str(potSumList))
 
 
-#---------------- End Tally Loop ----------------#
+# 2 loops over dark file (efficiency, purity)
 
