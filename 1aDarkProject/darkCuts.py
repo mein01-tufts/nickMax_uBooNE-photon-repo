@@ -26,31 +26,31 @@ def cut(eventTree):
 def particleTallies(ntuple):
     electronShowerList, photonShowerList, muonShowerList, pionShowerList, protonShowerList, electronTrackList, photonTrackList, muonTrackList, pionTrackList, protonTrackList = []
 
-    for x in range(ntuple.nshowers):
-        if abs(ntuple.showerRecoPID[x]) == 11:
+    for x in range(ntuple.nShowers):
+        if abs(ntuple.showerPID[x]) == 11:
             electronShowerList.append(x)
-        elif ntuple.showerRecoPID[x] == 22:
+        elif ntuple.showerPID[x] == 22:
             photonShowerList.append(x)
-        elif ntuple.showerRecoPID[x] == 13:
+        elif ntuple.showerPID[x] == 13:
             muonShowerList.append(x)
-        elif abs(ntuple.showerRecoPID[x]) == 211:
+        elif abs(ntuple.showerPID[x]) == 211:
             pionShowerList.append(x)
-        elif ntuple.showerRecoPID[x] == 2212:
+        elif ntuple.showerPID[x] == 2212:
             protonShowerList.append(x)
 
     for x in range(ntuple.nTracks):
-        if abs(ntuple.trackRecoPID[x]) == 11:
+        if abs(ntuple.trackPID[x]) == 11:
             electronTrackList.append(x)
-        elif ntuple.trackRecoPID[x] == 22:
-            photonTrackList.append(X)
-        elif ntuple.trackRecoPID[x] == 13:
+        elif ntuple.trackPID[x] == 22:
+            photonTrackList.append(x)
+        elif ntuple.trackPID[x] == 13:
             muonTrackList.append(x)
-        elif abs(ntuple.trackRecoPID[x]) == 211:
+        elif abs(ntuple.trackPID[x]) == 211:
             pionTrackList.append(x)
-        elif ntuple.trackRecoPID[x] == 2212:
+        elif ntuple.trackPID[x] == 2212:
             protonTrackList.append(x)
 
-return electronShowerList, photonShowerList, muonShowerList, pionShowerList, protonShowerList, electronTrackList, photonTrackList, muonTrackList, pionTrackList, protonTrackList
+    return electronShowerList, photonShowerList, muonShowerList, pionShowerList, protonShowerList, electronTrackList, photonTrackList, muonTrackList, pionTrackList, protonTrackList
 
 def protonCut(protonShowerList, protonTrackList, tolerance = 0):
     keep = True
@@ -80,7 +80,7 @@ def electronCut(muonShowerList, muonTrackList, rangeLow = 1, rangeHigh = 2):
 
 def trueParticleTallies(ntuple):
     electronList, photonList, muonList, pionList, protonList = []
-    for x in range(nTruePrimParts):
+    for x in range(ntuple.nTruePrimParts):
         if ntuple.truePrimPartPDG[x] == 13:
             muonList.append[x]
         elif abs(ntuple.truePrimPartPDG[x]) == 11:
