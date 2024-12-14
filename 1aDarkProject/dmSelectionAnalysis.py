@@ -16,7 +16,6 @@ dark_file = rt.TFile(args.darkFile)
 std_file = rt.TFile(args.stdFile)
 cosmic_file = rt.TFile(args.cosmicFile)
 
-
 # Grab eventTrees and potTrees for each input for reference
 darkTree = dark_file.Get("EventTree")
 darkPotTree = dark_file.Get("potTree")
@@ -45,13 +44,49 @@ for i in range(stdPotTree.GetEntries()):
 potSumList = [darkPOTsum, stdPOTsum, cosmicPOTsum]
 print(str(potSumList))
 
+#HISTOGRAMS DEFINED HERE
+puritySignal1 = rt.TH1F("PSignal", "Dark Matter Event",1,0,1)
+standardBackground1 =  rt.TH1F("eventBackground", "Standard Model Event",1,0,1)
+cosmicBackground1 = rt.TH1F("cosmicBackground", "Cosmic Event",1,0,1)
+
+effSignal1 = rt.TH1F("PSignal", "Found Events",1,0,1)
+effProton1 = rt.TH1F("effProton", "Proton Reconstructed",1,0,1)
+effMuon1 = rt.TH1F("effProton", "Proton Reconstructed",1,0,1)
+effPion1 = rt.TH1F("effProton", "Proton Reconstructed",1,0,1)
+effElectronPhoton1 = rt.TH1F("effProton", "Electron/Photon Misreconstruction",1,0,1)
 
 # 2 loops over dark file (efficiency, purity)
-#LOOP 1 - PURITY
+#LOOP 1 - OVER DARK FILE
 for i in range(darkTree.GetEntries()):
     darkTree.GetEntry(i)
     #Make lists of every track and shower that contain each kind of particle
     electronShowers, photonShowers, muonShowers, pionShowers, protonShowers, electronTracks, protonTracks, muonTracks, pionTracks, protonTracks = particleTallies(darkTree)
+
+    #Now we cut based on the particles we don't want
+    if protonCut(protonShowers, protonTracks) == False:
+        effProton1.Fill(1, darkTree.xsecWeight)
+        continue
+    if muonCut(muonShowers, muonTracks) == False:
+        effMuon1.Fill(1, darkTree.xsecWeight)
+        continue
+    if pionCut(pionShowers, pionTracks) == False:
+        effPion1.Fill(1, darkTree.xsecWeight)
+        continue
+
+    #Try to identify events that fit our stipulations
+    if electronCut == False and cleverPhotonCut == False:
+        effElectronPhoton1.Fill(1, darkTree.xsecWeight)
+        continue
+
+    #Load up the histogram, baby!
+    puritySignal1.Fill(1, darkTree.xsecWeight)
+    effSignal1.Fill(1, darkTree.xsecWeight)
+
+#LOOP 2 - OVER REGULAR FILE
+for i in range(stdTree.GetEntries()):
+    stdTreekTree.GetEntry(i)
+    #Make lists of every track and shower that contain each kind of particle
+    electronShowers, photonShowers, muonShowers, pionShowers, protonShowers, electronTracks, protonTracks, muonTracks, pionTracks, protonTracks = particleTallies(stdTree)
 
     #Now we cut based on the particles we don't want
     if protonCut(protonShowers, protonTracks) == False:
@@ -65,15 +100,27 @@ for i in range(darkTree.GetEntries()):
     if electronCut == False and cleverPhotonCut == False:
         continue
 
-    #Load up the histogram, baby!
+    #Now we fill the background histogram!
+    standardBackground1(1, stdTree.xsecWeight)
 
-#LOOP 2 - EFFICIENCY
-    electronList, photonList, muonList, pionList, protonList = trueParticleTallies(darkTree)
+#LOOP 3 - OVER THE COSMIC FILE
+for i in range(cosmicTree.GetEntries()):
+    cosmicTree.GetEntry(i)
+    #Make lists of every track and shower that contain each kind of particle
+    electronShowers, photonShowers, muonShowers, pionShowers, protonShowers, electronTracks, protonTracks, muonTracks, pionTracks, protonTracks = particleTallies(stdTree)
 
-    if trueProtonCut(protonShowers, protonTracks) == False:
+    #Now we cut based on the particles we don't want
+    if protonCut(protonShowers, protonTracks) == False:
         continue
-    if trueMuonCut(muonShowers, muonTracks) == False:
+    if muonCut(muonShowers, muonTracks) == False:
         continue
-    if truePionCut(pionShowers, pionTracks) == False:
+    if pionCut(pionShowers, pionTracks) == False:
         continue
+
+    #Try to identify events that fit our stipulations
+    if electronCut == False and cleverPhotonCut == False:
+        continue
+
+    #Now we fill the background histogram!
+    standardBackground1(1, stdTree.xsecWeight)
 

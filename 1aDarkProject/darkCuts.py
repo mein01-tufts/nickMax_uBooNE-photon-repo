@@ -24,7 +24,7 @@ def cut(eventTree):
 
 #Goes through an event, iterates over all tracks and showers, and creates two lists for each particle - one for any entries in tracks with that particle, and one for any entries in showers
 def particleTallies(ntuple):
-    electronShowerList, photonShowerList, muonShowerList, pionShowerList, protonShowerList, electronTrackList, photonTrackList, muonTrackList, pionTrackList, protonTrackList = []
+    electronShowerList, photonShowerList, muonShowerList, pionShowerList, protonShowerList, electronTrackList, photonTrackList, muonTrackList, pionTrackList, protonTrackList = [], [], [], [], [], [], [], [], [], []
 
     for x in range(ntuple.nshowers):
         if abs(ntuple.showerRecoPID[x]) == 11:
@@ -75,8 +75,6 @@ def electronCut(muonShowerList, muonTrackList, rangeLow = 1, rangeHigh = 2):
     if len(muonShowerList) + len(muonTrackList) < rangeLow or len(muonShowerList) + len(muonTrackList) > rangeHigh:
         keep = False
     return keep
-
-
 
 def trueParticleTallies(ntuple):
     electronList, photonList, muonList, pionList, protonList = []
