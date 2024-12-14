@@ -2,7 +2,7 @@ import sys, argparse
 import numpy as np
 import ROOT as rt
 
-from darkCuts import cut
+from darkCuts import particleTallies, protonCut, muonCut, pionCut, electronCut, cleverPhotonCut, trueParticleTallies, trueProtonCut, trueMuonCut, truePionCut, truePhotonCut
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-d", "--darkFile", type=str, required=True, help="darkNu input ntuple filepath")
@@ -47,4 +47,33 @@ print(str(potSumList))
 
 
 # 2 loops over dark file (efficiency, purity)
+#LOOP 1 - PURITY
+for i in range(darkTree.GetEntries()):
+    darkTree.GetEntry(i)
+    #Make lists of every track and shower that contain each kind of particle
+    electronShowers, photonShowers, muonShowers, pionShowers, protonShowers, electronTracks, protonTracks, muonTracks, pionTracks, protonTracks = particleTallies(darkTree)
+
+    #Now we cut based on the particles we don't want
+    if protonCut(protonShowers, protonTracks) == False:
+        continue
+    if muonCut(muonShowers, muonTracks) == False:
+        continue
+    if pionCut(pionShowers, pionTracks) == False:
+        continue
+
+    #Try to identify events that fit our stipulations
+    if electronCut == False and cleverPhotonCut == False:
+        continue
+
+    #Load up the histogram, baby!
+
+#LOOP 2 - EFFICIENCY
+    electronList, photonList, muonList, pionList, protonList = trueParticleTallies(darkTree)
+
+    if trueProtonCut(protonShowers, protonTracks) == False:
+        continue
+    if trueMuonCut(muonShowers, muonTracks) == False:
+        continue
+    if truePionCut(pionShowers, pionTracks) == False:
+        continue
 
