@@ -545,7 +545,7 @@ def recoPhotonList(ntuple, threshold = 0):
       if ntuple.showerClassified[x] == 1:
        if ntuple.showerPID[x] == 22:
         recoIDs.append(x) 
-    elif ntuple.showerSize[x] > 7:
+    elif ntuple.showerSize[x] > threshold:
       if ntuple.showerPID[x] == 22:
         recoIDs.append(x)
   return recoIDs
@@ -569,30 +569,42 @@ def recoPionProton(ntuple):
     return True
 
 
-def recoProton(ntuple):
+def recoProton(ntuple, threshold = 0):
   protonsFound = 0
   #Go through tracks to see if we can find sufficiently energetic protons
   for x in range(ntuple.nTracks):
     if ntuple.trackPID[x] == 2212:
+      if threshold != 0:
+        if ntuple.trackSize[x] < threshold:
+          continue
       distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
       #A very high percentage of photons reconstructed below threshold but with tracks longer than 7.5 cm are actually above threshold
       if ntuple.trackRecoE[x] > 100 or distxyz > 7.5:
         protonsFound += 1
-  #for x in range(ntuple.nShowers):
-  #  if ntuple.showerPID[x] == 2212:
-  #    if ntuple.showerRecoE[x] > 100:
-  #      protonsFound += 1
+  for x in range(ntuple.nShowers):
+    if threshold != 0:
+        if ntuple.showerSize[x] < threshold:
+          continue
+    if ntuple.showerPID[x] == 2212:
+      if ntuple.showerRecoE[x] > 100:
+        protonsFound += 1
   return protonsFound
 
-def recoPion(ntuple):
+def recoPion(ntuple, threshold = 0):
   pionFound = False
   for x in range(ntuple.nTracks):
     if abs(ntuple.trackPID[x]) == 211:
+      if threshold != 0:
+        if ntuple.trackSize[x] < threshold:
+          continue
       if ntuple.trackRecoE[x] >= 50:
         pionFound = True
         break
   for x in range(ntuple.nShowers):
     if abs(ntuple.showerPID[x]) == 211:
+      if threshold != 0:
+        if ntuple.showerSize[x] < threshold:
+          continue
       if ntuple.showerRecoE[x] >= 50:
         pionFound = True
         break
@@ -641,9 +653,10 @@ def recoCutMuons(ntuple, threshold = 0):
     if threshold == 0:
       #If not, look at all classified tracks that have the right predicted origin point
       if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
-        muonPresent = True
-        break
-    #If so, loko at any tracks exceeding the threshold that have the right predicted origin point
+        if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 100:
+          muonPresent = True
+          break
+    #If so, look at any tracks exceeding the threshold that have the right predicted origin point
     elif ntuple.trackSize[x] > threshold and ntuple.trackProcess[x] == 0:
       if ntuple.trackPID[x] == 13 and ntuple.trackRecoE[x] > 100:
         muonPresent = True
@@ -668,15 +681,22 @@ def recoCutElectrons(ntuple, threshold = 0):
   #Cut any events containing primary electrons 
   electronPresent = False
   for x in range(ntuple.nTracks):
-
-    #if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
-    if ntuple.trackSize[x] > 7 and ntuple.trackProcess[x] == 0:
+    if threshold == 0:
+      if ntuple.trackClassified[x] == 1 and ntuple.trackProcess[x] == 0:
+        if ntuple.trackPID[x] == 11 and ntuple.trackRecoE[x] > 10:
+          electronPresent = True
+          break
+    elif ntuple.trackSize[x] >threshold and ntuple.trackProcess[x] == 0:
       if ntuple.trackPID[x] == 11 and ntuple.trackRecoE[x] > 10:
         electronPresent = True
         break
   for x in range(ntuple.nShowers):
-    #if ntuple.showerClassified[x] == 1 and ntuple.showerProcess[x] == 0:
-    if ntuple.showerSize[x] > 7 and ntuple.showerProcess[x] == 0:
+    if threshold == 0:
+      if ntuple.showerClassified[x] == 1 and ntuple.showerProcess[x] == 0:
+        if ntuple.showerPID[x] == 11 and ntuple.showerRecoE[x] > 10:
+          electronPresent = True
+          break
+    elif ntuple.showerSize[x] > threshold and ntuple.showerProcess[x] == 0:
       if ntuple.showerPID[x] == 11 and ntuple.showerRecoE[x] > 10:
         electronPresent = True
         break
@@ -777,12 +797,16 @@ def recoCutLongTracks(ntuple, fiducial):
     return True 
 
 
-def recoCutShortTracks(ntuple):
-  #Cut any event that has any reconstructed track longer than 20 cm
+def recoCutShortTracks(ntuple, threshold):
+  #Cut any event that has any reconstructed track longer than 20 cm - NOT YET UPDATED TO ACCOMODATE THRESHOLD CHANGES
   acceptable = True
   for x in range(ntuple.nTracks):
-    #if ntuple.trackClassified[x] == 0:
-    if ntuple.trackSize[x] < 7:
+    if threshold == 0:
+      if ntuple.trackClassified[x] == 0:
+        distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
+        if distxyz < 10 and distxyz > 4:
+          acceptable = False
+    elif ntuple.trackSize[x] < threshold:
       distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
       if distxyz < 10 and distxyz > 4:
         acceptable = False
@@ -791,14 +815,16 @@ def recoCutShortTracks(ntuple):
   else:
     return True
 
-def recoCutManyTracks(ntuple):
+def recoCutManyTracks(ntuple, threshold = 0):
   #If an event has more than four tracks, it's almost certainly up to no good. Maybe.
   noTracks = 0
   noUnclassified = 0
   for track in range(ntuple.nTracks):
     noTracks += 1
-    #if ntuple.trackClassified[track] == 0:
-    if ntuple.trackSize[x] < 7:
+    if threshold == 0:
+      if ntuple.trackClassified[track] == 0:
+        noClassified += 1
+    elif ntuple.trackSize[x] < threshold:
       noUnclassified += 1
   if noTracks > 4:
     return False
@@ -811,29 +837,53 @@ def recoCutManyTracks(ntuple):
     return True
 
 
-def recoPhotonListFiducial(fiducial, ntuple):
+def recoPhotonListFiducial(fiducial, ntuple, threshold = 0):
   #Creates a list of photons based on the showers in the event
   recoIDs = []
   for x in range(ntuple.nShowers):
-    #if ntuple.showerClassified[x] == 1:
-    if ntuple.showerSize[x] > 7:
+    if threshold == 0:
+      if ntuple.showerClassified[x] == 1:
+        if ntuple.showerPID[x] == 22:
+          if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
+            recoIDs.append(x)
+    elif ntuple.showerSize[x] > threshold:
       if ntuple.showerPID[x] == 22:
         #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
         if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
           recoIDs.append(x)
   return recoIDs
 
-def recoPhotonListTracks(fiducial, ntuple):
+def recoPhotonListTracks(fiducial, ntuple, threshold = 0):
   #Creates a list of photons based on the tracks in the event
   recoIDs = []
   for x in range(ntuple.nTracks):
-    #if ntuple.trackClassified[x] == 1:
-    if ntuple.trackSize[x] > 7:
+    if threshold == 0:
+      if ntuple.trackClassified[x] == 1:
+        if ntuple.trackPID[x] == 22:
+        #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
+          if ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
+            recoIDs.append(x)
+    elif ntuple.trackSize[x] > threshold:
       if ntuple.trackPID[x] == 22:
         #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
         if ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
           recoIDs.append(x)
   return recoIDs
+
+def recoCutMuonCompleteness(eventTree):
+  goodEvent = True
+  for x in range(eventTree.nTracks):
+    if eventTree.trackPID[x] == 13:
+      if eventTree.trackComp[x] < 0.5:
+        goodEvent = False
+  for x in range(eventTree.nShowers):
+    if eventTree.showerPID[x] == 13:
+      if eventTree.showerComp[x] < 0.5:
+        goodEvent = False
+  if goodEvent == False:
+    return False
+  else:
+    return True
 
 def recoCutPrimary(ntuple, recoPhotons, recoPhotons2):
   if len(recoPhotons) + len(recoPhotons2) == 1:

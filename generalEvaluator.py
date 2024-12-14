@@ -4,9 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons, recoCutManyTracks, recoCutCompleteness, recoCutMuonCompleteness
-
-from helpers.larflowreco_ana_funcs import getCosThetaGravVector
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons, recoCutManyTracks, recoCutCompleteness, recoCutMuonCompleteness
 
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
@@ -24,7 +22,6 @@ potTree = ntuple_file.Get("potTree")
 
 cosmic_file = rt.TFile(args.cosmicFile)
 cosmicTree = cosmic_file.Get("EventTree")
-cosmicPotTree = ntuple_file.Get("cosmicPotTree")
 
 #we will scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
 targetPOT = 6.67e+20
