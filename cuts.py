@@ -8,6 +8,23 @@ import math
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
 
+def trueParticleTallies(ntuple):
+    electronIndex, photonIndex, muonIndex, pionIndex, protonIndex, otherIndex = [], [], [], [], [], [] 
+    for x in range(ntuple.nTrueSimParts):
+      if ntuple.trueSimPartPDG[x] == 13:
+        muonIndex.append(x)
+      elif abs(ntuple.trueSimPartPDG[x]) == 11:
+        electronIndex.append(x)
+      elif abs(ntuple.trueSimPartPDG[x]) == 2212:
+        protonIndex.append(x)
+      elif ntuple.trueSimPartPDG[x] == 22:
+        photonIndex.append(x)
+      elif abs(ntuple.trueSimPartPDG[x]) == 211:
+        pionIndex.append(x)
+      else:
+        otherIndex.append(x)
+    return electronIndex, photonIndex, muonIndex, pionIndex, protonIndex, otherIndex
+
 def trueCutNC(ntuple):
 #Filter for neutral current using truth - False if CC, True if NC
   chargePartPresent = False
@@ -270,7 +287,7 @@ def trueCutMaxProtons(ntuple):
 #  for key in histDisct.keys():
 
 
-def histStack(title, histList, POTSum):
+def histStack(title, histList, POTSum, axisLabel="Photon Energy (GeV)"):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
@@ -307,7 +324,40 @@ def histStack(title, histList, POTSum):
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
   histCanvas = rt.TCanvas() 
   stack.Draw("HIST")
-  stack.GetXaxis().SetTitle("Photon Energy (GeV)")
+  stack.GetXaxis().SetTitle(axisLabel)
+  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
+  legend.Draw()
+  histCanvas.Update()
+
+  return histCanvas, stack, legend, histInt
+
+def histStackDark(title, histList, POTSum, axisLabel="Photon Energy (GeV)"):
+  #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
+  colors = [rt.kGreen, rt. kBlue,  rt. kOrange+1, rt.kViolet+3, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+1, rt.kBlack, rt.kViolet]
+  POTTarget = 6.67e+20
+  histIntTotal = 0
+  #Adds the histograms to the stack
+  for x in range(len(histList)):
+    hist = histList[x]
+    bins = hist.GetNbinsX()
+    hist.SetLineColor(colors[x%9])
+    #Now we add to the stack
+    stack.Add(hist)
+  #Writing up the legend
+  listLength = (len(histList) - 1)
+  for x in range(listLength, -1, -1):
+    hist = histList[x]
+    histInt = hist.Integral(1, int(bins))
+    histIntTotal += histInt
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
+  legend.SetHeader(str(legendHeaderString), "C")
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas() 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle(axisLabel)
   stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
   legend.Draw()
   histCanvas.Update()
@@ -334,7 +384,7 @@ def histStackTwoSignal(title, histList, POTSum):
       hist.SetLineColor(rt.kGreen + 4)
     #The rest get random colors
     else:
-      hist.SetLineColor(colors[x%7])
+      hist.SetLineColor(colors[x%9])
     #Now we add to the stack
     stack.Add(hist)
   #Making the legend entry for the signal first, so it goes on top

@@ -515,7 +515,6 @@ for canvas in writeList:
   canvas.Write()
 
 print("PURITY STATS:")
-print("Vertex reconstructed:", initialCount)
 print("Neutral Current:", NCCount)
 print("In Fiducial:", fiducialCount)
 print("No pions, protons:", noPionCount)

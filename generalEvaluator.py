@@ -301,6 +301,7 @@ for i in range(eventTree.GetEntries()):
     continue
   NCCount += 1
 
+  #Fiducial Cut
   if trueCutFiducials(eventTree, fiducialData) == False:
     addHist(eventTree, recoList, recoTrackList, fiducialPHists, leadingPhoton, eventTree.xsecWeight)
     continue
@@ -440,10 +441,6 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, truePhotonIDs, emptyList, effNoVertexHists, leadingPhoton, eventTree.xsecWeight)
     continue
   hasVertex += 1
-  #See if the event is neutral current                                                                                                  
-  #if recoNeutralCurrent(eventTree) == False:
-  #  addHist(eventTree, truePhotonIDs, emptyList, effCCHists, leadingPhoton, eventTree.xsecWeight)
-  #  continue
 
   #Check for above-threshold muons and electrons 
   if recoCutMuons(eventTree, classificationThreshold) == False:
@@ -545,7 +542,6 @@ for canvas in writeList:
   canvas.Write()
 
 print("PURITY STATS:")
-print("Vertex reconstructed:", initialCount)
 print("Neutral Current:", NCCount)
 print("In Fiducial:", fiducialCount)
 print("No pions, protons:", noPionCount)
