@@ -206,11 +206,9 @@ def truePhotonList(ntuple, fiducial):
       elif abs(ntuple.trueSimPartX[x] - ntuple.trueVtxX) <= 0.15 and abs(ntuple.trueSimPartY[x] - ntuple.trueVtxY) <= 0.15 and abs(ntuple.trueSimPartZ[x] - ntuple.trueVtxZ) <= 0.15:
         secondaryList.append(x)
   for x in secondaryList:
-    if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["width"]):
-      #pixelSum = ntuple.trueSimPartPixelSumUplane[x] + ntuple.trueSimPartPixelSumVplane[x] + ntuple.trueSimPartPixelSumYplane[x]
+    if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["photonWidth"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["photonWidth"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["photonWidth"]):
       pixelList = [ntuple.trueSimPartPixelSumUplane[x], ntuple.trueSimPartPixelSumVplane[x], ntuple.trueSimPartPixelSumYplane[x]]
       pixelEnergy = max(pixelList)*0.0126
-      #if pixelSum > 5000:
       if pixelEnergy > 20:
         list1.append(x)
   return list1
@@ -287,12 +285,12 @@ def trueCutMaxProtons(ntuple):
 #  for key in histDisct.keys():
 
 
-def histStack(title, histList, POTSum, axisLabel="Photon Energy (GeV)"):
+def histStack(histName, title, histList, POTSum, axisLabel="Photon Energy (GeV)"):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
-  stack = rt.THStack("PhotonStack", str(title))
+  stack = rt.THStack(str("Histname"), str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt. kBlue,  rt. kOrange+1, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+1, rt.kBlack, rt.kViolet]
-  POTTarget = 6.67e+20
+  POTTarget = 4.4e+19
   histIntTotal = 0
   #Adds the histograms to the stack
   for x in range(len(histList)):
@@ -370,13 +368,64 @@ def histStackTwoSignal(title, histList, POTSum):
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
   colors = [rt. kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt. kOrange+1]
-  POTTarget = 6.67e+20
+  POTTarget = 4.4e+19
   histIntTotal = 0
   #Adds the histograms to the stack
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
     hist.Scale(POTTarget/POTSum)
+    #Make sure the signals are the only ones with green, for easy identification
+    if x == 0:
+      hist.SetLineColor(rt.kGreen)
+    elif x == 1:
+      hist.SetLineColor(rt.kGreen + 4)
+    #The rest get random colors
+    else:
+      hist.SetLineColor(colors[x%9])
+    #Now we add to the stack
+    stack.Add(hist)
+  #Making the legend entry for the signal first, so it goes on top
+  hist = histList[0]
+  histInt = hist.Integral(1, int(bins))
+  histIntTotal += histInt
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  #Do it again for the second signal
+  hist = histList[1]
+  histInt = hist.Integral(1, int(bins))
+  histIntTotal += histInt
+  legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  #Adding the rest of the legend entries (has to be backwards here, or the legend order will be reversed on the graph)
+  listLength = (len(histList) - 1)
+  for x in range(listLength, 1, -1):
+    hist = histList[x]
+    histInt = hist.Integral(1, int(bins))
+    histIntTotal += histInt
+    legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round(histInt, 1)), "l")
+  legendHeaderString = "Total: " + str(round((histIntTotal),1)) 
+  legend.SetHeader(str(legendHeaderString), "C")
+  #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
+  histCanvas = rt.TCanvas() 
+  stack.Draw("HIST")
+  stack.GetXaxis().SetTitle("Photon Energy (GeV)")
+  stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
+  legend.Draw()
+  histCanvas.Update()
+
+  return histCanvas, stack, legend, histInt
+
+def histStackNoScale(title, histList, POTSum):
+  #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written. 
+  #This one is designed for 1 Gamma + 0 and 1 Gamma + 1P data, so no scaling is implimented
+  stack = rt.THStack("PhotonStack", str(title))
+  legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
+  colors = [rt. kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt. kOrange+1]
+  POTTarget = 6.67e+20
+  histIntTotal = 0
+  #Adds the histograms to the stack
+  for x in range(len(histList)):
+    hist = histList[x]
+    bins = hist.GetNbinsX()
     #Make sure the signals are the only ones with green, for easy identification
     if x == 0:
       hist.SetLineColor(rt.kGreen)
@@ -898,10 +947,21 @@ def recoPhotonListFiducial(fiducial, ntuple, threshold = 0):
             recoIDs.append(x)
     elif ntuple.showerSize[x] > threshold:
       if ntuple.showerPID[x] == 22:
-        #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
-        if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
+        #Extra check to ensure photons deposit in fiducial volume
+        if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["photonWidth"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["photonWidth"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["photonWidth"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["photonWidth"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["photonWidth"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["photonWidth"]):
           recoIDs.append(x)
   return recoIDs
+
+def recoCutMaxInTime(ntuple, protonNo):
+  #Cuts based on Taritree's new variable to cut down one events where the vertex was misplaced
+  goodEvent = True
+  if protonNo == 0 and ntuple.vtxMaxIntimePixelSum > 18000:
+    goodEvent = False
+
+  elif protonNo == 1 and ntuple.vtxMaxIntimePixelSum > 40000:
+    goodEvent = False
+
+  return goodEvent
 
 def recoPhotonListTracks(fiducial, ntuple, threshold = 0):
   #Creates a list of photons based on the tracks in the event
