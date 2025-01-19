@@ -370,10 +370,8 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.35, 0.5, 0.9, 0.9)
-  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kOrange]
-  targetPOT = 3.2974607516739725e+20
-  colors = [rt.kGreen+2, rt.kRed, rt. kBlue, rt.kOrange, rt.kMagenta, rt.kCyan, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kGreen]
-  targetPOT = 6.67e+20
+  colors = [rt.kRed, rt.kOrange, rt.kYellow+2, rt.kCyan, rt. kBlue, rt.kMagenta, rt.kViolet, rt.kBlack]
+  targetPOT = 4.4e+19
   integralSum = 0
   sum = 0
   for x in range(len(histList)):
@@ -382,13 +380,17 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
     hist.Scale(targetPOT/ntuplePOTSum)
     histInt = hist.Integral(1, int(bins))
     sum += histInt
-  print(sum)
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
-    hist.SetFillColor(colors[x%7])
-    hist.SetMarkerStyle(21)
-    hist.SetMarkerColor(colors[x%7])
+    if x == 0:
+        hist.SetFillColor(rt.kGreen+2)
+        hist.SetMarkerStyle(21)
+        hist.SetMarkerColor(rt.kGreen+2)
+    else:
+        hist.SetFillColor(colors[x%7])
+        hist.SetMarkerStyle(21)
+        hist.SetMarkerColor(colors[x%7])
     histInt = hist.Integral(1, int(bins))
     integralSum += histInt
     legend.AddEntry(hist, str(hist.GetTitle())+": "+str(round((histInt/sum*100), 2))+" percent of events", "f")
@@ -398,7 +400,7 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
   stack.Draw("HIST")
   stack.GetXaxis().SetTitle(str(xTitle))
   stack.GetYaxis().SetTitle(str(yTitle))
-  legendHeaderString = str(str(legendTitle) + str(round((integralSum),1)) + " per 6.67e+20 POT)") 
+  legendHeaderString = str(str(legendTitle) + str(round((integralSum),1)) + " per 4.4e+19 POT)") 
   legend.SetHeader(str(legendHeaderString), "C")
   legend.Draw()
   histCanvas.Update()
