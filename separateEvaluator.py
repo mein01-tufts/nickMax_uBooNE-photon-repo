@@ -4,7 +4,7 @@ import ROOT as rt
 rt.PyConfig.IgnoreCommandLineOptions = True
 rt.gROOT.SetBatch(True)
 
-from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons, recoCutManyTracks, recoCutCompleteness, recoCutMuonCompleteness, histStackTwoSignal
+from cuts import trueCutNC, trueCutFiducials,trueCutCosmic, truePhotonList, trueCutPionProton, histStack, recoNoVertex, recoFiducials, recoPhotonList, recoPionProton, recoNeutralCurrent, scaleRecoEnergy, scaleTrueEnergy, recoPion, recoProton, recoCutShowerFromChargeScore, recoCutLongTracks, recoPhotonListFiducial, recoCutPrimary, recoCutShortTracks, recoPhotonListTracks, recoCutFarShowers, trueCutMuons, trueCutElectrons, recoCutMuons, recoCutElectrons, recoCutManyTracks, recoCutCompleteness, recoCutMuonCompleteness, histStackTwoSignal, recoCutMaxInTime
 
 from helpers.larflowreco_ana_funcs import getCosThetaGravVector
 
@@ -24,18 +24,24 @@ potTree = ntuple_file.Get("potTree")
 
 cosmic_file = rt.TFile(args.cosmicFile)
 cosmicTree = cosmic_file.Get("EventTree")
-cosmicPotTree = ntuple_file.Get("cosmicPotTree")
+#cosmicPotTree = ntuple_file.Get("cosmicPotTree")
 
 #we will scale histograms to expected event counts from POT in runs 1-3: 6.67e+20
-targetPOT = 6.67e+20
-targetPOTstring = "6.67e+20"
+targetPOT = 4.4e+19
+targetPOTstring = "4.4e+19"
 ntuplePOTsum = 0
 
 for i in range(potTree.GetEntries()):
   potTree.GetEntry(i)
   ntuplePOTsum = ntuplePOTsum + potTree.totGoodPOT
 
-cosmicPOTsum = 3.2974607516739725e+20
+#For the old cosmic file
+#cosmicPOTsum = 3.2974607516739725e+20
+#cosmicWeight = 1
+
+#For the new cosmic file
+cosmicPOTsum = 5.28e+19
+cosmicWeight = 0.4
 
 #Hists created and organized here
 #PURITY HISTOGRAMS
@@ -101,6 +107,7 @@ effShowerCharge = rt.TH1F("effShowerCharge1", "Shower from Charged Cut",60,0,2)
 effPrimary = rt.TH1F("effPrimary1", "Primary Score Cut",60,0,2)
 effLongTracks = rt.TH1F("effLongTracks1", "Tracks with length > 20 cm",60,0,2)
 effMuonComp = rt.TH1F("effMuonComp1", "Muons with too-low Efficiency",60,0,2)
+effMaxInTime = rt.TH1F("effMaxInTime1", "Likely Incorrect Vertex",60,0,2)
 
 effProtonNoVertex = rt.TH1F("effProtonNoVertex1", "No Vertex Found",60,0,2)
 effProtonMuon = rt.TH1F("effProtonMuon1", "Muon False Positive",60,0,2)
@@ -116,6 +123,7 @@ effProtonShowerCharge = rt.TH1F("effProtonShowerCharge1", "Shower from Charged C
 effProtonPrimary = rt.TH1F("effProtonPrimary1", "Primary Score Cut",60,0,2)
 effProtonLongTracks = rt.TH1F("effProtonLongTracks1", "Tracks with length > 20 cm",60,0,2)
 effProtonMuonComp = rt.TH1F("effProtonMuonComp1", "Muons with too-low Efficiency",60,0,2)
+effProtonMaxInTime = rt.TH1F("effProtonMaxInTime1", "Likely Incorrect Vertex",60,0,2)
 
 
 #Histogram Lists!
@@ -133,6 +141,7 @@ effShowerChargeHists = [effShowerCharge, effProtonShowerCharge]
 effPrimaryHists = [effPrimary, effProtonPrimary]
 effLongTrackHists = [effLongTracks, effProtonLongTracks]
 effMuonCompHists = [effMuonComp, effProtonMuonComp]
+effMaxInTimeHists = [effMaxInTime, effProtonMaxInTime]
 
 #Lists of histograms for stacking. Place with signal first, then put the others in backwards in order of application (so the last one to apply would immediately follow the signal, then the second to last, all the way down to the first)
 effList1 = [effSignal, effMuonComp, effLongTracks, effPrimary, effManyPhotons, effTwoPhotons, effNoPhotons, effShowerCharge, effProton, effPion, effElectron, effMuon, effNoVertex]
@@ -166,6 +175,7 @@ count = 0
 
 totalCosmics = 0
 vertexCosmics = 0 
+noVertexCosmics = 0
 NCCosmics = 0
 MattProofCosmics = 0
 fiducialCosmics = 0
@@ -185,11 +195,13 @@ oneEffPhoton = 0
 twoEffPhotons = 0
 manyEffPhotons = 0
 
+distList = []
+
 #We put this into the addHist function for truth-based graphs
 emptyList = []
 
 #Variables for program function
-fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":30}
+fiducialData = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":15, "photonWidth":3}
 classificationThreshold = 0
 
 #BEGINNING EVENT LOOP FOR DEFAULT PURITY
@@ -231,7 +243,7 @@ for i in range(eventTree.GetEntries()):
   #List all photons classified as tracks
   recoTrackList = recoPhotonListTracks(fiducialData, eventTree, classificationThreshold)
 
-  if len(recoList) + len(recoTrackList) == 0:
+  if len(recoList) + len(recoTrackList) != 1:
     continue
 
   #Try cutting based on data for Shower from Charged
@@ -250,11 +262,21 @@ for i in range(eventTree.GetEntries()):
   if recoCutMuonCompleteness(eventTree) == False:
     continue
 
+  if recoCutMaxInTime(eventTree, recoProtonCount) == False:    
+    continue
+
   #PURITY - GRAPHING BASED ON TRUTH
   
   #Calculating graphing values
   leadingPhoton = scaleRecoEnergy(eventTree, recoList, recoTrackList)
-  
+
+  vertexDistX = eventTree.vtxX - eventTree.trueVtxX
+  vertexDistY = eventTree.vtxY - eventTree.trueVtxY
+  vertexDistZ = eventTree.vtxZ - eventTree.trueVtxZ
+  vertexDist = np.sqrt(vertexDistX**2 + vertexDistY**2 + vertexDistZ**2)
+  #if vertexDist < 3:
+  #  continue
+
   #Cut muons and electrons
   if trueCutMuons(eventTree) == False:
     addHist(eventTree, recoProtonCount, muonPHists, leadingPhoton, eventTree.xsecWeight)
@@ -318,6 +340,7 @@ for i in range(cosmicTree.GetEntries()):
   totalCosmics += 1
 
   if recoNoVertex(cosmicTree) == False:
+    noVertexCosmics += 1
     continue
   vertexCosmics += 1
   #See if the event is neutral current
@@ -351,7 +374,7 @@ for i in range(cosmicTree.GetEntries()):
   #List all photons classified as tracks
   recoTrackList = recoPhotonListTracks(fiducialData, cosmicTree)
   
-  if len(recoList) + len(recoTrackList) == 0:
+  if len(recoList) + len(recoTrackList) != 1:
     continue
   photonCosmics += 1
   
@@ -377,7 +400,7 @@ for i in range(cosmicTree.GetEntries()):
   #graphing based on photon count
   #Calculating graphing values
   leadingPhoton = scaleRecoEnergy(cosmicTree, recoList, recoTrackList)
-  addHist(cosmicTree, recoProtonCount, cosmicList, leadingPhoton, 1)
+  addHist(cosmicTree, recoProtonCount, cosmicList, leadingPhoton, cosmicWeight)
 
 #BEGINNING EVENT LOOP FOR EFFICIENCY
 for i in range(eventTree.GetEntries()):
@@ -402,7 +425,7 @@ for i in range(eventTree.GetEntries()):
 
   truePhotonIDs = truePhotonList(eventTree, fiducialData)
 
-  if len(truePhotonIDs) == 0:
+  if len(truePhotonIDs) != 1:
     continue
 
   
@@ -471,6 +494,10 @@ for i in range(eventTree.GetEntries()):
     addHist(eventTree, protonCount, effMuonCompHists, leadingPhoton, eventTree.xsecWeight)
     continue
 
+  if recoCutMaxInTime(eventTree, protonCount) == False:
+    addHist(eventTree, protonCount, effMaxInTimeHists, leadingPhoton, eventTree.xsecWeight)
+    continue
+
   survivesCuts += 1
 
   #Now we're pretty sure the event is legitimate, so we go ahead and graph based on the number of photons
@@ -498,8 +525,8 @@ for hist in cosmicList:
 purityCanvas1, purityStack1, purityLegend1, purityInt1 = histStackTwoSignal("1 Gamma + 0 Sample", pList1, ntuplePOTsum)
 purityProtonCanvas1, purityProtonStack1, purityProtonLegend1, purityProtonInt1 = histStackTwoSignal("1 Gamma + 1P Sample", pProtonList1, ntuplePOTsum)
 
-effCanvas1, effStack1, effLegend1, effInt1 = histStack("True 1 Gamma + 0  Outcomes", effList1, ntuplePOTsum)
-effProtonCanvas1, effProtonStack1, effProtonLegend1, effProtonInt1 = histStack("True 1 Gamma + 1P  Outcomes", effProtonList1, ntuplePOTsum)
+effCanvas1, effStack1, effLegend1, effInt1 = histStack("TrueOutcomes1", "True 1 Gamma + 0  Outcomes", effList1, ntuplePOTsum)
+effProtonCanvas1, effProtonStack1, effProtonLegend1, effProtonInt1 = histStack("TrueOutcomes1P", "True 1 Gamma + 1P  Outcomes", effProtonList1, ntuplePOTsum)
 
 writeList = [purityCanvas1, purityProtonCanvas1, effCanvas1, effProtonCanvas1]
 
@@ -509,13 +536,15 @@ for stack in [purityStack1, purityProtonStack1]:
 for stack in [effStack1, effProtonStack1]:
   stack.GetXaxis().SetTitle("True LeadingPhoton Energy (GeV)")
 
+for stack in [effStack1, effProtonStack1, purityStack1, purityProtonStack1]:
+  stack.GetYaxis().SetTitle("Events per 4.4e19 POT")
+
 #Now all that's left to do is write the canvases to the file
 outFile = rt.TFile(args.outfile, "RECREATE")
 for canvas in writeList:
   canvas.Write()
 
 print("PURITY STATS:")
-print("Vertex reconstructed:", initialCount)
 print("Neutral Current:", NCCount)
 print("In Fiducial:", fiducialCount)
 print("No pions, protons:", noPionCount)
@@ -536,5 +565,11 @@ print("Total with one photon:", oneEffPhoton)
 print("Total with two photons:", twoEffPhotons)
 print("Total with three photons:", manyEffPhotons)
 
-
 print("POTsum:", ntuplePOTsum)
+
+print("There were", totalCosmics, "total cosmics")
+print(vertexCosmics, "had a reconstructed vertex")
+print(noVertexCosmics, "had no reconstructed vertex")
+
+
+#print("Average vertex distance:", sum(distList)/len(distList))
