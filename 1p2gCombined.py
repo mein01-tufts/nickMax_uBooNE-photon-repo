@@ -7,7 +7,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
 parser.add_argument("-c", "--cosmicFile", type=str, required=True, help="input cosmic ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="16JanCombinedOutputPiZero.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="2025-01-19_CombinedOutputPiZeroWcosmicupdate.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -66,7 +66,6 @@ trueSignalHist = rt.TH1F("trueSignal", "1p2g successfully truth-matched", purity
 
 # Define min, max, fiducial and data function
 fiducialWidth = 10
-fiducialDict = {"xMin":0, "xMax":256, "yMin":-116.5, "yMax":116.5, "zMin":0, "zMax":1036, "width":10}
 
 recoNoVertex = 0
 trueTotalTally = 0
@@ -273,7 +272,7 @@ for i in range(cosmicTree.GetEntries()):
 
     recoProtonInv, recoPiZeroInv, recoDeltaInv = recoInvariantMassCalculations(cosmicTree, CosmicProtonIndex, cosmicPhotonIndexList)
 
-    trueCosmicsHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+    trueCosmicsHist.Fill(recoPiZeroInv, 0.4)
  
 #------------------ End of Loops ------------------#
 trueCosmicsHist.Scale(ntuplePOTsum/cosmicPOTsum)
