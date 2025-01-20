@@ -470,7 +470,7 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.35, 0.5, 0.9, 0.9)
   colors = [rt.kRed, rt.kOrange, rt.kYellow+2, rt.kCyan, rt. kBlue, rt.kMagenta, rt.kViolet, rt.kBlack]
-  targetPOT = 4.4e+19
+  targetPOT = 6.67e+20
   integralSum = 0
   sum = 0
   for x in range(len(histList)):
@@ -499,7 +499,7 @@ def histStackFill(title, histList, legendTitle, xTitle, yTitle, ntuplePOTSum):
   stack.Draw("HIST")
   stack.GetXaxis().SetTitle(str(xTitle))
   stack.GetYaxis().SetTitle(str(yTitle))
-  legendHeaderString = str(str(legendTitle) + str(round((integralSum),1)) + " per 4.4e+19 POT)") 
+  legendHeaderString = str(str(legendTitle) + str(round((integralSum),1)) + " per 6.67e+20 POT)") 
   legend.SetHeader(str(legendHeaderString), "C")
   legend.Draw()
   histCanvas.Update()
@@ -1131,6 +1131,8 @@ def recoCCCut(eventTree):
   if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:   
     cc = True
   if eventTree.nTracks >= 4:
+    cc = True
+  if eventTree.vtxMaxIntimePixelSum >= 35000.:
     cc = True
 
   if cc == True:
