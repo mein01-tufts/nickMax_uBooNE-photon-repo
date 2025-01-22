@@ -191,7 +191,7 @@ def trueCutEDep(ntuple, fiducialInfo):
     return True
 
 
-def truePhotonList(ntuple, fiducial):
+def truePhotonList(ntuple, fiducial, threshold=5.0):
 #Uses truth to create a list of photons that pass the vertex and deposit tests
   list1 = []
   secondaryList = []
@@ -206,11 +206,14 @@ def truePhotonList(ntuple, fiducial):
       elif abs(ntuple.trueSimPartX[x] - ntuple.trueVtxX) <= 0.15 and abs(ntuple.trueSimPartY[x] - ntuple.trueVtxY) <= 0.15 and abs(ntuple.trueSimPartZ[x] - ntuple.trueVtxZ) <= 0.15:
         secondaryList.append(x)
   for x in secondaryList:
-    if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["photonWidth"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["photonWidth"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["photonWidth"]):
-      pixelList = [ntuple.trueSimPartPixelSumUplane[x], ntuple.trueSimPartPixelSumVplane[x], ntuple.trueSimPartPixelSumYplane[x]]
-      pixelEnergy = max(pixelList)*0.0126
-      if pixelEnergy > 20:
-        list1.append(x)
+    if ntuple.trueSimPartEDepX[x] > (fiducial["xMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepX[x] < (fiducial["xMax"] - fiducial["photonWidth"]) and ntuple.trueSimPartEDepY[x] > (fiducial["yMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepY[x] < (fiducial["yMax"] - fiducial["photonWidth"]) and ntuple.trueSimPartEDepZ[x] > (fiducial["zMin"] + fiducial["photonWidth"]) and ntuple.trueSimPartEDepZ[x] < (fiducial["zMax"] - fiducial["photonWidth"]):        
+        pixelList = [ntuple.trueSimPartPixelSumUplane[x], ntuple.trueSimPartPixelSumVplane[x], ntuple.trueSimPartPixelSumYplane[x]]
+        nplanes = 0
+        for pixsum in pixelList:
+          if pixsum*0.0126>threshold:
+              nplanes += 1
+        if nplanes>=2:
+            list1.append(x)
   return list1
 
 def trueBottomlessPhotonList(ntuple, fiducial):
@@ -279,6 +282,24 @@ def trueCutMaxProtons(ntuple):
   else:
     return False
 
+def trueTwoPhotonOpeningAngle( eventTree, simpartindex1, simpartindex2 ):
+    id1 = simpartindex1
+    id2 = simpartindex2
+    pgamma1 = [eventTree.trueSimPartPx[id1],eventTree.trueSimPartPy[id1],eventTree.trueSimPartPz[id1]]
+    pgamma2 = [eventTree.trueSimPartPx[id2],eventTree.trueSimPartPy[id2],eventTree.trueSimPartPz[id2]]
+    norm1 = 0.0
+    norm2 = 0.0
+    cosOpen = 0.0
+    for vv in range(3):
+      norm1 += pgamma1[vv]*pgamma1[vv]
+      norm2 += pgamma2[vv]*pgamma2[vv]
+      cosOpen += pgamma1[vv]*pgamma2[vv]
+    cosnorm = norm1*norm2
+    if cosnorm>0:
+      cosOpen = cosOpen/np.sqrt(cosnorm)
+    trueOpeningAngle = np.arccos(cosOpen)*180.0/3.14159
+    return trueOpeningAngle
+
 
 #HISTOGRAM FUNCTIONS
 #def massHistMake(histDict, bincount, lowx, highx):
@@ -296,6 +317,7 @@ def histStack(histName, title, histList, POTSum, axisLabel="Photon Energy (GeV)"
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
+    hist.SetLineWidth(2)
     hist.Scale(POTTarget/POTSum)
     #Make sure signal is the only one with green, for easy identification
     if x == 0:
@@ -363,17 +385,18 @@ def histStackDark(title, histList, POTSum, axisLabel="Photon Energy (GeV)"):
   return histCanvas, stack, legend, histInt
 
 
-def histStackTwoSignal(title, histList, POTSum):
+def histStackTwoSignal(title, histList, POTSum, POTTarget, beamHist):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written
+  #POTTarget = 4.4e+19    
   stack = rt.THStack("PhotonStack", str(title))
   legend = rt.TLegend(0.5, 0.5, 0.9, 0.9)
-  colors = [rt. kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt. kOrange+1]
-  POTTarget = 4.4e+19
+  colors = [rt.kBlue, rt.kRed, rt.kCyan, rt.kMagenta, rt.kYellow+2, rt.kBlack, rt.kYellow, rt.kViolet, rt.kOrange+1,rt.kCyan+3,rt.kViolet-6,rt.kOrange+3]
   histIntTotal = 0
   #Adds the histograms to the stack
   for x in range(len(histList)):
     hist = histList[x]
     bins = hist.GetNbinsX()
+    hist.SetLineWidth(2)    
     hist.Scale(POTTarget/POTSum)
     #Make sure the signals are the only ones with green, for easy identification
     if x == 0:
@@ -382,9 +405,13 @@ def histStackTwoSignal(title, histList, POTSum):
       hist.SetLineColor(rt.kGreen + 4)
     #The rest get random colors
     else:
-      hist.SetLineColor(colors[x%9])
+      hist.SetLineColor(colors[x%len(colors)])
     #Now we add to the stack
     stack.Add(hist)
+
+  if beamHist is not None:
+      legend.AddEntry(beamHist,"DATA: %d"%(beamHist.Integral()),"lep")
+    
   #Making the legend entry for the signal first, so it goes on top
   hist = histList[0]
   histInt = hist.Integral(1, int(bins))
@@ -407,12 +434,23 @@ def histStackTwoSignal(title, histList, POTSum):
   #Make the canvas and draw everything to it (NOTE - This component is only designed for events using 6.67e+20 scaling
   histCanvas = rt.TCanvas() 
   stack.Draw("HIST")
+
+  if beamHist is not None:
+    stackmax = stack.GetMaximum()
+    beammax  = beamHist.GetMaximum()
+    beammax  = beammax+np.sqrt(beammax)
+    if stackmax<beammax:
+        stack.SetMaximum( beammax*1.1 )
+    beamHist.SetLineWidth(3)
+    beamHist.Draw("E1same")
+
+          
   stack.GetXaxis().SetTitle("Photon Energy (GeV)")
   stack.GetYaxis().SetTitle("Events per 6.67e+20 POT")
   legend.Draw()
   histCanvas.Update()
 
-  return histCanvas, stack, legend, histInt
+  return histCanvas, stack, legend, histIntTotal
 
 def histStackNoScale(title, histList, POTSum):
   #Takes a list of histograms and converts them into one properly formatted stacked histogram. Returns the canvas on which the histogram is written. 
@@ -644,7 +682,7 @@ def recoPhotonList(ntuple, threshold = 0):
       if ntuple.showerClassified[x] == 1:
        if ntuple.showerPID[x] == 22:
         recoIDs.append(x) 
-    elif ntuple.showerSize[x] > threshold:
+    elif ntuple.showerRecoE[x] > threshold:
       if ntuple.showerPID[x] == 22:
         recoIDs.append(x)
   return recoIDs
@@ -676,17 +714,21 @@ def recoProton(ntuple, threshold = 0):
       if threshold != 0:
         if ntuple.trackSize[x] < threshold:
           continue
-      distxyz = np.sqrt((ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x])**2 + (ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x])**2 + (ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x])**2)
+      dx = ntuple.trackStartPosX[x] - ntuple.trackEndPosX[x]
+      dy = ntuple.trackStartPosY[x] - ntuple.trackEndPosY[x]
+      dz = ntuple.trackStartPosZ[x] - ntuple.trackEndPosZ[x]
+      distxyz = np.sqrt(dx*dx + dy*dy + dz*dz)
       #A very high percentage of photons reconstructed below threshold but with tracks longer than 7.5 cm are actually above threshold
-      if ntuple.trackRecoE[x] > 100 or distxyz > 7.5:
+      #if ntuple.trackRecoE[x] > 30 or distxyz > 7.5:
+      if ntuple.trackRecoE[x] > 50:
         protonsFound += 1
-  for x in range(ntuple.nShowers):
-    if threshold != 0:
-        if ntuple.showerSize[x] < threshold:
-          continue
-    if ntuple.showerPID[x] == 2212:
-      if ntuple.showerRecoE[x] > 100:
-        protonsFound += 1
+  #for x in range(ntuple.nShowers):
+  #  if threshold != 0:
+  #      if ntuple.showerSize[x] < threshold:
+  #        continue
+  #  if ntuple.showerPID[x] == 2212:
+  #    if ntuple.showerRecoE[x] > 30:
+  #      protonsFound += 1
   return protonsFound
 
 def recoPion(ntuple, threshold = 0):
@@ -870,14 +912,16 @@ def recoCutMuScore(ntuple, recoPhotons):
     return True
 
 
-def recoCutCompleteness(ntuple, recoPhotons, recoPhotons2):
-  #Cuts any single-photon event that has a Shower-From-Charged Score between -5 and 0. Targets cosmics very efficiently
+def recoCutCompleteness(ntuple, recoPhotons, recoPhotons2, completeness_threshold=0.7):
+  # Cuts any single-photon event that has a Shower-From-Charged Score between -5 and 0. Targets cosmics very efficiently
   if len(recoPhotons) + len(recoPhotons2) == 1:
-    if len(recoPhotons) == 1 and ntuple.showerComp[recoPhotons[0]] < 0.3:
+    if len(recoPhotons) == 1 and ntuple.showerComp[recoPhotons[0]] < completeness_threshold:
       return False
-    elif len(recoPhotons2) and ntuple.trackComp[recoPhotons2[0]] < 0.3:
+    elif len(recoPhotons2)==1 and ntuple.trackComp[recoPhotons2[0]] < completeness_threshold:
       return False
     else:
+      return True
+  else:
       return True
 
 def recoCutLongTracks(ntuple, fiducial):
@@ -943,19 +987,33 @@ def recoPhotonListFiducial(fiducial, ntuple, threshold = 0):
     if threshold == 0:
       if ntuple.showerClassified[x] == 1:
         if ntuple.showerPID[x] == 22:
-          if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
+          if ( ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["photonWidth"])
+               and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["photonWidth"])
+               and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["photonWidth"])
+               and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["photonWidth"])
+               and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["photonWidth"])
+               and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["photonWidth"])):
             recoIDs.append(x)
-    elif ntuple.showerSize[x] > threshold:
+    elif ntuple.showerRecoE[x] > threshold:
       if ntuple.showerPID[x] == 22:
         #Extra check to ensure photons deposit in fiducial volume
-        if ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["photonWidth"]) and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["photonWidth"]) and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["photonWidth"]) and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["photonWidth"]) and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["photonWidth"]) and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["photonWidth"]):
+        if ( ntuple.showerStartPosX[x] > (fiducial["xMin"] + fiducial["photonWidth"])
+             and ntuple.showerStartPosX[x] < (fiducial["xMax"] - fiducial["photonWidth"])
+             and ntuple.showerStartPosY[x] > (fiducial["yMin"] + fiducial["photonWidth"])
+             and ntuple.showerStartPosY[x] < (fiducial["yMax"] - fiducial["photonWidth"])
+             and ntuple.showerStartPosZ[x] > (fiducial["zMin"] + fiducial["photonWidth"])
+             and ntuple.showerStartPosZ[x] < (fiducial["zMax"] - fiducial["photonWidth"]) ):
           recoIDs.append(x)
   return recoIDs
 
 def recoCutMaxInTime(ntuple, protonNo):
   #Cuts based on Taritree's new variable to cut down one events where the vertex was misplaced
   goodEvent = True
-  if protonNo == 0 and ntuple.vtxMaxIntimePixelSum > 18000:
+  # for bypassing
+  #if True:
+  #    return True
+  
+  if protonNo == 0 and ntuple.vtxMaxIntimePixelSum*0.0126 > 200.0:
     goodEvent = False
 
   elif protonNo == 1 and ntuple.vtxMaxIntimePixelSum > 40000:
@@ -970,13 +1028,23 @@ def recoPhotonListTracks(fiducial, ntuple, threshold = 0):
     if threshold == 0:
       if ntuple.trackClassified[x] == 1:
         if ntuple.trackPID[x] == 22:
-        #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
-          if ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
+            #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
+          if (ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["photonWidth"])
+              and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["photonWidth"])
+              and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["photonWidth"])
+              and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["photonWidth"])
+              and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["photonWidth"])
+              and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["photonWidth"])):
             recoIDs.append(x)
     elif ntuple.trackSize[x] > threshold:
       if ntuple.trackPID[x] == 22:
         #Extra check to ensure photons deposit in fiducial volume (with a 5 cm margin of error)
-        if ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["width"]) and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["width"]) and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["width"]) and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["width"]) and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["width"]) and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["width"]):
+        if (ntuple.trackStartPosX[x] > (fiducial["xMin"] + fiducial["photonWidth"])
+            and ntuple.trackStartPosX[x] < (fiducial["xMax"] - fiducial["photonWidth"])
+            and ntuple.trackStartPosY[x] > (fiducial["yMin"] + fiducial["photonWidth"])
+            and ntuple.trackStartPosY[x] < (fiducial["yMax"] - fiducial["photonWidth"])
+            and ntuple.trackStartPosZ[x] > (fiducial["zMin"] + fiducial["photonWidth"])
+            and ntuple.trackStartPosZ[x] < (fiducial["zMax"] - fiducial["photonWidth"])):
           recoIDs.append(x)
   return recoIDs
 
