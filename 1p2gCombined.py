@@ -7,7 +7,7 @@ from cuts import trueCCCut, recoCCCut, trueFiducialCut, recoFiducialCut, truePiP
 parser = argparse.ArgumentParser("Make energy histograms from a bnb nu overlay ntuple file")
 parser.add_argument("-i", "--infile", type=str, required=True, help="input ntuple file")
 parser.add_argument("-c", "--cosmicFile", type=str, required=True, help="input cosmic ntuple file")
-parser.add_argument("-o", "--outfile", type=str, default="2025-01-19_CombinedOutputPiZeroWcosmicupdate.root", help="output root file name")
+parser.add_argument("-o", "--outfile", type=str, default="2025-01-21_CombinedOutput4.4.root", help="output root file name")
 args = parser.parse_args()
 
 # Grab ntuple file, eventTree, and potTree for reference
@@ -49,7 +49,7 @@ recoSignalHist = rt.TH1F("recoSignal", "1p2g successfully reconstructed", 60, 0,
 
 #Purity histograms: named true bc true called the reco events x
 purityxMin = 0
-purityxMax = 800
+purityxMax = 1200
 purityBins = 60
 recoTotalHist = rt.TH1F("recoTotalHist", "All Reco Signal Events", purityBins, purityxMin, purityxMax)
 trueOutFiducialHist = rt.TH1F("trueOutsideFiducial", "True vertex outside fiducial volume", purityBins, purityxMin, purityxMax)
@@ -169,30 +169,30 @@ for i in range(eventTree.GetEntries()):
     if len(recoPhotonTIDList) != 2:
         continue
 # Reco invariant mass calc
-    recoProtonInv, recoPiZeroInv, recoDeltaInv = recoInvariantMassCalculations(eventTree, recoProtonIndex, recoPhotonIndexList)
+    # recoProtonInv, recoPiZeroInv, recoDeltaInv = recoInvariantMassCalculations(eventTree, recoProtonIndex, recoPhotonIndexList)
 
-    recoTotalHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+    recoTotalHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
 
 #------------ TruthMatching ------------#
 # true cc check
     if trueCCCut(eventTree):
-        trueCCHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        trueCCHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 #true fiducial check
     if trueFiducialCut(eventTree, fiducialWidth):
-        trueOutFiducialHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        trueOutFiducialHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 # true pi+ check
     if truePiPlusCut(eventTree):
-        truePiPlusHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        truePiPlusHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 # true proton selection
     nTrueProtons, trueProtonTID, trueProtonIndex = trueProtonSelection(eventTree)
     if nTrueProtons == 0:
-        trueNoProtonHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        trueNoProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if nTrueProtons >= 2:
-        truePluralProtonHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        truePluralProtonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 # uncomment below for proton tid-matching
 #    if trueProtonTID != trueProtonTID:
@@ -201,16 +201,16 @@ for i in range(eventTree.GetEntries()):
 # true photon selection up top
     truePhotonTIDList, trueLeadingPhotonEnergy, truePhotonIndexList = truePhotonSelection(eventTree, fiducialWidth)
     if len(truePhotonTIDList) == 0:
-        trueNoPhotonHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        trueNoPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if len(truePhotonTIDList) == 1:
-        trueOnePhotonHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        trueOnePhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
     if len(truePhotonTIDList) >= 3:
-        trueManyPhotonHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+        trueManyPhotonHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
         continue
 
-    trueSignalHist.Fill(recoPiZeroInv, eventTree.xsecWeight)
+    trueSignalHist.Fill(recoLeadingPhotonEnergy, eventTree.xsecWeight)
 
 #------------------ Cosmic Loop ------------------#
 #------------------ Cosmic Loop ------------------#
@@ -224,7 +224,34 @@ for i in range(cosmicTree.GetEntries()):
     if cosmicTree.foundVertex == 0:
         continue
 # Cosmic CC Cut:
-    if recoCCCut(cosmicTree):
+    recoPrimaryMuonTrackFound = False
+    recoPrimaryMuonShowerFound = False
+    recoPrimaryElectronTrackFound = False
+    recoPrimaryElectronShowerFound = False
+    cc = False
+    unclassifiedTracks = 0
+    for i in range(eventTree.nTracks):
+        if eventTree.trackClassified[i] == 0:
+            unclassifiedTracks += 1
+        if eventTree.trackIsSecondary[i] == 0:
+            if abs(eventTree.trackPID[i]) == 13:
+                recoPrimaryMuonTrackFound = True
+            elif abs(eventTree.trackPID[i]) == 11:
+                recoPrimaryElectronTrackFound = True
+    for i in range(eventTree.nShowers):
+        if eventTree.showerIsSecondary[i] == 0:
+            if abs(eventTree.showerPID[i]) == 11:
+                recoPrimaryElectronShowerFound == True
+            elif abs(eventTree.showerPID[i]) == 13:
+                recoPrimaryMuonShowerFound == True
+    if eventTree.nTracks != 0:
+        if unclassifiedTracks/eventTree.nTracks >= 0.55:
+            cc = True
+    if recoPrimaryMuonTrackFound or recoPrimaryMuonShowerFound or recoPrimaryElectronTrackFound or recoPrimaryElectronShowerFound:   
+        cc = True
+    if eventTree.nTracks >= 4:
+        cc = True
+    if cc == True:
         continue
 # Cosmic Fiducial Cut:
     if recoFiducialCut(cosmicTree, fiducialWidth):
@@ -270,9 +297,9 @@ for i in range(cosmicTree.GetEntries()):
     if len(cosmicPhotonIndexList) != 2:
         continue
 
-    recoProtonInv, recoPiZeroInv, recoDeltaInv = recoInvariantMassCalculations(cosmicTree, CosmicProtonIndex, cosmicPhotonIndexList)
+    # recoProtonInv, recoPiZeroInv, recoDeltaInv = recoInvariantMassCalculations(cosmicTree, CosmicProtonIndex, cosmicPhotonIndexList)
 
-    trueCosmicsHist.Fill(recoPiZeroInv, 0.4)
+    trueCosmicsHist.Fill(recoLeadingPhotonEnergy, 0.4)
  
 #------------------ End of Loops ------------------#
 trueCosmicsHist.Scale(ntuplePOTsum/cosmicPOTsum)
@@ -296,7 +323,7 @@ efficiencyCanvas, efficiencyStack, efficiencyLegend, efficiencyInt = \
     histStackFill(" NC 2g + 1p Event Reconstruction Efficiency", efficiencyHistList, "All Truth Events: (", "True Leading Photon Energy (MeV)", "Events per 4.4e+19 POT", ntuplePOTsum)
 
 purityCanvas, purityStack, purityLegend, purityInt = \
-    histStackFill("NC 2g + 1p Event Reconstruction Purity", purityHistList, "All Reconstructed Events: (", "Reconstructed 2 gamma Invariant Mass (MeV/c^2)", "Events per 4.4e+19 POT", ntuplePOTsum)
+    histStackFill("NC 2g + 1p Event Reconstruction Purity", purityHistList, "All Reconstructed Events: (", "Reconstructed Leading Photon Energy (MeV)", "Events per 4.4e+19 POT", ntuplePOTsum)
 
 # Write Efficiency and Purity Canvases to Outfile
 outFile = rt.TFile(args.outfile, "RECREATE")
